@@ -212,15 +212,15 @@ export function criarClawMachine(scene) {
     garraTetoGroup.add(carrinho);
 
     const garraCaboGroup = new THREE.Group();
-    // BAIXAR A GARRA POR DEFEITO (Desce 10 unidades)
-    garraCaboGroup.position.y = -10; 
+    // BAIXAR A GARRA POR DEFEITO (Desce 4 unidades para ficar mais acima)
+    garraCaboGroup.position.y = -4; 
     garraTetoGroup.add(garraCaboGroup);
 
     const caboGeo = new THREE.CylinderGeometry(0.18, 0.18, 1, 8);
     caboGeo.translate(0, 0.5, 0); 
     const cabo = new THREE.Mesh(caboGeo, matMetal);
     cabo.position.y = 0; 
-    cabo.scale.y = 10; // Esticar o cabo para compensar a descida inicial
+    cabo.scale.y = 4; // Esticar o cabo para compensar a descida inicial
     cabo.castShadow = true; 
     garraCaboGroup.add(cabo);
 
