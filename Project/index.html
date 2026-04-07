@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Claw Machine</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: sans-serif; color: #fff; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+        #info h3 { margin: 0 0 10px 0; }
+        #info p { margin: 5px 0; }
+    </style>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://threejs.org/build/three.module.js",
+            "three/addons/": "https://threejs.org/examples/jsm/"
+          }
+        }
+    </script>
+</head>
+<body>
+    <div id="info">
+        <h3>🎮 Claw Machine</h3>
+        <p><strong>Controles:</strong></p>
+        <p>⬅️ ➡️ ⬆️ ⬇️ - Move a garra</p>
+        <p>SPACE - Começar jogada</p>
+    </div>
+
+    <script type="module" src="./src/js/main.js"></script>
+</body>
+</html>

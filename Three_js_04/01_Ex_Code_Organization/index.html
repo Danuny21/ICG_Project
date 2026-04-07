@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<!--
+
+		Example adapted from Damien Rohmer tutorial
+
+		https://imagecomputing.net/damien.rohmer/teaching/2019_2020/semester_1/MPRI_2-39/practice/threejs/content/000_threejs_tutorial/index.html
+
+		J. Madeira - April 2021; Updated - March 2024
+
+-->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title> 3D scene </title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script type="module">
+
+        import * as THREE from "https://threejs.org/build/three.module.js";
+
+        // To store the scene graph, and elements usefull to rendering the scene
+        const sceneElements = {
+            sceneGraph: null,
+            camera: null,
+            renderer: null,
+        };
+
+        // HELPER FUNCTIONS
+
+        const helper = {
+
+            initEmptyScene: function (sceneElements) {
+
+                // ************************** //
+                // Create the 3D scene
+                // ************************** //
+                sceneElements.sceneGraph = new THREE.Scene();
+
+                // ************************** //
+                // Add camera
+                // ************************** //
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 500);
+                sceneElements.camera = camera;
+                camera.position.set(0, 5, 5);
+                camera.lookAt(0, 0, 0);
+
+                // ************************** //
+                // Illumination
+                // ************************** //
+
+                // ************************** //
+                // Add ambient light
+                // ************************** //
+                const ambientLight = new THREE.AmbientLight('hsl(0, 0%, 100%)', 0.2);
+                sceneElements.sceneGraph.add(ambientLight);
+
+                // ***************************** //
+                // Add spotlight (with shadows)
+                // ***************************** //
+                const spotLight1 = new THREE.SpotLight('hsl(0, 0%, 100%)', 40);
+                spotLight1.decay = 1;
+                spotLight1.position.set(-5, 8, 0);
+                sceneElements.sceneGraph.add(spotLight1);
+
+                // Setup shadow properties for the spotlight
+                spotLight1.castShadow = true;
+                spotLight1.shadow.mapSize.width = 2048;
+                spotLight1.shadow.mapSize.height = 2048;
+
+                // Give a name to the spot light
+                spotLight1.name = "light 1";
+
+                // ***************************** //
+                // Add second spotlight (with shadows)
+                // ***************************** //
+                const spotLight2 = new THREE.SpotLight('hsl(0, 0%, 100%)', 40);
+                spotLight2.decay = 1;
+                spotLight2.position.set(5, 8, 0);
+                sceneElements.sceneGraph.add(spotLight2);
+
+                // Setup shadow properties for the second spotlight
+                spotLight2.castShadow = true;
+                spotLight2.shadow.mapSize.width = 2048;
+                spotLight2.shadow.mapSize.height = 2048;
+
+                // Give a name to the second spot light
+                spotLight2.name = "light 2";
+
+                // *********************************** //
+                // Create renderer (with shadow map)
+                // *********************************** //
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                sceneElements.renderer = renderer;
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setClearColor('hsl(60, 100%, 79%)', 1.0);
+                renderer.setSize(width, height);
+
+                // Setup shadowMap property
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                // **************************************** //
+                // Add the rendered image in the HTML DOM
+                // **************************************** //
+                const htmlElement = document.querySelector("#Tag3DScene");
+                htmlElement.appendChild(renderer.domElement);
+            },
+
+            render: function (sceneElements) {
+                sceneElements.renderer.render(sceneElements.sceneGraph, sceneElements.camera);
+            },
+        };
+
+        // FACTORY FUNCTIONS FOR BUILDING THE SCENE
+
+        // Factory function to create a sphere
+        function createSphere(sceneGraph, posX, posY, posZ, radius, color) {
+            const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+            const sphereMaterial = new THREE.MeshPhongMaterial({ color: color });
+            const sphereObject = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sceneGraph.add(sphereObject);
+            
+            sphereObject.translateX(posX).translateY(posY).translateZ(posZ);
+            sphereObject.castShadow = true;
+            sphereObject.receiveShadow = true;
+            
+            return sphereObject;
+        }
+
+        // Factory function to create a cube
+        function createCube(sceneGraph, posX, posY, posZ, size, color) {
+            const cubeGeometry = new THREE.BoxGeometry(size, size, size);
+            const cubeMaterial = new THREE.MeshPhongMaterial({ color: color });
+            const cubeObject = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            sceneGraph.add(cubeObject);
+            
+            cubeObject.translateX(posX).translateY(posY).translateZ(posZ);
+            cubeObject.castShadow = true;
+            cubeObject.receiveShadow = true;
+            
+            return cubeObject;
+        }
+
+        // Factory function to create a cylinder
+        function createCylinder(sceneGraph, posX, posY, posZ, radius, height, color) {
+            const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, height, 25, 1);
+            const cylinderMaterial = new THREE.MeshPhongMaterial({ color: color });
+            const cylinderObject = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            sceneGraph.add(cylinderObject);
+            
+            cylinderObject.translateX(posX).translateY(posY).translateZ(posZ);
+            cylinderObject.castShadow = true;
+            cylinderObject.receiveShadow = true;
+            
+            return cylinderObject;
+        }
+
+        // Factory function to create a plane
+        function createPlane(sceneGraph, sizeX, sizeY, color) {
+            const planeGeometry = new THREE.PlaneGeometry(sizeX, sizeY);
+            const planeMaterial = new THREE.MeshPhongMaterial({ color: color, side: THREE.DoubleSide });
+            const planeObject = new THREE.Mesh(planeGeometry, planeMaterial);
+            sceneGraph.add(planeObject);
+            
+            planeObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+            planeObject.receiveShadow = true;
+            
+            return planeObject;
+        }
+
+        // Scene object containing load3DObjects method
+        const scene = {
+            // Create and insert in the scene graph the models of the 3D scene
+            load3DObjects: function (sceneGraph) {
+                // ************************** //
+                // Create a ground plane
+                // ************************** //
+                createPlane(sceneGraph, 10, 10, 'hsl(0, 0%, 78%)');
+
+                // ************************** //
+                // Create multiple spheres (left side)
+                // ************************** //
+                const sphereCount = 3;
+                for (let i = 0; i < sphereCount; i++) {
+                    const posZ = -2 + i * 2;
+                    const hue = 120 - i * 15;
+                    const saturation = (i === 1) ? 59 : 100;
+                    const lightness = (i === 2) ? 70 : 50;
+                    createSphere(sceneGraph, -2.5, 0.5, posZ, 0.5, `hsl(${hue}, ${saturation}%, ${lightness}%)`);
+                }
+
+                // ************************** //
+                // Create multiple cubes (center)
+                // ************************** //
+                const cubeCount = 3;
+                const cubeHues = [0, 10, 28];
+                const cubeLightness = [50, 39, 41];
+                for (let i = 0; i < cubeCount; i++) {
+                    const posZ = 2 - i * 2;
+                    createCube(sceneGraph, 0, 0.5, posZ, 1, `hsl(${cubeHues[i]}, 100%, ${cubeLightness[i]}%)`);
+                }
+
+                // ************************** //
+                // Create multiple cylinders (right side)
+                // ************************** //
+                const cylinderCount = 4;
+                const cylinderHues = [160, 180, 220, 245];
+                const cylinderLightness = [50, 39, 50, 50];
+                for (let i = 0; i < cylinderCount; i++) {
+                    const posZ = 1.5 - i * 1;
+                    createCylinder(sceneGraph, 3, 0.5, posZ, 0.15, 1, `hsl(${cylinderHues[i]}, 100%, ${cylinderLightness[i]}%)`);
+                }
+            }
+        };
+
+        function computeFrame(time) {
+
+            // Rendering
+            helper.render(sceneElements);
+
+            // Call for the next frame
+            // Uncomment to allow animation
+            // requestAnimationFrame(computeFrame);
+        }
+
+        // Call functions:
+        //  1. Initialize the empty scene
+        //  2. Add elements within the scene
+        //  3. Animate
+
+        function init() {
+            helper.initEmptyScene(sceneElements);
+            scene.load3DObjects(sceneElements.sceneGraph);
+            requestAnimationFrame(computeFrame);
+        }
+
+        // HANDLING EVENTS
+
+        window.addEventListener('resize', resizeWindow);
+
+        // Update render image size and camera aspect when the window is resized
+        function resizeWindow(eventParam) {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            sceneElements.camera.aspect = width / height;
+            sceneElements.camera.updateProjectionMatrix();
+
+            sceneElements.renderer.setSize(width, height);
+
+            // Comment when doing animation
+            computeFrame(sceneElements);
+        }
+
+        // STARTING
+
+        init();
+
+    </script>
+
+</head>
+
+<body>
+    <div id="Tag3DScene"> </div>
+</body>
+
+</html>

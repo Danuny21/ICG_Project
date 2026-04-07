@@ -1,0 +1,107 @@
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    background-color: #1a1a2e; 
+    font-family: 'Courier New', monospace;
+    color: #fff;
+}
+
+canvas { 
+    display: block; 
+}
+
+#ui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 3px solid #00ff88;
+    border-radius: 10px;
+    padding: 20px;
+    color: #00ff88;
+    text-shadow: 0 0 10px #00ff88;
+    max-width: 400px;
+    font-size: 14px;
+    line-height: 1.6;
+    z-index: 100;
+}
+
+#ui h2 {
+    margin: 0 0 15px 0;
+    font-size: 28px;
+    color: #ff00ff;
+    text-shadow: 0 0 20px #ff00ff;
+}
+
+#ui h3 {
+    margin: 10px 0 5px 0;
+    font-size: 16px;
+    color: #00ff88;
+}
+
+#ui p {
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+#ui strong {
+    color: #ffff00;
+    text-shadow: 0 0 5px #ffff00;
+}
+
+#game-info {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px dashed #00ff88;
+}
+
+#controls-info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #00ff88;
+    font-size: 12px;
+}
+
+#controls-info p {
+    margin: 3px 0;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000;
+    background: linear-gradient(135deg, #00ff88, #00ffff);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    transition: all 0.2s;
+    font-family: 'Courier New', monospace;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+    background: linear-gradient(135deg, #00ffff, #00ff88);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Animação de pulse para botão */
+@keyframes pulse {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+    50% { 
+        box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+    }
+}
+
+button {
+    animation: pulse 2s infinite;
+}

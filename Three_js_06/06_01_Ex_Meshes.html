@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+
+		J. Madeira - March 2026
+        Based on an example from Google Gemini
+
+-->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Three.js - Meshes - BufferGeometry</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111111;
+        }
+    </style>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://threejs.org/build/three.module.js",
+            "three/addons/": "https://threejs.org/examples/jsm/"
+          }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
+
+        const sceneElements = {
+            sceneGraph: null,
+            camera: null,
+            renderer: null,
+            control: null
+        };
+
+        const helper = {
+            initEmptyScene: function (elements) {
+                elements.sceneGraph = new THREE.Scene();
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                elements.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 500);
+                elements.camera.position.set(8, 10, 15);
+
+                // --- LIGHTING ---
+                elements.sceneGraph.add(new THREE.AmbientLight(0xffffff, 0.4));
+                const light_1 = new THREE.DirectionalLight(0xffffff, 1.5);
+                light_1.position.set(5, 10, 7);
+                elements.sceneGraph.add(light_1);
+
+                // --- RENDERER ---
+                elements.renderer = new THREE.WebGLRenderer({ antialias: true });
+                elements.renderer.setPixelRatio(window.devicePixelRatio);
+                elements.renderer.setSize(width, height);
+                document.body.appendChild(elements.renderer.domElement);
+
+                elements.control = new OrbitControls(elements.camera, elements.renderer.domElement);
+            },
+
+            render: function (elements) {
+                elements.renderer.render(elements.sceneGraph, elements.camera);
+            }
+        };
+
+        const scene = {
+            load3DObjects: function (sceneGraph) {
+                // PYRAMID
+
+                // 1. Define the Vertices (x, y, z)
+                // v0: Top, v1-v4: Base corners
+                const vertices = new Float32Array([
+                    0, 3, 0,     // index 0: Peak
+                    -2, 0, 2,    // index 1: Front-Left
+                    2, 0, 2,     // index 2: Front-Right
+                    2, 0, -2,    // index 3: Back-Right
+                    -2, 0, -2    // index 4: Back-Left
+                ]);
+
+                // 2. Define the Vertex Indices for each triangular face
+                // Counter-clockwise order for outward-facing normals
+                const indices = [
+                    0, 1, 2,    // Front Face
+                    0, 2, 3,    // Right Face
+                    0, 3, 4,    // Back Face
+                    0, 4, 1,    // Left Face
+                    1, 3, 2,    // Base Tri 1
+                    1, 4, 3     // Base Tri 2
+                ];
+
+                // 3. Create the BufferGeometry
+                const geometry = new THREE.BufferGeometry();
+
+                // Set the 'position' attribute (3 coord values per vertex)
+                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+                // Set the 'index' attribute for face definition
+                geometry.setIndex(indices);
+
+                // 4. Compute Normals (Essential for lighting/shading)
+                geometry.computeVertexNormals();
+
+                // 5. Create Mesh
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00c8ff,
+                    specular: 0xffffff,
+                    shininess: 100,
+                    flatShading: true // Makes the edges "sharper"
+                });
+
+                const pyramid = new THREE.Mesh(geometry, material);
+
+                // 6. Move to the left
+                pyramid.translateX(-4);
+
+
+                sceneGraph.add(pyramid);
+
+                // Add VertexNormalsHelper to visualize the computed vertex normals
+                const normalsHelper = new VertexNormalsHelper(pyramid, 0.7, 0xff00ff);
+                sceneGraph.add(normalsHelper);
+
+                // --- TRIANGULAR PRISM ---
+                // Vertices: 6 (3 for each base)
+                // Base 1: y = 0
+                // Base 2: y = 3
+                const prismVertices = new Float32Array([
+                    // Lower base (y = 0)
+                    0, 0, 0,    // v0
+                    2, 0, 0,    // v1
+                    1, 0, 2,    // v2
+                    // Upper base (y = 3)
+                    0, 3, 0,    // v3
+                    2, 3, 0,    // v4
+                    1, 3, 2     // v5
+                ]);
+
+                // Triangles 
+                const prismIndices  = [
+                    0, 1, 2,    // Base ground
+                    5, 4, 3,    // Base top
+                    0, 2, 3,    // Right Face Ground
+                    5, 3, 2,    // Right Face Top
+                    5, 2, 1,    // Left Face Ground
+                    1, 4, 5,    // Left Face Top
+                    3, 1, 0,    // Back ground
+                    3, 4, 1     // Back top
+                ];
+
+                const prismGeometry = new THREE.BufferGeometry();
+                prismGeometry.setAttribute('position', new THREE.BufferAttribute(prismVertices, 3));
+                prismGeometry.setIndex(prismIndices);
+                prismGeometry.computeVertexNormals();
+
+                const prismMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x00c8ff,
+                    specular: 0xffffff,
+                    shininess: 80,
+                    flatShading: true
+                });
+                const prism = new THREE.Mesh(prismGeometry, prismMaterial);
+                // Mover o prisma mais para o centro
+                prism.position.x = 2;
+                sceneGraph.add(prism);
+
+                // Add VertexNormalsHelper for the prism
+                const prismNormalsHelper = new VertexNormalsHelper(prism, 0.7, 0x00ff00);
+                sceneGraph.add(prismNormalsHelper);
+
+                // Add a helper grid for context
+                const grid = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                sceneGraph.add(grid);
+            }
+        };
+
+        function computeFrame() {
+            helper.render(sceneElements);
+            requestAnimationFrame(computeFrame);
+        }
+
+        function init() {
+            helper.initEmptyScene(sceneElements);
+            scene.load3DObjects(sceneElements.sceneGraph);
+            computeFrame();
+        }
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth, h = window.innerHeight;
+            sceneElements.camera.aspect = w / h;
+            sceneElements.camera.updateProjectionMatrix();
+            sceneElements.renderer.setSize(w, h);
+        });
+
+        init();
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>

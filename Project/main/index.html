@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sapo na Cápsula - Modular</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #2b2b2b; font-family: sans-serif;}
+        canvas { display: block; }
+        #ui {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none; 
+        }
+        button {
+            pointer-events: auto; 
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #ff3366;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+    
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://threejs.org/build/three.module.js",
+            "three/addons/": "https://threejs.org/examples/jsm/"
+          }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="ui">
+        <button id="btnAbrir">ABRIR CÁPSULA!</button>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+
+</body>
+</html>
