@@ -8,9 +8,9 @@ export function criarClawMachine(scene) {
     const group = new THREE.Group();
     scene.add(group);
 
-    // --- MATERIAIS (MELHORADOS) ---
+    // --- MATERIAIS (MELHORADOS E ALTERADOS PARA VERMELHO) ---
     const matEstrutura = new THREE.MeshPhongMaterial({ 
-        color: 0xff1493, // Rosa vibrante
+        color: 0xcc0000, // Vermelho clássico de arcade
         flatShading: true,
         shininess: 100
     }); 
@@ -47,182 +47,210 @@ export function criarClawMachine(scene) {
         shininess: 60
     });
 
-    // --- 1. ESTRUTURA BÁSICA (A CAIXA) ---
-    // Base com mais estilo - AUMENTADA
-    const baseGeo = new THREE.BoxGeometry(20, 6, 20);
+    // --- 1. ESTRUTURA BÁSICA (A CAIXA) - AJUSTADA PARA MAIS MATERIAL E MENOS VIDRO ---
+    
+    // Base - AUMENTADA ATÉ AO NÍVEL DOS CONTROLOS (Altura: 14)
+    const baseGeo = new THREE.BoxGeometry(24, 14, 24);
     const base = new THREE.Mesh(baseGeo, matEstrutura);
-    base.position.y = 3;
+    base.position.y = 7; // Vai de 0 a 14
     base.castShadow = true;
     base.receiveShadow = true;
     group.add(base);
 
-    // Rodas na base (detalhes visuais)
+    // Rodas na base
     const rodaMat = new THREE.MeshPhongMaterial({ color: 0x222222, metalness: 0.8 });
-    const rodaGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 16);
-    const posicoesRodas = [[8.5, 8.5], [-8.5, 8.5], [8.5, -8.5], [-8.5, -8.5]];
+    const rodaGeo = new THREE.CylinderGeometry(1, 1, 0.6, 16);
+    const posicoesRodas = [[10.2, 10.2], [-10.2, 10.2], [10.2, -10.2], [-10.2, -10.2]];
     posicoesRodas.forEach(p => {
         const roda = new THREE.Mesh(rodaGeo, rodaMat);
-        roda.position.set(p[0], 0.8, p[1]);
+        roda.position.set(p[0], 0.3, p[1]); // Ligeiramente abaixo do chão
         roda.rotation.z = Math.PI / 2;
         roda.castShadow = true;
         group.add(roda);
     });
 
-    // Teto - AUMENTADO
-    const tetoGeo = new THREE.BoxGeometry(20, 2, 20);
+    // Teto - Colocado exatamente sobre os postes (y = 41 + 1.2 = 42.2)
+    const tetoGeo = new THREE.BoxGeometry(24, 2.4, 24);
     const teto = new THREE.Mesh(tetoGeo, matEstrutura);
-    teto.position.y = 28;
+    teto.position.y = 42.2; 
     teto.castShadow = true;
     group.add(teto);
 
-    // Postes (4 cantos) - mais grossos e altos
-    const posteGeo = new THREE.BoxGeometry(0.8, 22, 0.8);
-    const posteCornerGeo = new THREE.BoxGeometry(0.8, 22, 0.8);
-    const posicoes = [[9.6, 9.6], [-9.6, 9.6], [9.6, -9.6], [-9.6, -9.6]];
+    // Postes (4 cantos) - Altura reduzida pois a base subiu (De 14 a 41 = Altura 27)
+    const posteGeo = new THREE.BoxGeometry(1, 27, 1);
+    const posicoes = [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]];
     posicoes.forEach(p => {
-        const poste = new THREE.Mesh(posteCornerGeo, matEstrutura);
-        poste.position.set(p[0], 14, p[1]);
+        const poste = new THREE.Mesh(posteGeo, matEstrutura);
+        poste.position.set(p[0], 27.5, p[1]); // Centro Y = 14 + 13.5 = 27.5
         poste.castShadow = true;
         group.add(poste);
     });
 
-    // Vidros (Frente, Trás, Lados) - SEM OVERLAPPING, com espessura aumentada
-    const vidroLadoGeo = new THREE.BoxGeometry(0.2, 20, 19);
-    const vidroFrenteGeo = new THREE.BoxGeometry(19, 20, 0.2);
+    // Vidros (Frente, Trás, Lados) - Altura acompanhando os postes
+    const vidroLadoGeo = new THREE.BoxGeometry(0.1, 27, 22);
+    const vidroFrenteTrasGeo = new THREE.BoxGeometry(22, 27, 0.1);
 
     const vidroEsq = new THREE.Mesh(vidroLadoGeo, matVidro);
-    vidroEsq.position.set(-10.1, 14, 0);
+    vidroEsq.position.set(-11.45, 27.5, 0); 
     group.add(vidroEsq);
 
     const vidroDir = new THREE.Mesh(vidroLadoGeo, matVidro);
-    vidroDir.position.set(10.1, 14, 0);
+    vidroDir.position.set(11.45, 27.5, 0);
     group.add(vidroDir);
 
-    const vidroTras = new THREE.Mesh(vidroFrenteGeo, matVidro);
-    vidroTras.position.set(0, 14, -10.1);
+    const vidroTras = new THREE.Mesh(vidroFrenteTrasGeo, matVidro);
+    vidroTras.position.set(0, 27.5, -11.45);
     group.add(vidroTras);
     
-    // Vidro da frente - altura reduzida para mostrar painel de controle
-    const vidroFrenteGeoCurto = new THREE.BoxGeometry(19, 16, 0.2);
-    const vidroFrente = new THREE.Mesh(vidroFrenteGeoCurto, matVidro);
-    vidroFrente.position.set(0, 16, 10.1);
+    // Vidro da frente - Agora tem a altura normal pois a base subiu
+    const vidroFrente = new THREE.Mesh(vidroFrenteTrasGeo, matVidro);
+    vidroFrente.position.set(0, 27.5, 11.45);
     group.add(vidroFrente);
 
-    // Chao interior - SEM CONFLITO com base
-    const chaoGeo = new THREE.BoxGeometry(19, 0.2, 19);
+    // Chao interior - Subiu para se adaptar à nova base
+    const chaoGeo = new THREE.BoxGeometry(23.8, 0.1, 23.8); 
     const chao = new THREE.Mesh(chaoGeo, matChao);
-    chao.position.y = 6.1;
+    chao.position.y = 14.06; // Logo acima do topo da base (y=14)
     chao.receiveShadow = true;
     group.add(chao);
 
-    // Caixa de saída (Buraco) - maior e melhor posicionada
-    const saidaGeo = new THREE.BoxGeometry(5.5, 6, 5.5);
-    const saida = new THREE.Mesh(saidaGeo, new THREE.MeshPhongMaterial({ color: 0xffa500 }));
-    saida.position.set(-6.5, 3, 6.5);
+    // Caixa de saída (Buraco) - Ajustada à nova altura
+    const saidaGeo = new THREE.BoxGeometry(6.6, 0.2, 6.6); 
+    const matBuraco = new THREE.MeshPhongMaterial({ color: 0x111111 });
+    const saida = new THREE.Mesh(saidaGeo, matBuraco);
+    saida.position.set(-7.8, 14.15, 7.8); 
     group.add(saida);
 
-    // --- 2. PAINEL DE CONTROLE (MELHORADO) ---
-    const painelGeo = new THREE.BoxGeometry(12, 4, 3.5);
+    // Moldura do buraco 
+    const molduraBuraco = new THREE.BoxGeometry(7, 0.3, 7);
+    const matMoldura = new THREE.MeshPhongMaterial({ color: 0xffa500 });
+    const moldura = new THREE.Mesh(molduraBuraco, matMoldura);
+    moldura.position.set(-7.8, 14.08, 7.8);
+    group.add(moldura);
+
+    // --- 2. PAINEL DE CONTROLO ---
+    
+    // Suporte elevado para acompanhar a nova base
+    const suportePainelGeo = new THREE.BoxGeometry(24, 13, 4);
+    const suportePainel = new THREE.Mesh(suportePainelGeo, matEstrutura);
+    suportePainel.position.set(0, 6.5, 12.8); 
+    suportePainel.castShadow = true;
+    suportePainel.receiveShadow = true;
+    group.add(suportePainel);
+
+    // Painel principal - Ajustado à nova altura
+    const painelGroup = new THREE.Group();
+    painelGroup.position.set(0, 13, 13.5); 
+    painelGroup.rotation.x = Math.PI / 6; 
+    group.add(painelGroup);
+
+    const painelGeo = new THREE.BoxGeometry(24, 3, 5.2);
     const painel = new THREE.Mesh(painelGeo, matEstrutura);
-    painel.position.set(0, 10, 10.8);
-    painel.rotation.x = -Math.PI / 6;
     painel.castShadow = true;
-    group.add(painel);
+    painelGroup.add(painel);
 
-    // Joystick melhorado - AUMENTADO
-    const joyBaseGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.4, 8);
+    // Joystick 
+    const joyGroup = new THREE.Group();
+    joyGroup.position.set(-5, 1.5, 0); 
+    painelGroup.add(joyGroup);
+
+    const joyBaseGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.4, 16);
     const joyBase = new THREE.Mesh(joyBaseGeo, new THREE.MeshPhongMaterial({color: 0x444444}));
-    joyBase.position.set(-3.5, 11.5, 11);
-    joyBase.rotation.x = -Math.PI / 6;
+    joyBase.position.set(0, 0.2, 0); 
     joyBase.castShadow = true;
-    group.add(joyBase);
+    joyGroup.add(joyBase);
 
-    const joyHasteGeo = new THREE.CylinderGeometry(0.25, 0.25, 2.2, 8);
+    const joyHasteGroup = new THREE.Group();
+    joyHasteGroup.position.set(0, 0.4, 0); 
+    joyGroup.add(joyHasteGroup);
+
+    const joyHasteGeo = new THREE.CylinderGeometry(0.3, 0.3, 2.8, 8);
     const joyHaste = new THREE.Mesh(joyHasteGeo, matMetal);
-    joyHaste.position.set(-3.5, 12.3, 11.5);
-    joyHaste.rotation.x = -Math.PI / 6;
+    joyHaste.position.set(0, 1.4, 0); 
     joyHaste.castShadow = true;
-    group.add(joyHaste);
+    joyHasteGroup.add(joyHaste);
 
-    const joyBolaGeo = new THREE.SphereGeometry(0.7, 8, 8);
+    const joyBolaGeo = new THREE.SphereGeometry(0.9, 16, 16);
     const joyBola = new THREE.Mesh(joyBolaGeo, new THREE.MeshPhongMaterial({color: 0xff0000, shininess: 100}));
-    joyBola.position.set(-3.5, 13.2, 12);
+    joyBola.position.set(0, 2.8 + 0.4, 0);
     joyBola.castShadow = true;
-    group.add(joyBola);
+    joyHasteGroup.add(joyBola);
 
-    // Botão Grande (com mais detalhe) - AUMENTADO
-    const btnGeo = new THREE.CylinderGeometry(1.3, 1.3, 0.8, 16);
+    // Botão Grande
+    const btnGroup = new THREE.Group();
+    btnGroup.position.set(5, 1.5, 0); 
+    painelGroup.add(btnGroup);
+
+    const btnBaseGeo = new THREE.CylinderGeometry(1.8, 1.8, 0.3, 16);
+    const btnBase = new THREE.Mesh(btnBaseGeo, new THREE.MeshPhongMaterial({color: 0x222222}));
+    btnBase.position.set(0, 0.15, 0);
+    btnGroup.add(btnBase);
+
+    const btnGeo = new THREE.CylinderGeometry(1.5, 1.5, 1.0, 16);
     const btn = new THREE.Mesh(btnGeo, new THREE.MeshPhongMaterial({
         color: 0x00ff00,
         shininess: 100,
         emissive: 0x00aa00
     }));
-    btn.position.set(3.5, 11.5, 11);
-    btn.rotation.x = -Math.PI / 6;
+    btn.position.set(0, 0.15 + 0.5, 0); 
     btn.castShadow = true;
-    group.add(btn);
+    btnGroup.add(btn);
 
-    // Luz do botão (glow effect)
-    const btnLight = new THREE.PointLight(0x00ff00, 1, 6);
-    btnLight.position.set(3.5, 12.5, 11.3);
-    group.add(btnLight);
+    const btnLight = new THREE.PointLight(0x00ff00, 1, 8);
+    btnLight.position.set(5, 4, 0); 
+    painelGroup.add(btnLight);
 
-    // --- 3. MECANISMO DA GARRA (Versão Melhorada) ---
+    // --- 3. MECANISMO DA GARRA ---
     
-    // Grupo Teto
     const garraTetoGroup = new THREE.Group();
-    garraTetoGroup.position.set(0, 28, 0);
+    garraTetoGroup.position.set(0, 42.2, 0);
     group.add(garraTetoGroup);
 
-    // Carrinho do teto (com mais detalhe) - AUMENTADO
-    const carrinhoGeo = new THREE.BoxGeometry(4.4, 1, 4.4);
+    const carrinhoGeo = new THREE.BoxGeometry(5.28, 1.2, 5.28);
     const carrinho = new THREE.Mesh(carrinhoGeo, matMecanismo);
     carrinho.castShadow = true;
     garraTetoGroup.add(carrinho);
 
-    // Grupo Cabo
     const garraCaboGroup = new THREE.Group();
+    // BAIXAR A GARRA POR DEFEITO (Desce 10 unidades)
+    garraCaboGroup.position.y = -10; 
     garraTetoGroup.add(garraCaboGroup);
 
-    // O Cabo (com mais detail) - AUMENTADO
-    const caboGeo = new THREE.CylinderGeometry(0.15, 0.15, 20, 8);
+    const caboGeo = new THREE.CylinderGeometry(0.18, 0.18, 1, 8);
+    caboGeo.translate(0, 0.5, 0); 
     const cabo = new THREE.Mesh(caboGeo, matMetal);
-    cabo.position.y = 10;
+    cabo.position.y = 0; 
+    cabo.scale.y = 10; // Esticar o cabo para compensar a descida inicial
     cabo.castShadow = true; 
     garraCaboGroup.add(cabo);
 
-    // A Cabeça da Garra - AUMENTADA
-    const cabecaGeo = new THREE.CylinderGeometry(1.2, 1.8, 2, 8);
+    const cabecaGeo = new THREE.CylinderGeometry(1.44, 2.16, 2.4, 8);
     const cabeca = new THREE.Mesh(cabecaGeo, matMecanismo);
     cabeca.position.y = 0;
     cabeca.castShadow = true;
     garraCaboGroup.add(cabeca);
 
-    // Dedos da Garra (MELHORADOS - mais bonitos) - AUMENTADOS
     const dedos = [];
-    const numDedos = 4; // 4 dedos em vez de 3
+    const numDedos = 4; 
 
     for (let i = 0; i < numDedos; i++) {
         const dedoPivot = new THREE.Group();
-        dedoPivot.position.y = -0.6;
+        dedoPivot.position.y = -0.72;
         
-        // Distribuir os 4 dedos
         dedoPivot.rotation.y = (Math.PI * 2 / numDedos) * i;
         garraCaboGroup.add(dedoPivot);
 
-        // Parte superior do dedo (mais comprido e elegante)
-        const dedoSupGeo = new THREE.BoxGeometry(0.5, 3.6, 0.7);
-        dedoSupGeo.translate(0, -1.8, 0.4); 
+        const dedoSupGeo = new THREE.BoxGeometry(0.6, 2.4, 0.84);
+        dedoSupGeo.translate(0, -1.2, 0.48); 
         const dedoSup = new THREE.Mesh(dedoSupGeo, matDedoMelhorado);
         dedoSup.rotation.x = Math.PI / 8;
         dedoSup.castShadow = true;
         dedoPivot.add(dedoSup);
 
-        // Ponta afiada (cone)
-        const dedoPontaGeo = new THREE.ConeGeometry(0.44, 1.6, 6);
-        dedoPontaGeo.translate(0, -0.8, 0);
+        const dedoPontaGeo = new THREE.ConeGeometry(0.528, 1.2, 6);
+        dedoPontaGeo.translate(0, -0.6, 0);
         const dedoPonta = new THREE.Mesh(dedoPontaGeo, matDedoMelhorado);
-        dedoPonta.position.set(0, -3.6, 0.7);
+        dedoPonta.position.set(0, -2.4, 0.84);
         dedoPonta.rotation.x = -Math.PI / 3;
         dedoPonta.castShadow = true;
         dedoSup.add(dedoPonta);
@@ -230,11 +258,15 @@ export function criarClawMachine(scene) {
         dedos.push(dedoSup);
     }
 
-    // Retornamos as partes que precisamos de animar
     return {
         caixa: group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
-        dedos: dedos
+        dedos: dedos,
+        cabo: cabo, 
+        controles: {
+            joystick: joyHasteGroup, 
+            botao: btn             
+        }
     };
 }
