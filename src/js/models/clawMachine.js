@@ -128,6 +128,21 @@ export function criarClawMachine(scene) {
     moldura.position.set(-7.8, 14.08, 7.8);
     group.add(moldura);
 
+    // --- DIVISORES DO BURACO (Vidros protetores nas bordas da moldura) ---
+    // Estes vidros sobem retos a partir da moldura, formando um canto
+    
+    // Painel Direito - Vidro vertical alinhado com a borda direita da moldura (x = -4.3)
+    const divisorDirGeo = new THREE.BoxGeometry(0.1, 10, 7.2); // Fino, 10 de altura
+    const divisorDir = new THREE.Mesh(divisorDirGeo, matVidro);
+    divisorDir.position.set(-4.3, 19.1, 7.85); // y = 14.1 (chão) + 5 = 19.1
+    group.add(divisorDir);
+
+    // Painel Traseiro - Vidro vertical alinhado com a borda de trás da moldura (z = 4.3)
+    const divisorTrasGeo = new THREE.BoxGeometry(7.2, 10, 0.1); 
+    const divisorTras = new THREE.Mesh(divisorTrasGeo, matVidro);
+    divisorTras.position.set(-7.85, 19.1, 4.3); 
+    group.add(divisorTras);
+
     // --- 2. PAINEL DE CONTROLO ---
     
     // Suporte elevado para acompanhar a nova base
@@ -258,12 +273,38 @@ export function criarClawMachine(scene) {
         dedos.push(dedoSup);
     }
 
+    // --- 4. PORTA DE SAÍDA DE PRÉMIOS (FRONTAL) ---
+    // Fundo escuro na frente da base (agora ajustado para a verdadeira face frontal)
+    const fundoBuracoGeo = new THREE.PlaneGeometry(6.6, 6.6);
+    const fundoBuraco = new THREE.Mesh(fundoBuracoGeo, new THREE.MeshBasicMaterial({ color: 0x050505 }));
+    fundoBuraco.position.set(-7.8, 4.5, 14.81); // Puxado para a frente (14.8 é o limite do suportePainel)
+    group.add(fundoBuraco);
+
+    // Grupo Pivot para a porta rodar a partir do topo
+    const portaPivot = new THREE.Group();
+    portaPivot.position.set(-7.8, 7.8, 14.82); // Pivot puxado para a frente
+    group.add(portaPivot);
+
+    // O vidro/plástico da porta
+    const portaMat = new THREE.MeshPhongMaterial({
+        color: 0xeeeeee,
+        transparent: true,
+        opacity: 0.5,
+        shininess: 90,
+        side: THREE.DoubleSide
+    });
+    const portaGeo = new THREE.BoxGeometry(6.8, 6.8, 0.1);
+    portaGeo.translate(0, -3.4, 0); 
+    const porta = new THREE.Mesh(portaGeo, portaMat);
+    portaPivot.add(porta);
+
     return {
         caixa: group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
         dedos: dedos,
         cabo: cabo, 
+        porta: portaPivot,
         controles: {
             joystick: joyHasteGroup, 
             botao: btn             

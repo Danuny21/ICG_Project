@@ -45,18 +45,35 @@ scene.add(lightInter);
 const clawMachine = criarClawMachine(scene);
 
 // FÍSICA BÁSICA E CÁPSULAS
-const numCapsulas = 50;
+const numCapsulas = 100;
 const capsulas = [];
-const RAIO_CAPSULA = 1.5; // O tamanho da esfera na capsuleModel é raio=1.5 (0.75x do original)
+const RAIO_CAPSULA = 1.5; 
 
 for (let i = 0; i < numCapsulas; i++) {
     const { grupo } = criarCapsula();
     
-    // Posições aleatórias iniciais dentro da máquina
+    let posX, posZ;
+    let caiuNoBuraco = true;
+
+    // 2. LÓGICA DE SPAWN: Continua a sortear posições até encontrar uma fora do buraco
+    while (caiuNoBuraco) {
+        // Alarguei um pouco a área de spawn (de 16 para 19) para espalhar melhor pela máquina inteira
+        posX = (Math.random() - 0.5) * 19; 
+        posZ = (Math.random() - 0.5) * 19; 
+
+        // Coordenadas aproximadas do buraco: X entre -11.5 e -4.0 | Z entre +4.0 e +11.5
+        if (posX < -4.0 && posX > -11.5 && posZ > 4.0 && posZ < 11.5) {
+            caiuNoBuraco = true; // Ops, ia cair no buraco! Tenta de novo.
+        } else {
+            caiuNoBuraco = false; // Posição segura e válida!
+        }
+    }
+    
+    // Aplica a posição segura que foi calculada
     grupo.position.set(
-        (Math.random() - 0.5) * 16, 
-        22 + Math.random() * 10, 
-        (Math.random() - 0.5) * 16
+        posX, 
+        22 + Math.random() * 12, // Aumentei um pouco a variação de altura para não colidirem todas ao mesmo tempo
+        posZ
     );
     
     scene.add(grupo);
@@ -81,18 +98,91 @@ function updatePhysics() {
 
         c.vel.y += gravity;
         c.mesh.position.add(c.vel);
-        c.vel.multiplyScalar(0.98);
+        
+        // Resistência do ar básica
+        c.vel.x *= 0.98;
+        c.vel.z *= 0.98;
 
-        // Colisões com o chão
-        if (c.mesh.position.y < floorY) {
+        // --- Colisões com o chão e Lógica do Buraco (Chute) ---
+        if (c.mesh.position.y <= floorY) {
             let noBuraco = false;
+            // Verifica se está na área do buraco
             if (c.mesh.position.x < -4.5 && c.mesh.position.x > -11.1 && c.mesh.position.z > 4.5 && c.mesh.position.z < 11.1) {
                 noBuraco = true;
             }
 
             if (!noBuraco) {
+                // Bateu no chão normal de jogo
                 c.mesh.position.y = floorY;
-                c.vel.y *= -0.5;
+                
+                // 1. CORREÇÃO DO TREMOR Y: Se a força da queda for minúscula, não ressalta
+                if (Math.abs(c.vel.y) < 0.3) {
+                    c.vel.y = 0; 
+                } else {
+                    c.vel.y *= -0.5;
+                }
+                
+                // 2. CORREÇÃO DO DESLIZE: Fricção extra quando toca no chão
+                c.vel.x *= 0.85;
+                c.vel.z *= 0.85;
+            } else {
+                // --- ESTÁ A CAIR PELO BURACO (RAMPA INVISÍVEL) ---
+                
+                // Calcula a altura do chão falso (rampa) baseada na posição Z da cápsula
+                // Em Z = 4.5 (parte de trás do buraco) -> Altura = 13 (quase colado ao chão da máquina)
+                // Em Z = 14.8 (junto à porta) -> Altura = 3.5 (fundo do cesto)
+                const inicioZ = 4.5;
+                const fimZ = 14.8;
+                const alturaInicio = 13.0;
+                const alturaFim = 3.5;
+                
+                // Calcula a inclinação
+                const declive = (alturaInicio - alturaFim) / (fimZ - inicioZ);
+                let alturaRampa = alturaInicio - (c.mesh.position.z - inicioZ) * declive;
+                
+                // O chão nunca pode ser mais fundo que o próprio cesto
+                if (alturaRampa < alturaFim) alturaRampa = alturaFim;
+                
+                const contatoY = alturaRampa + c.radius;
+
+                // Se a bola tenta cair abaixo da rampa, ela bate nela
+                if (c.mesh.position.y < contatoY) {
+                    c.mesh.position.y = contatoY; // Fica "apoiada" na rampa inclinada
+                    
+                    // Como a rampa é inclinada, a gravidade converte-se num empurrão para a frente (+Z)
+                    if (c.mesh.position.z < 13.5) {
+                        c.vel.z += 0.25; // Força forte a rolar rampa abaixo!
+                    }
+                    
+                    // Amortece o impacto de queda
+                    if (Math.abs(c.vel.y) < 0.3) {
+                        c.vel.y = 0; 
+                    } else {
+                        c.vel.y *= -0.3;
+                    }
+                    
+                    c.vel.x *= 0.8; // Fricção lateral para não bater tanto nas paredes do buraco
+                }
+
+                // Interação com a Porta Frontal
+                // A porta agora está em Z = 14.8, a bola deteta-a mais à frente
+                if (c.mesh.position.z > 12.0 && c.mesh.position.y < 8) {
+                    
+                    // A porta abre assim que a bola se aproxima
+                    if (clawMachine.porta) {
+                        clawMachine.porta.rotation.x = -Math.PI / 3.5; 
+                    }
+
+                    // Limite físico: pára a bola para ela ficar meio de fora na zona de recolha
+                    // (z=13.8 garante que a bola não cai para o infinito fora da máquina)
+                    if (c.mesh.position.z > 13.8) { 
+                        c.mesh.position.z = 13.8; 
+                        c.vel.z = 0;
+                    } else {
+                        // Ligeiro atrito a passar a porta
+                        c.vel.z *= 0.95;
+                    }
+                }
             }
         }
         
@@ -102,6 +192,38 @@ function updatePhysics() {
         
         if (c.mesh.position.z > limitZ) { c.mesh.position.z = limitZ; c.vel.z *= -0.8; }
         if (c.mesh.position.z < -limitZ) { c.mesh.position.z = -limitZ; c.vel.z *= -0.8; }
+        
+        // --- Colisões com os vidros do buraco ---
+        const vidroX = -4.3; 
+        const vidroZ = 4.3;  
+        const topoVidroY = 24.1; 
+
+        if (c.mesh.position.y < topoVidroY) {
+            if (c.mesh.position.x < vidroX + c.radius && c.mesh.position.z > vidroZ - c.radius) {
+                if (c.mesh.position.x < vidroX && c.mesh.position.z > vidroZ) {
+                    if (c.mesh.position.x > vidroX - c.radius) {
+                        c.mesh.position.x = vidroX - c.radius;
+                        c.vel.x *= -0.5;
+                    }
+                    if (c.mesh.position.z < vidroZ + c.radius) {
+                        c.mesh.position.z = vidroZ + c.radius;
+                        c.vel.z *= -0.5;
+                    }
+                } 
+                else {
+                    const distParaX = (vidroX + c.radius) - c.mesh.position.x;
+                    const distParaZ = c.mesh.position.z - (vidroZ - c.radius);
+                    
+                    if (distParaX < distParaZ) {
+                        c.mesh.position.x = vidroX + c.radius;
+                        c.vel.x *= -0.6;
+                    } else {
+                        c.mesh.position.z = vidroZ - c.radius;
+                        c.vel.z *= -0.6;
+                    }
+                }
+            }
+        }
         
         // Colisões entre esferas
         for (let j = i + 1; j < capsulas.length; j++) {
@@ -130,6 +252,12 @@ function updatePhysics() {
             }
         }
         
+        // 3. ESTADO DE REPOUSO (Sleep): Corta velocidades microscópicas para 0
+        if (Math.abs(c.vel.x) < 0.01) c.vel.x = 0;
+        if (Math.abs(c.vel.y) < 0.01) c.vel.y = 0;
+        if (Math.abs(c.vel.z) < 0.01) c.vel.z = 0;
+        
+        // Agora só rodam se realmente tiverem velocidade
         c.mesh.rotation.x += c.vel.z * 0.2;
         c.mesh.rotation.z -= c.vel.x * 0.2;
     }
@@ -168,7 +296,7 @@ window.addEventListener('keyup', (e) => {
 });
 
 
-// --- 5. FUNÇÕES DE ANIMAÇÃO DA GARRA (CORRIGIDAS) ---
+// --- 5. FUNÇÕES DE ANIMAÇÃO DA GARRA ---
 
 function abrirGarra() {
     clawMachine.dedos.forEach(dedo => {
@@ -305,6 +433,11 @@ function animate(time) {
     clawMachine.cabo.scale.y = dif < 0.1 ? 0.1 : dif;
     
     updatePhysics();
+
+    // Fecha a porta de saída suavemente (efeito de mola/gravidade)
+    if (clawMachine.porta) {
+        clawMachine.porta.rotation.x = THREE.MathUtils.lerp(clawMachine.porta.rotation.x, 0, 0.08);
+    }
 
     controls.update(); 
     renderer.render(scene, camera);
