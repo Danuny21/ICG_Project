@@ -304,7 +304,7 @@ export function criarClawMachine(scene) {
         mecanismoCabo: garraCaboGroup,
         dedos: dedos,
         cabo: cabo, 
-        porta: portaPivot,
+        porta: porta, // Exportar a porta
         controles: {
             joystick: joyHasteGroup, 
             botao: btn             
