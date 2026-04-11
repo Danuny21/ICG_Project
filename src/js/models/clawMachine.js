@@ -25,20 +25,15 @@ export function criarClawMachine(scene) {
     
     const matChao = new THREE.MeshPhongMaterial({ 
         color: 0x1a1a1a, 
-        flatShading: true,
-        metalness: 0.3
+        flatShading: true
     });
     
     const matMetal = new THREE.MeshPhongMaterial({ 
-        color: 0xcccccc, 
-        metalness: 0.9, 
-        roughness: 0.1
+        color: 0xcccccc
     });
     
     const matMecanismo = new THREE.MeshPhongMaterial({ 
-        color: 0x333333,
-        metalness: 0.6,
-        roughness: 0.3
+        color: 0x333333
     });
     
     const matDedoMelhorado = new THREE.MeshPhongMaterial({ 

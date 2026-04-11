@@ -3,6 +3,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { criarClawMachine } from "./models/clawMachine.js";
 import { criarCapsula } from "./models/capsuleModel.js";
 import { updatePhysics, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
+import { CapsuleOpener } from "./systems/CapsuleOpener.js";
+import { carregarPremio } from "./systems/PrizeLoader.js";
+import { criarConfetis } from "./models/confetti.js";
 
 // Configuração da cena
 const scene = new THREE.Scene();
@@ -10,6 +13,7 @@ scene.background = new THREE.Color(0x1a1a1a);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 30, 60);
+scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -46,8 +50,7 @@ const numCapsulas = 100;
 const capsulas = [];
 
 for (let i = 0; i < numCapsulas; i++) {
-    const { grupo } = criarCapsula();
-
+    const { grupo, dobradica } = criarCapsula();
     let posX, posZ;
     let caiuNoBuraco = true;
 
@@ -67,9 +70,12 @@ for (let i = 0; i < numCapsulas; i++) {
     scene.add(grupo);
     capsulas.push({
         mesh: grupo,
+        dobradica: dobradica,
         vel: new THREE.Vector3(0, 0, 0),
         radius: RAIO_CAPSULA,
-        apanhada: false
+        apanhada: false,
+        saiu: false, // Controla se já saiu da máquina
+        aberta: false // Controla se já foi aberta
     });
 }
 
@@ -84,6 +90,7 @@ let capsulaApanhada = null;
 
 window.addEventListener('keydown', (e) => {
     if (estadoJogo !== "LIVRE") return;
+    if (capsuleOpener.estado !== "INATIVA") return;
 
     if (e.key === 'ArrowUp')    teclas.up    = true;
     if (e.key === 'ArrowDown')  teclas.down  = true;
@@ -119,6 +126,11 @@ function fecharGarra() {
     });
 }
 
+const confetisObj = criarConfetis(scene);
+
+// Instância global do CapsuleOpener
+const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
+let capsuleOpenerActive = false;
 
 // Ciclo de animação principal
 function animate(time) {
@@ -233,6 +245,17 @@ function animate(time) {
     clawMachine.cabo.scale.y = dif < 0.1 ? 0.1 : dif;
 
     updatePhysics(capsulas, clawMachine);
+    // Marcar cápsulas que já saíram da máquina
+    for (let c of capsulas) {
+        if (!c.saiu && c.mesh.position.z >= 11.5) {
+            c.saiu = true;
+        }
+    }
+    // Atualiza animação do CapsuleOpener
+    capsuleOpener.update(time);
+    
+    // Atualiza movimento dos confetis
+    confetisObj.atualizarMovimento();
 
     controls.update();
     renderer.render(scene, camera);
@@ -244,4 +267,52 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Raycaster para clique nas cápsulas exteriores
+const raycaster = new THREE.Raycaster();
+const pontoClique = new THREE.Vector2();
+
+window.addEventListener("click", (e) => {
+    // Só responde se não estiver já a animar uma cápsula
+    if (capsuleOpener.estado !== "INATIVA" && capsuleOpener.estado !== "CONTROLO_LIVRE") return;
+
+    pontoClique.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(pontoClique, camera);
+
+    // Recolhe todos os meshes das cápsulas que já saíram e não foram abertas
+    const capsulasDisponiveis = capsulas.filter(c => c.saiu && !c.aberta);
+    const meshes = capsulasDisponiveis.map(c => c.mesh).flat();
+    
+    // three.js precisa de uma lista de Object3D; como cada `c.mesh` é um Group,
+    // usamos recursiveFlag=true para testar filhos também
+    const hits = raycaster.intersectObjects(meshes, true);
+
+    if (hits.length === 0) return;
+
+    // Descobre a qual cápsula pertence o mesh clicado
+    const objetoHit = hits[0].object;
+    const capsulaFis = capsulasDisponiveis.find(c => {
+        let found = false;
+        c.mesh.traverse(child => { if (child === objetoHit) found = true; });
+        return found;
+    });
+
+    if (!capsulaFis || capsulaFis.apanhada) return;
+    
+    capsulaFis.aberta = true;
+    capsulaFis.vel.set(0, 0, 0);
+
+    const capsulaObj = {
+        grupo:     capsulaFis.mesh,
+        dobradica: capsulaFis.dobradica
+    };
+
+    // Carrega o prémio e ativa o opener (diretamente na scene)
+    carregarPremio('frog.glb', scene, (modelo) => {
+        capsuleOpener.ativar(capsulaObj, capsulaFis, modelo, 0.05);
+        capsuleOpenerActive = true;
+    });
 });
