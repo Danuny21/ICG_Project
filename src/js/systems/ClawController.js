@@ -1,9 +1,6 @@
 import * as THREE from "three";
 
-/**
- * Controlador completo da Claw Machine
- * Gestiona movimento, colisões, apanha de itens e pontuação
- */
+// Controlador da Claw Machine
 export class ClawController {
     constructor(clawMachine, brinquedos, scene, confetis) {
         this.clawMachine = clawMachine;
@@ -55,7 +52,7 @@ export class ClawController {
     }
 
     iniciarJogo() {
-        console.log('🎮 JOGO INICIADO! Use as setas para mover, ENTER para apanhar!');
+        console.log('Use as setas para mover, ENTER para apanhar!');
         this.estado = 'JOGANDO';
         this.tempoJogo = 0;
         this.brinquedosApanhados = 0;
@@ -159,7 +156,7 @@ export class ClawController {
                 clearInterval(animacao);
                 this.scene.remove(brinquedo);
                 
-                // Disparar confetis quando apanha algo
+                // Disparar confetis
                 if (this.confetis) {
                     this.confetis.disparar();
                 }

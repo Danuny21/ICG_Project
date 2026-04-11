@@ -48,7 +48,7 @@ export class CapsuleOpener {
         }
 
         if (this.estado === "EXPULSAR") {
-            // Animando a cápsula a partir-se
+            // Animação da cápsula a abrir
             parteDebaixo.position.y -= 0.2;
             parteDebaixo.position.z += 0.1;
             parteDecima.position.y -= 0.2;
@@ -78,13 +78,13 @@ export class CapsuleOpener {
 
         if (this.estado === "CONTROLO_LIVRE") {
             if (this.modelo) {
-                // 1. Rotação automática (comum a todos os modelos)
+                // Rotação automática
                 this.modelo.rotation.y += 0.005;
 
-                // 2. FLUTUAÇÃO MODULAR
+                // Flutuação
                 this.modelo.position.y = 1.5 + (Math.sin(time * 0.005) * 1);
 
-                // 3. Focar a câmara no modelo (suavemente)
+                // Focar a câmara
                 this.controls.target.lerp(this.modelo.position, 0.1);
             }
         }

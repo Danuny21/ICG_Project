@@ -8,15 +8,15 @@ export function criarClawMachine(scene) {
     const group = new THREE.Group();
     scene.add(group);
 
-    // --- MATERIAIS (MELHORADOS E ALTERADOS PARA VERMELHO) ---
+    // Materiais
     const matEstrutura = new THREE.MeshPhongMaterial({ 
-        color: 0xcc0000, // Vermelho clássico de arcade
+        color: 0xcc0000, // Vermelho
         flatShading: true,
         shininess: 100
     }); 
     
     const matVidro = new THREE.MeshPhongMaterial({ 
-        color: 0x87ceeb, // Azul céu
+        color: 0x87ceeb, // Azul
         transparent: true, 
         opacity: 0.25, 
         depthWrite: false,
@@ -47,46 +47,34 @@ export function criarClawMachine(scene) {
         shininess: 60
     });
 
-    // --- 1. ESTRUTURA BÁSICA (A CAIXA) - AJUSTADA PARA MAIS MATERIAL E MENOS VIDRO ---
+    // Estrutura básica
     
-    // Base - AUMENTADA ATÉ AO NÍVEL DOS CONTROLOS (Altura: 14)
+    // Base
     const baseGeo = new THREE.BoxGeometry(24, 14, 24);
     const base = new THREE.Mesh(baseGeo, matEstrutura);
-    base.position.y = 7; // Vai de 0 a 14
+    base.position.y = 7;
     base.castShadow = true;
     base.receiveShadow = true;
     group.add(base);
 
-    // Rodas na base
-    const rodaMat = new THREE.MeshPhongMaterial({ color: 0x222222, metalness: 0.8 });
-    const rodaGeo = new THREE.CylinderGeometry(1, 1, 0.6, 16);
-    const posicoesRodas = [[10.2, 10.2], [-10.2, 10.2], [10.2, -10.2], [-10.2, -10.2]];
-    posicoesRodas.forEach(p => {
-        const roda = new THREE.Mesh(rodaGeo, rodaMat);
-        roda.position.set(p[0], 0.3, p[1]); // Ligeiramente abaixo do chão
-        roda.rotation.z = Math.PI / 2;
-        roda.castShadow = true;
-        group.add(roda);
-    });
-
-    // Teto - Colocado exatamente sobre os postes (y = 41 + 1.2 = 42.2)
+    // Teto
     const tetoGeo = new THREE.BoxGeometry(24, 2.4, 24);
     const teto = new THREE.Mesh(tetoGeo, matEstrutura);
     teto.position.y = 42.2; 
     teto.castShadow = true;
     group.add(teto);
 
-    // Postes (4 cantos) - Altura reduzida pois a base subiu (De 14 a 41 = Altura 27)
+    // Postes
     const posteGeo = new THREE.BoxGeometry(1, 27, 1);
     const posicoes = [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]];
     posicoes.forEach(p => {
         const poste = new THREE.Mesh(posteGeo, matEstrutura);
-        poste.position.set(p[0], 27.5, p[1]); // Centro Y = 14 + 13.5 = 27.5
+        poste.position.set(p[0], 27.5, p[1]);
         poste.castShadow = true;
         group.add(poste);
     });
 
-    // Vidros (Frente, Trás, Lados) - Altura acompanhando os postes
+    // Vidros
     const vidroLadoGeo = new THREE.BoxGeometry(0.1, 27, 22);
     const vidroFrenteTrasGeo = new THREE.BoxGeometry(22, 27, 0.1);
 
@@ -102,50 +90,49 @@ export function criarClawMachine(scene) {
     vidroTras.position.set(0, 27.5, -11.45);
     group.add(vidroTras);
     
-    // Vidro da frente - Agora tem a altura normal pois a base subiu
+    // Vidro da frente
     const vidroFrente = new THREE.Mesh(vidroFrenteTrasGeo, matVidro);
     vidroFrente.position.set(0, 27.5, 11.45);
     group.add(vidroFrente);
 
-    // Chao interior - Subiu para se adaptar à nova base
+    // Chao interior
     const chaoGeo = new THREE.BoxGeometry(23.8, 0.1, 23.8); 
     const chao = new THREE.Mesh(chaoGeo, matChao);
-    chao.position.y = 14.06; // Logo acima do topo da base (y=14)
+    chao.position.y = 14.06;
     chao.receiveShadow = true;
     group.add(chao);
 
-    // Caixa de saída (Buraco) - Ajustada à nova altura
+    // Caixa de saída
     const saidaGeo = new THREE.BoxGeometry(6.6, 0.2, 6.6); 
     const matBuraco = new THREE.MeshPhongMaterial({ color: 0x111111 });
     const saida = new THREE.Mesh(saidaGeo, matBuraco);
     saida.position.set(-7.8, 14.15, 7.8); 
     group.add(saida);
 
-    // Moldura do buraco 
+    // Moldura do buraco
     const molduraBuraco = new THREE.BoxGeometry(7, 0.3, 7);
     const matMoldura = new THREE.MeshPhongMaterial({ color: 0xffa500 });
     const moldura = new THREE.Mesh(molduraBuraco, matMoldura);
     moldura.position.set(-7.8, 14.08, 7.8);
     group.add(moldura);
 
-    // --- DIVISORES DO BURACO (Vidros protetores nas bordas da moldura) ---
-    // Estes vidros sobem retos a partir da moldura, formando um canto
+    // Divisores do buraco
     
-    // Painel Direito - Vidro vertical alinhado com a borda direita da moldura (x = -4.3)
+    // Painel direito
     const divisorDirGeo = new THREE.BoxGeometry(0.1, 10, 7.2); // Fino, 10 de altura
     const divisorDir = new THREE.Mesh(divisorDirGeo, matVidro);
-    divisorDir.position.set(-4.3, 19.1, 7.85); // y = 14.1 (chão) + 5 = 19.1
+    divisorDir.position.set(-4.3, 19.1, 7.85);
     group.add(divisorDir);
 
-    // Painel Traseiro - Vidro vertical alinhado com a borda de trás da moldura (z = 4.3)
+    // Painel traseiro
     const divisorTrasGeo = new THREE.BoxGeometry(7.2, 10, 0.1); 
     const divisorTras = new THREE.Mesh(divisorTrasGeo, matVidro);
     divisorTras.position.set(-7.85, 19.1, 4.3); 
     group.add(divisorTras);
 
-    // --- 2. PAINEL DE CONTROLO ---
+    // Painel de controlo
     
-    // Suporte elevado para acompanhar a nova base
+    // Suporte do painel
     const suportePainelGeo = new THREE.BoxGeometry(24, 13, 4);
     const suportePainel = new THREE.Mesh(suportePainelGeo, matEstrutura);
     suportePainel.position.set(0, 6.5, 12.8); 
@@ -153,7 +140,7 @@ export function criarClawMachine(scene) {
     suportePainel.receiveShadow = true;
     group.add(suportePainel);
 
-    // Painel principal - Ajustado à nova altura
+    // Painel principal
     const painelGroup = new THREE.Group();
     painelGroup.position.set(0, 13, 13.5); 
     painelGroup.rotation.x = Math.PI / 6; 
@@ -164,7 +151,7 @@ export function criarClawMachine(scene) {
     painel.castShadow = true;
     painelGroup.add(painel);
 
-    // Joystick 
+    // Joystick
     const joyGroup = new THREE.Group();
     joyGroup.position.set(-5, 1.5, 0); 
     painelGroup.add(joyGroup);
@@ -191,7 +178,7 @@ export function criarClawMachine(scene) {
     joyBola.castShadow = true;
     joyHasteGroup.add(joyBola);
 
-    // Botão Grande
+    // Botão
     const btnGroup = new THREE.Group();
     btnGroup.position.set(5, 1.5, 0); 
     painelGroup.add(btnGroup);
@@ -215,7 +202,7 @@ export function criarClawMachine(scene) {
     btnLight.position.set(5, 4, 0); 
     painelGroup.add(btnLight);
 
-    // --- 3. MECANISMO DA GARRA ---
+    // Mecanismo da garra
     
     const garraTetoGroup = new THREE.Group();
     garraTetoGroup.position.set(0, 42.2, 0);
@@ -227,7 +214,7 @@ export function criarClawMachine(scene) {
     garraTetoGroup.add(carrinho);
 
     const garraCaboGroup = new THREE.Group();
-    // BAIXAR A GARRA POR DEFEITO (Desce 4 unidades para ficar mais acima)
+    // Posição inicial da garra
     garraCaboGroup.position.y = -4; 
     garraTetoGroup.add(garraCaboGroup);
 
@@ -235,7 +222,7 @@ export function criarClawMachine(scene) {
     caboGeo.translate(0, 0.5, 0); 
     const cabo = new THREE.Mesh(caboGeo, matMetal);
     cabo.position.y = 0; 
-    cabo.scale.y = 4; // Esticar o cabo para compensar a descida inicial
+    cabo.scale.y = 4;
     cabo.castShadow = true; 
     garraCaboGroup.add(cabo);
 
@@ -273,19 +260,19 @@ export function criarClawMachine(scene) {
         dedos.push(dedoSup);
     }
 
-    // --- 4. PORTA DE SAÍDA DE PRÉMIOS (FRONTAL) ---
-    // Fundo escuro na frente da base (agora ajustado para a verdadeira face frontal)
+    // Porta de saída de prémios (frontal)
+    // Fundo escuro na frente da base
     const fundoBuracoGeo = new THREE.PlaneGeometry(6.6, 6.6);
     const fundoBuraco = new THREE.Mesh(fundoBuracoGeo, new THREE.MeshBasicMaterial({ color: 0x050505 }));
-    fundoBuraco.position.set(-7.8, 4.5, 14.81); // Puxado para a frente (14.8 é o limite do suportePainel)
+    fundoBuraco.position.set(-7.8, 4.5, 14.81);
     group.add(fundoBuraco);
 
-    // Grupo Pivot para a porta rodar a partir do topo
+    // Grupo pivot da porta
     const portaPivot = new THREE.Group();
-    portaPivot.position.set(-7.8, 7.8, 14.82); // Pivot puxado para a frente
+    portaPivot.position.set(-7.8, 7.8, 14.82);
     group.add(portaPivot);
 
-    // O vidro/plástico da porta
+    // Porta
     const portaMat = new THREE.MeshPhongMaterial({
         color: 0xeeeeee,
         transparent: true,

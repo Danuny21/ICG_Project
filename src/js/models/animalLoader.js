@@ -1,15 +1,10 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-/**
- * Carrega um modelo de animal (GLB) desde assets/models
- * @param {THREE.Group} parentGroup - Grupo pai para adicionar o animal
- * @param {Function} onLoadCallback - Função chamada quando o modelo estiver carregado
- * @param {string} modelPath - Caminho relativo ao models folder (ex: 'animal-dog.glb')
- */
+// Carrega um modelo de animal (GLB) desde assets/models
 export function carregarAnimal(parentGroup, onLoadCallback, modelPath = 'animal-dog.glb') {
     const loader = new GLTFLoader();
 
-    // Usando caminho relativo ao assets/models
+    // Caminho relativo ao assets/models
     loader.load(`./assets/models/${modelPath}`, function (gltf) {
         const animal = gltf.scene; 
         
@@ -25,7 +20,7 @@ export function carregarAnimal(parentGroup, onLoadCallback, modelPath = 'animal-
 
         parentGroup.add(animal);
 
-        // Avisa quando terminou de carregar
+        // Callback ao terminar de carregar
         if (onLoadCallback) {
             onLoadCallback(animal);
         }

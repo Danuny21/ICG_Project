@@ -21,7 +21,7 @@ export function criarConfetis(scene) {
         });
     }
 
-    // Retornamos funções úteis para o main.js controlar os confetis
+    // Funções para controlar os confetis
     return {
         disparar: function() {
             confettis.forEach(c => {

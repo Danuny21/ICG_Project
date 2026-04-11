@@ -14,7 +14,6 @@ export function criarCapsula() {
     bottomHalf.receiveShadow = true;
     capsuleGroup.add(bottomHalf);
 
-    // Dobradiça
     const hinge = new THREE.Group(); 
     hinge.position.set(0, 0, -1.5); 
     capsuleGroup.add(hinge);
@@ -25,13 +24,12 @@ export function criarCapsula() {
     topHalf.receiveShadow = true;
     hinge.add(topHalf); 
 
-    // Aro de detalhe
     const ringGeo = new THREE.TorusGeometry(1.54, 0.075, 6, 12);
     const ring = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({color: 0xffffff, flatShading: true}));
     ring.rotation.x = Math.PI / 2;
     bottomHalf.add(ring);
 
-    // Exportamos o grupo (para pôr na cena) e a dobradiça (para animar)
+    // Exporta o grupo e a dobradiça
     return {
         grupo: capsuleGroup,
         dobradica: hinge
