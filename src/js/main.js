@@ -2,12 +2,12 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { criarClawMachine } from "./models/clawMachine.js";
 import { criarCapsula } from "./models/capsuleModel.js";
-import { updatePhysics, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
+import { PhysicsWorld, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
 import { carregarPremio } from "./systems/PrizeLoader.js";
 import { criarConfetis } from "./models/confetti.js";
 
-// Configuração da cena
+// ── Cena ──────────────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a1a);
 
@@ -25,177 +25,231 @@ controls.enableDamping = true;
 controls.target.set(0, 18, 0);
 controls.update();
 
-// Iluminação
+// ── Iluminação ────────────────────────────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(36, 72, 24);
 dirLight.castShadow = true;
-dirLight.shadow.camera.left = -24;
-dirLight.shadow.camera.right = 24;
-dirLight.shadow.camera.top = 40;
+dirLight.shadow.camera.left  = -24;
+dirLight.shadow.camera.right =  24;
+dirLight.shadow.camera.top   =  40;
 dirLight.shadow.camera.bottom = -20;
 scene.add(dirLight);
 
-const lightInter = new THREE.PointLight(0xffffff, 1.5, 36);
-lightInter.position.set(0, 18, 0);
-scene.add(lightInter);
+const pointLight = new THREE.PointLight(0xffffff, 1.5, 36);
+pointLight.position.set(0, 18, 0);
+scene.add(pointLight);
 
-
-// Carregar o modelo
+// ── Modelo da máquina ─────────────────────────────────────────────────────────
 const clawMachine = criarClawMachine(scene);
 
-// Física básica e cápsulas
+// ── Cápsulas ──────────────────────────────────────────────────────────────────
 const numCapsulas = 100;
-const capsulas = [];
+const capsulas    = [];
 
 for (let i = 0; i < numCapsulas; i++) {
     const { grupo, dobradica } = criarCapsula();
-    let posX, posZ;
-    let caiuNoBuraco = true;
 
+    let posX, posZ, caiuNoBuraco = true;
     while (caiuNoBuraco) {
         posX = (Math.random() - 0.5) * 8;
         posZ = (Math.random() - 0.5) * 8;
-
-        if (posX < -4.0 && posX > -11.5 && posZ > 4.0 && posZ < 11.5) {
-            caiuNoBuraco = true;
-        } else {
-            caiuNoBuraco = false;
-        }
+        caiuNoBuraco = posX < -4.0 && posX > -11.5 && posZ > 4.0 && posZ < 11.5;
     }
 
     grupo.position.set(posX, 22 + Math.random() * 12, posZ);
-
     scene.add(grupo);
+
     capsulas.push({
-        mesh: grupo,
+        mesh:     grupo,
         dobradica: dobradica,
-        vel: new THREE.Vector3(0, 0, 0),
-        radius: RAIO_CAPSULA,
+        vel:      new THREE.Vector3(),   // mantido para compatibilidade (não usado pelo Rapier)
+        radius:   RAIO_CAPSULA,
         apanhada: false,
-        saiu: false, // Controla se já saiu da máquina
-        aberta: false // Controla se já foi aberta
+        saiu:     false,
+        aberta:   false
     });
 }
 
-// Lógica de movimento e teclado
-const teclas = { up: false, down: false, left: false, right: false, action: false };
+// ── Teclado ───────────────────────────────────────────────────────────────────
+const teclas      = { up: false, down: false, left: false, right: false, action: false };
 const velMovimento = 0.15;
-const limites = { x: 9, z: 9 };
+const limites      = { x: 9, z: 9 };
 
-let estadoJogo    = "LIVRE";
-let timeAnim      = 0;
-let capsulaApanhada = null;
+let estadoJogo       = "LIVRE";
+let timeAnim         = 0;
+let capsulaApanhada  = null;   // única cápsula agarrada pela garra (ou null)
 
-window.addEventListener('keydown', (e) => {
+// Os listeners de teclado são adicionados após a instância do capsuleOpener
+// (declarado mais abaixo) ser criada.
+
+// ── Funções de animação da garra ──────────────────────────────────────────────
+// Estado de repouso (default): igual ao aberto atual
+function estadoRepousoGarra() {
+    clawMachine.dedos.forEach(d => {
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 3.2, 0.1);
+    });
+}
+// Garra aberta: menos aberta que antes
+function abrirGarra() {
+    clawMachine.dedos.forEach(d => {
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 2.2, 0.1);
+    });
+}
+function fecharGarra() {
+    // Fechar: igual ao abrir mas menos rotação (menos aberto)
+    clawMachine.dedos.forEach(d => {
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 7, 0.1);
+    });
+}
+
+// ── Helpers da garra ──────────────────────────────────────────────────────────
+
+/**
+ * Centro da garra (pivot dos dedos) em coordenadas mundo.
+ * garraTetoGroup está em (mecanismoTeto.x, 42.2, mecanismoTeto.z) mundo.
+ * garraCaboGroup.position.y é relativo a garraTetoGroup.
+ * dedoPivot.position.y = -0.72 relativo a garraCaboGroup.
+ */
+function getClawCenterWorld() {
+    return new THREE.Vector3(
+        clawMachine.mecanismoTeto.position.x,
+        42.2 + clawMachine.mecanismoCabo.position.y - 0.72,
+        clawMachine.mecanismoTeto.position.z
+    );
+}
+
+// ── Confetis e CapsuleOpener ──────────────────────────────────────────────────
+const confetisObj   = criarConfetis(scene);
+const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
+
+// ── Listeners de teclado ──────────────────────────────────────────────────────
+window.addEventListener("keydown", (e) => {
     if (estadoJogo !== "LIVRE") return;
     if (capsuleOpener.estado !== "INATIVA") return;
 
-    if (e.key === 'ArrowUp')    teclas.up    = true;
-    if (e.key === 'ArrowDown')  teclas.down  = true;
-    if (e.key === 'ArrowLeft')  teclas.left  = true;
-    if (e.key === 'ArrowRight') teclas.right = true;
+    if (e.key === "ArrowUp")    teclas.up    = true;
+    if (e.key === "ArrowDown")  teclas.down  = true;
+    if (e.key === "ArrowLeft")  teclas.left  = true;
+    if (e.key === "ArrowRight") teclas.right = true;
 
-    if (e.key === ' ' && estadoJogo === "LIVRE") {
+    if (e.key === " ") {
         teclas.action = true;
         estadoJogo = "DESCENDO";
-        setTimeout(() => teclas.action = false, 300);
+        setTimeout(() => (teclas.action = false), 300);
     }
 });
-
-window.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp')    teclas.up    = false;
-    if (e.key === 'ArrowDown')  teclas.down  = false;
-    if (e.key === 'ArrowLeft')  teclas.left  = false;
-    if (e.key === 'ArrowRight') teclas.right = false;
+window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowUp")    teclas.up    = false;
+    if (e.key === "ArrowDown")  teclas.down  = false;
+    if (e.key === "ArrowLeft")  teclas.left  = false;
+    if (e.key === "ArrowRight") teclas.right = false;
 });
 
+// ── Raycaster (clique nas cápsulas exteriores) ────────────────────────────────
+const raycaster   = new THREE.Raycaster();
+const pontoClique = new THREE.Vector2();
 
-// Funções de animação da garra
+window.addEventListener("click", (e) => {
+    if (capsuleOpener.estado !== "INATIVA") return;
 
-function abrirGarra() {
-    clawMachine.dedos.forEach(dedo => {
-        dedo.rotation.x = THREE.MathUtils.lerp(dedo.rotation.x, -Math.PI / 6, 0.1);
+    pontoClique.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pontoClique, camera);
+
+    const disponiveis = capsulas.filter(c => c.saiu && !c.aberta && !c.apanhada);
+    const hits = raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
+    if (!hits.length) return;
+
+    const hit = hits[0].object;
+    const capsulaFis = disponiveis.find(c => {
+        let found = false;
+        c.mesh.traverse(child => { if (child === hit) found = true; });
+        return found;
     });
-}
+    if (!capsulaFis) return;
 
-function fecharGarra() {
-    clawMachine.dedos.forEach(dedo => {
-        dedo.rotation.x = THREE.MathUtils.lerp(dedo.rotation.x, Math.PI / 3, 0.1);
+    capsulaFis.aberta = true;
+
+    carregarPremio("frog.glb", scene, (modelo) => {
+        capsuleOpener.ativar(
+            { grupo: capsulaFis.mesh, dobradica: capsulaFis.dobradica },
+            capsulaFis,
+            modelo,
+            0.05
+        );
     });
-}
+});
 
-const confetisObj = criarConfetis(scene);
-
-// Instância global do CapsuleOpener
-const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
-let capsuleOpenerActive = false;
-
-// Ciclo de animação principal
+// ── Loop principal ────────────────────────────────────────────────────────────
 function animate(time) {
     requestAnimationFrame(animate);
 
-    // 6.1 MOVIMENTO LIVRE
+    // Movimento livre (setas)
     if (estadoJogo === "LIVRE") {
-        fecharGarra();
-
+        estadoRepousoGarra();
         if (teclas.up    && clawMachine.mecanismoTeto.position.z > -limites.z) clawMachine.mecanismoTeto.position.z -= velMovimento;
         if (teclas.down  && clawMachine.mecanismoTeto.position.z <  limites.z) clawMachine.mecanismoTeto.position.z += velMovimento;
         if (teclas.left  && clawMachine.mecanismoTeto.position.x > -limites.x) clawMachine.mecanismoTeto.position.x -= velMovimento;
         if (teclas.right && clawMachine.mecanismoTeto.position.x <  limites.x) clawMachine.mecanismoTeto.position.x += velMovimento;
     }
 
-    // Animação do joystick e botão
-    let targetRotX = 0, targetRotZ = 0;
-    if (teclas.up)    targetRotX = -Math.PI / 8;
-    if (teclas.down)  targetRotX =  Math.PI / 8;
-    if (teclas.left)  targetRotZ =  Math.PI / 8;
-    if (teclas.right) targetRotZ = -Math.PI / 8;
+    // Animação joystick / botão
+    clawMachine.controles.joystick.rotation.x = THREE.MathUtils.lerp(
+        clawMachine.controles.joystick.rotation.x,
+        teclas.up ? -Math.PI / 8 : teclas.down ? Math.PI / 8 : 0, 0.15);
+    clawMachine.controles.joystick.rotation.z = THREE.MathUtils.lerp(
+        clawMachine.controles.joystick.rotation.z,
+        teclas.left ? Math.PI / 8 : teclas.right ? -Math.PI / 8 : 0, 0.15);
+    clawMachine.controles.botao.position.y = THREE.MathUtils.lerp(
+        clawMachine.controles.botao.position.y, teclas.action ? 0.45 : 0.65, 0.3);
 
-    clawMachine.controles.joystick.rotation.x = THREE.MathUtils.lerp(clawMachine.controles.joystick.rotation.x, targetRotX, 0.15);
-    clawMachine.controles.joystick.rotation.z = THREE.MathUtils.lerp(clawMachine.controles.joystick.rotation.z, targetRotZ, 0.15);
-
-    const targetBtnY = teclas.action ? 0.45 : 0.65;
-    clawMachine.controles.botao.position.y = THREE.MathUtils.lerp(clawMachine.controles.botao.position.y, targetBtnY, 0.3);
-
-    // 6.2 LÓGICA DA JOGADA AUTOMÁTICA
-
+    // ── DESCENDO ──────────────────────────────────────────────────────────────
+    // A garra desce com os dedos abertos.
+    // A física de colisão real é tratada pelo Rapier através dos finger bodies
+    // cinemáticos que são actualizados em physicsWorld.update() → _syncFingerBodies.
+    // Os dedos empurram fisicamente as cápsulas ao descer.
     if (estadoJogo === "DESCENDO") {
         abrirGarra();
         if (clawMachine.mecanismoCabo.position.y > -24.5) {
             clawMachine.mecanismoCabo.position.y -= 0.4;
         } else {
             estadoJogo = "FECHANDO";
-            timeAnim = 0;
+            timeAnim   = 0;
         }
     }
 
+    // ── FECHANDO ──────────────────────────────────────────────────────────────
+    // Os dedos fecham-se fisicamente (animação rotation.x) e os finger bodies
+    // do Rapier seguem a mesma rotação, empurrando as cápsulas para o centro.
+    //
+    // Ao frame 55 (~85% fechados), verificamos quais as cápsulas que ficaram
+    // dentro do raio de captura — são as que os dedos conseguiram envolver.
+    // Nenhum imã: se a cápsula escapou antes dos dedos fecharem, não é apanhada.
     if (estadoJogo === "FECHANDO") {
-        fecharGarra();
+        fecharGarra(); // garantir animação contínua
         timeAnim++;
 
-        if (timeAnim === 30) {
-            const garraPos = new THREE.Vector3(
-                clawMachine.mecanismoTeto.position.x,
-                42.2 + clawMachine.mecanismoCabo.position.y - 2.5,
-                clawMachine.mecanismoTeto.position.z
-            );
-            for (let c of capsulas) {
-                if (!c.apanhada && c.mesh.position.distanceTo(garraPos) < 4.5) {
-                    capsulaApanhada = c;
+        if (timeAnim === 55) {
+            const centro    = getClawCenterWorld();
+            const raioGrab  = 2.8; // raio de captura após fechar os dedos
+
+            for (const c of capsulas) {
+                if (c.apanhada || c.saiu) continue;
+                if (c.mesh.position.distanceTo(centro) < raioGrab) {
                     c.apanhada = true;
-                    console.log("Cápsula apanhada!");
-                    break;
+                    capsulaApanhada = c;
+                    physicsWorld.freezeBody(c);
+                    break; // garra real apanha no máximo uma cápsula
                 }
             }
         }
 
-        if (timeAnim > 60) {
-            estadoJogo = "SUBINDO";
-        }
+        if (timeAnim > 70) estadoJogo = "SUBINDO";
     }
 
+    // ── SUBINDO ───────────────────────────────────────────────────────────────
     if (estadoJogo === "SUBINDO") {
         fecharGarra();
         if (clawMachine.mecanismoCabo.position.y < -4) {
@@ -205,6 +259,7 @@ function animate(time) {
         }
     }
 
+    // ── RETORNANDO ────────────────────────────────────────────────────────────
     if (estadoJogo === "RETORNANDO") {
         fecharGarra();
         const posTeto = clawMachine.mecanismoTeto.position;
@@ -213,106 +268,57 @@ function animate(time) {
 
         if (Math.abs(posTeto.x - (-7.8)) < 0.3 && Math.abs(posTeto.z - 9) < 0.3) {
             estadoJogo = "ABRINDO";
-            timeAnim = 0;
+            timeAnim   = 0;
         }
     }
 
+    // ── ABRINDO (larga cápsula no buraco) ─────────────────────────────────────
     if (estadoJogo === "ABRINDO") {
         abrirGarra();
         timeAnim++;
 
         if (timeAnim === 40 && capsulaApanhada) {
+            // Devolver à simulação dinâmica — a cápsula cai por si própria
+            physicsWorld.unfreezeBody(capsulaApanhada);
             capsulaApanhada.apanhada = false;
-            capsulaApanhada.vel.set(0, 0, 0);
             capsulaApanhada = null;
         }
 
-        if (timeAnim > 50) {
-            estadoJogo = "LIVRE";
-        }
+        if (timeAnim > 50) estadoJogo = "LIVRE";
     }
 
+    // ── Manter cápsula colada à garra durante o transporte ───────────────────
     if (capsulaApanhada) {
-        capsulaApanhada.mesh.position.set(
-            clawMachine.mecanismoTeto.position.x,
-            42.2 + clawMachine.mecanismoCabo.position.y - 3,
-            clawMachine.mecanismoTeto.position.z
-        );
-        capsulaApanhada.vel.set(0, 0, 0);
+        const c = getClawCenterWorld();
+        // Posicionar ligeiramente abaixo do pivot dos dedos
+        physicsWorld.setBodyPosition(capsulaApanhada, c.x, c.y - 2.0, c.z);
     }
 
+    // Escalar cabo
     const dif = Math.abs(clawMachine.mecanismoCabo.position.y);
-    clawMachine.cabo.scale.y = dif < 0.1 ? 0.1 : dif;
+    clawMachine.cabo.scale.y = Math.max(0.1, dif);
 
-    updatePhysics(capsulas, clawMachine);
-    // Marcar cápsulas que já saíram da máquina
-    for (let c of capsulas) {
-        if (!c.saiu && c.mesh.position.z >= 11.5) {
-            c.saiu = true;
-        }
-    }
-    // Atualiza animação do CapsuleOpener
+    // ── Sistemas ──────────────────────────────────────────────────────────────
+    physicsWorld.update(capsulas, clawMachine);
     capsuleOpener.update(time);
-    
-    // Atualiza movimento dos confetis
     confetisObj.atualizarMovimento();
 
     controls.update();
     renderer.render(scene, camera);
 }
 
-animate();
+// ── Inicialização assíncrona (Rapier usa WASM) ────────────────────────────────
+const physicsWorld = new PhysicsWorld();
 
-window.addEventListener('resize', () => {
+physicsWorld.init(capsulas, clawMachine).then(() => {
+    animate();
+}).catch(err => {
+    console.error("Erro ao inicializar Rapier:", err);
+});
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// Raycaster para clique nas cápsulas exteriores
-const raycaster = new THREE.Raycaster();
-const pontoClique = new THREE.Vector2();
-
-window.addEventListener("click", (e) => {
-    // Só responde se não estiver já a animar uma cápsula
-    if (capsuleOpener.estado !== "INATIVA" && capsuleOpener.estado !== "CONTROLO_LIVRE") return;
-
-    pontoClique.x =  (e.clientX / window.innerWidth)  * 2 - 1;
-    pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(pontoClique, camera);
-
-    // Recolhe todos os meshes das cápsulas que já saíram e não foram abertas
-    const capsulasDisponiveis = capsulas.filter(c => c.saiu && !c.aberta);
-    const meshes = capsulasDisponiveis.map(c => c.mesh).flat();
-    
-    // three.js precisa de uma lista de Object3D; como cada `c.mesh` é um Group,
-    // usamos recursiveFlag=true para testar filhos também
-    const hits = raycaster.intersectObjects(meshes, true);
-
-    if (hits.length === 0) return;
-
-    // Descobre a qual cápsula pertence o mesh clicado
-    const objetoHit = hits[0].object;
-    const capsulaFis = capsulasDisponiveis.find(c => {
-        let found = false;
-        c.mesh.traverse(child => { if (child === objetoHit) found = true; });
-        return found;
-    });
-
-    if (!capsulaFis || capsulaFis.apanhada) return;
-    
-    capsulaFis.aberta = true;
-    capsulaFis.vel.set(0, 0, 0);
-
-    const capsulaObj = {
-        grupo:     capsulaFis.mesh,
-        dobradica: capsulaFis.dobradica
-    };
-
-    // Carrega o prémio e ativa o opener (diretamente na scene)
-    carregarPremio('frog.glb', scene, (modelo) => {
-        capsuleOpener.ativar(capsulaObj, capsulaFis, modelo, 0.05);
-        capsuleOpenerActive = true;
-    });
 });

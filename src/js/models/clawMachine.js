@@ -1,295 +1,235 @@
 import * as THREE from 'three';
 
-/**
- * Cria a Claw Machine melhorada visualmente
- * Retorna os componentes principais para animação
- */
 export function criarClawMachine(scene) {
     const group = new THREE.Group();
     scene.add(group);
 
-    // Materiais
-    const matEstrutura = new THREE.MeshPhongMaterial({ 
-        color: 0xcc0000, // Vermelho
-        flatShading: true,
-        shininess: 100
-    }); 
-    
-    const matVidro = new THREE.MeshPhongMaterial({ 
-        color: 0x87ceeb, // Azul
-        transparent: true, 
-        opacity: 0.25, 
-        depthWrite: false,
-        side: THREE.DoubleSide
-    });
-    
-    const matChao = new THREE.MeshPhongMaterial({ 
-        color: 0x1a1a1a, 
-        flatShading: true
-    });
-    
-    const matMetal = new THREE.MeshPhongMaterial({ 
-        color: 0xcccccc
-    });
-    
-    const matMecanismo = new THREE.MeshPhongMaterial({ 
-        color: 0x333333
-    });
-    
-    const matDedoMelhorado = new THREE.MeshPhongMaterial({ 
-        color: 0xffaa00, // Laranja para garras
-        flatShading: true,
-        shininess: 60
-    });
+    const matEstrutura = new THREE.MeshPhongMaterial({ color: 0x0f1a70, flatShading: true, shininess: 100 });
+    const matVidro     = new THREE.MeshPhongMaterial({ color: 0x87ceeb, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide });
+    const matChao      = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, flatShading: true });
+    const matMetal     = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+    const matMecanismo = new THREE.MeshPhongMaterial({ color: 0x333333 });
+    const matDedo      = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 60 });
 
-    // Estrutura básica
-    
     // Base
-    const baseGeo = new THREE.BoxGeometry(24, 14, 24);
-    const base = new THREE.Mesh(baseGeo, matEstrutura);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 24), matEstrutura);
     base.position.y = 7;
-    base.castShadow = true;
-    base.receiveShadow = true;
+    base.castShadow = base.receiveShadow = true;
     group.add(base);
 
     // Teto
-    const tetoGeo = new THREE.BoxGeometry(24, 2.4, 24);
-    const teto = new THREE.Mesh(tetoGeo, matEstrutura);
-    teto.position.y = 42.2; 
+    const teto = new THREE.Mesh(new THREE.BoxGeometry(24, 2.4, 24), matEstrutura);
+    teto.position.y = 42.2;
     teto.castShadow = true;
     group.add(teto);
 
-    // Postes
+    // Postes (4 cantos)
     const posteGeo = new THREE.BoxGeometry(1, 27, 1);
-    const posicoes = [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]];
-    posicoes.forEach(p => {
+    [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]].forEach(([px, pz]) => {
         const poste = new THREE.Mesh(posteGeo, matEstrutura);
-        poste.position.set(p[0], 27.5, p[1]);
+        poste.position.set(px, 27.5, pz);
         poste.castShadow = true;
         group.add(poste);
     });
 
     // Vidros
-    const vidroLadoGeo = new THREE.BoxGeometry(0.1, 27, 22);
-    const vidroFrenteTrasGeo = new THREE.BoxGeometry(22, 27, 0.1);
+    const vLado  = new THREE.BoxGeometry(0.1, 27, 22);
+    const vFront = new THREE.BoxGeometry(22, 27, 0.1);
+    const ve = new THREE.Mesh(vLado,  matVidro); ve.position.set(-11.45, 27.5,  0);    group.add(ve);
+    const vd = new THREE.Mesh(vLado,  matVidro); vd.position.set( 11.45, 27.5,  0);    group.add(vd);
+    const vt = new THREE.Mesh(vFront, matVidro); vt.position.set(0, 27.5, -11.45);     group.add(vt);
+    const vf = new THREE.Mesh(vFront, matVidro); vf.position.set(0, 27.5,  11.45);     group.add(vf);
 
-    const vidroEsq = new THREE.Mesh(vidroLadoGeo, matVidro);
-    vidroEsq.position.set(-11.45, 27.5, 0); 
-    group.add(vidroEsq);
-
-    const vidroDir = new THREE.Mesh(vidroLadoGeo, matVidro);
-    vidroDir.position.set(11.45, 27.5, 0);
-    group.add(vidroDir);
-
-    const vidroTras = new THREE.Mesh(vidroFrenteTrasGeo, matVidro);
-    vidroTras.position.set(0, 27.5, -11.45);
-    group.add(vidroTras);
-    
-    // Vidro da frente
-    const vidroFrente = new THREE.Mesh(vidroFrenteTrasGeo, matVidro);
-    vidroFrente.position.set(0, 27.5, 11.45);
-    group.add(vidroFrente);
-
-    // Chao interior
-    const chaoGeo = new THREE.BoxGeometry(23.8, 0.1, 23.8); 
-    const chao = new THREE.Mesh(chaoGeo, matChao);
+    // Chão interior
+    const chao = new THREE.Mesh(new THREE.BoxGeometry(23.8, 0.1, 23.8), matChao);
     chao.position.y = 14.06;
     chao.receiveShadow = true;
     group.add(chao);
 
-    // Caixa de saída
-    const saidaGeo = new THREE.BoxGeometry(6.6, 0.2, 6.6); 
-    const matBuraco = new THREE.MeshPhongMaterial({ color: 0x111111 });
-    const saida = new THREE.Mesh(saidaGeo, matBuraco);
-    saida.position.set(-7.8, 14.15, 7.8); 
+    // Buraco de saída
+    const saida = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.2, 6.6),
+        new THREE.MeshPhongMaterial({ color: 0x111111 }));
+    saida.position.set(-7.8, 14.15, 7.8);
     group.add(saida);
 
-    // Moldura do buraco
-    const molduraBuraco = new THREE.BoxGeometry(7, 0.3, 7);
-    const matMoldura = new THREE.MeshPhongMaterial({ color: 0xffa500 });
-    const moldura = new THREE.Mesh(molduraBuraco, matMoldura);
+    const moldura = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 7),
+        new THREE.MeshPhongMaterial({ color: 0xffa500 }));
     moldura.position.set(-7.8, 14.08, 7.8);
     group.add(moldura);
 
     // Divisores do buraco
-    
-    // Painel direito
-    const divisorDirGeo = new THREE.BoxGeometry(0.1, 10, 7.2); // Fino, 10 de altura
-    const divisorDir = new THREE.Mesh(divisorDirGeo, matVidro);
-    divisorDir.position.set(-4.3, 19.1, 7.85);
-    group.add(divisorDir);
-
-    // Painel traseiro
-    const divisorTrasGeo = new THREE.BoxGeometry(7.2, 10, 0.1); 
-    const divisorTras = new THREE.Mesh(divisorTrasGeo, matVidro);
-    divisorTras.position.set(-7.85, 19.1, 4.3); 
-    group.add(divisorTras);
+    const divDir = new THREE.Mesh(new THREE.BoxGeometry(0.1, 10, 7.2), matVidro);
+    divDir.position.set(-4.3, 19.1, 7.85);
+    group.add(divDir);
+    const divTras = new THREE.Mesh(new THREE.BoxGeometry(7.2, 10, 0.1), matVidro);
+    divTras.position.set(-7.85, 19.1, 4.3);
+    group.add(divTras);
 
     // Painel de controlo
-    
-    // Suporte do painel
-    const suportePainelGeo = new THREE.BoxGeometry(24, 13, 4);
-    const suportePainel = new THREE.Mesh(suportePainelGeo, matEstrutura);
-    suportePainel.position.set(0, 6.5, 12.8); 
-    suportePainel.castShadow = true;
-    suportePainel.receiveShadow = true;
-    group.add(suportePainel);
+    const suporte = new THREE.Mesh(new THREE.BoxGeometry(24, 13, 4), matEstrutura);
+    suporte.position.set(0, 6.5, 12.8);
+    suporte.castShadow = suporte.receiveShadow = true;
+    group.add(suporte);
 
-    // Painel principal
     const painelGroup = new THREE.Group();
-    painelGroup.position.set(0, 13, 13.5); 
-    painelGroup.rotation.x = Math.PI / 6; 
+    painelGroup.position.set(0, 13, 13.5);
+    painelGroup.rotation.x = Math.PI / 6;
     group.add(painelGroup);
-
-    const painelGeo = new THREE.BoxGeometry(24, 3, 5.2);
-    const painel = new THREE.Mesh(painelGeo, matEstrutura);
-    painel.castShadow = true;
-    painelGroup.add(painel);
+    const painelMesh = new THREE.Mesh(new THREE.BoxGeometry(24, 3, 5.2), matEstrutura);
+    painelMesh.castShadow = true;
+    painelGroup.add(painelMesh);
 
     // Joystick
     const joyGroup = new THREE.Group();
-    joyGroup.position.set(-5, 1.5, 0); 
+    joyGroup.position.set(-5, 1.5, 0);
     painelGroup.add(joyGroup);
-
-    const joyBaseGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.4, 16);
-    const joyBase = new THREE.Mesh(joyBaseGeo, new THREE.MeshPhongMaterial({color: 0x444444}));
-    joyBase.position.set(0, 0.2, 0); 
-    joyBase.castShadow = true;
+    const joyBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.5, 1.5, 0.4, 16),
+        new THREE.MeshPhongMaterial({ color: 0x444444 })
+    );
+    joyBase.position.set(0, 0.2, 0);
     joyGroup.add(joyBase);
 
     const joyHasteGroup = new THREE.Group();
-    joyHasteGroup.position.set(0, 0.4, 0); 
+    joyHasteGroup.position.set(0, 0.4, 0);
     joyGroup.add(joyHasteGroup);
 
-    const joyHasteGeo = new THREE.CylinderGeometry(0.3, 0.3, 2.8, 8);
-    const joyHaste = new THREE.Mesh(joyHasteGeo, matMetal);
-    joyHaste.position.set(0, 1.4, 0); 
-    joyHaste.castShadow = true;
+    const joyHaste = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.8, 8), matMetal);
+    joyHaste.position.set(0, 1.4, 0);
     joyHasteGroup.add(joyHaste);
-
-    const joyBolaGeo = new THREE.SphereGeometry(0.9, 16, 16);
-    const joyBola = new THREE.Mesh(joyBolaGeo, new THREE.MeshPhongMaterial({color: 0xff0000, shininess: 100}));
-    joyBola.position.set(0, 2.8 + 0.4, 0);
-    joyBola.castShadow = true;
+    const joyBola = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 16),
+        new THREE.MeshPhongMaterial({ color: 0xff0000, shininess: 100 }));
+    joyBola.position.set(0, 3.2, 0);
     joyHasteGroup.add(joyBola);
 
     // Botão
     const btnGroup = new THREE.Group();
-    btnGroup.position.set(5, 1.5, 0); 
+    btnGroup.position.set(5, 1.5, 0);
     painelGroup.add(btnGroup);
-
-    const btnBaseGeo = new THREE.CylinderGeometry(1.8, 1.8, 0.3, 16);
-    const btnBase = new THREE.Mesh(btnBaseGeo, new THREE.MeshPhongMaterial({color: 0x222222}));
+    const btnBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.8, 1.8, 0.3, 16),
+        new THREE.MeshPhongMaterial({ color: 0x222222 })
+    );
     btnBase.position.set(0, 0.15, 0);
     btnGroup.add(btnBase);
-
-    const btnGeo = new THREE.CylinderGeometry(1.5, 1.5, 1.0, 16);
-    const btn = new THREE.Mesh(btnGeo, new THREE.MeshPhongMaterial({
-        color: 0x00ff00,
-        shininess: 100,
-        emissive: 0x00aa00
-    }));
-    btn.position.set(0, 0.15 + 0.5, 0); 
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.0, 16),
+        new THREE.MeshPhongMaterial({ color: 0x00ff00, shininess: 100, emissive: 0x00aa00 }));
+    btn.position.set(0, 0.65, 0);
     btn.castShadow = true;
     btnGroup.add(btn);
-
     const btnLight = new THREE.PointLight(0x00ff00, 1, 8);
-    btnLight.position.set(5, 4, 0); 
+    btnLight.position.set(5, 4, 0);
     painelGroup.add(btnLight);
 
-    // Mecanismo da garra
-    
+    // ── Mecanismo da garra ─────────────────────────────────────────────────────
     const garraTetoGroup = new THREE.Group();
     garraTetoGroup.position.set(0, 42.2, 0);
     group.add(garraTetoGroup);
 
-    const carrinhoGeo = new THREE.BoxGeometry(5.28, 1.2, 5.28);
-    const carrinho = new THREE.Mesh(carrinhoGeo, matMecanismo);
+    const carrinho = new THREE.Mesh(new THREE.BoxGeometry(5.28, 1.2, 5.28), matMecanismo);
     carrinho.castShadow = true;
     garraTetoGroup.add(carrinho);
 
     const garraCaboGroup = new THREE.Group();
-    // Posição inicial da garra
-    garraCaboGroup.position.y = -4; 
+    garraCaboGroup.position.y = -4;
     garraTetoGroup.add(garraCaboGroup);
 
     const caboGeo = new THREE.CylinderGeometry(0.18, 0.18, 1, 8);
-    caboGeo.translate(0, 0.5, 0); 
+    caboGeo.translate(0, 0.5, 0);
     const cabo = new THREE.Mesh(caboGeo, matMetal);
-    cabo.position.y = 0; 
     cabo.scale.y = 4;
-    cabo.castShadow = true; 
+    cabo.castShadow = true;
     garraCaboGroup.add(cabo);
 
-    const cabecaGeo = new THREE.CylinderGeometry(1.44, 2.16, 2.4, 8);
-    const cabeca = new THREE.Mesh(cabecaGeo, matMecanismo);
-    cabeca.position.y = 0;
+    // Cabeça central (aro onde os dedos se encaixam)
+    const cabeca = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 1.8, 8), matMecanismo);
     cabeca.castShadow = true;
     garraCaboGroup.add(cabeca);
 
-    const dedos = [];
-    const numDedos = 4; 
+    // ── 3 Dedos, cada um com 3 paralelepípedos planos ─────────────────────────
+    
+    // DEDOS MAIORES
+    const W     = 0.50;  // largura de cada placa (aumentado)
+    const T     = 0.40;  // espessura
+    const L1    = 3.0;   // comprimento do segmento 1 (aumentado)
+    const L2    = 2.2;   // comprimento do segmento 2 (aumentado)
+    const L3    = 1.3;   // comprimento do gancho (aumentado)
+    const Z_OFF = 1.0;   // deslocamento radial mais afastado do centro (ligeiramente maior)
 
-    for (let i = 0; i < numDedos; i++) {
-        const dedoPivot = new THREE.Group();
-        dedoPivot.position.y = -0.72;
+    const dedos      = [];  // seg1 de cada dedo — animados em main.js
+    const dedoPivots = [];  // pivots — world matrix lida pelo Rapier
+
+    for (let i = 0; i < 3; i++) {
+        const pivot = new THREE.Group();
+        pivot.position.y  = -0.9;
+        pivot.rotation.y  = (Math.PI * 2 / 3) * i;   // 0°, 120°, 240°
+        garraCaboGroup.add(pivot);
+        dedoPivots.push(pivot);
+
+        // ── Segmento 1 — superior, animado ────────────────────────────────
+        const geo1 = new THREE.BoxGeometry(W, L1, T);
+        geo1.translate(0, -L1 / 2, Z_OFF);  
+        const seg1 = new THREE.Mesh(geo1, matDedo);
         
-        dedoPivot.rotation.y = (Math.PI * 2 / numDedos) * i;
-        garraCaboGroup.add(dedoPivot);
+        // ALTERADO: Ângulo negativo para a base abrir ligeiramente para fora (-18 graus)
+        seg1.rotation.x = -Math.PI / 10;     
+        seg1.castShadow = true;
+        pivot.add(seg1);
+        dedos.push(seg1);                    
 
-        const dedoSupGeo = new THREE.BoxGeometry(0.6, 2.4, 0.84);
-        dedoSupGeo.translate(0, -1.2, 0.48); 
-        const dedoSup = new THREE.Mesh(dedoSupGeo, matDedoMelhorado);
-        dedoSup.rotation.x = Math.PI / 8;
-        dedoSup.castShadow = true;
-        dedoPivot.add(dedoSup);
+        // ── Segmento 2 — intermédio, fixo relativo ao seg1 ────────────────
+        const geo2 = new THREE.BoxGeometry(W, L2, T);
+        geo2.translate(0, -L2 / 2, 0);      
+        const seg2 = new THREE.Mesh(geo2, matDedo);
+        seg2.position.set(0, -L1, Z_OFF);   
+        
+        // ALTERADO: Dobra bem para dentro para formar a curvatura da garra (+45 graus)
+        seg2.rotation.x = Math.PI / 4;      
+        seg2.castShadow = true;
+        seg1.add(seg2);
 
-        const dedoPontaGeo = new THREE.ConeGeometry(0.528, 1.2, 6);
-        dedoPontaGeo.translate(0, -0.6, 0);
-        const dedoPonta = new THREE.Mesh(dedoPontaGeo, matDedoMelhorado);
-        dedoPonta.position.set(0, -2.4, 0.84);
-        dedoPonta.rotation.x = -Math.PI / 3;
-        dedoPonta.castShadow = true;
-        dedoSup.add(dedoPonta);
-
-        dedos.push(dedoSup);
+        // ── Segmento 3 — gancho/ponta, fixo relativo ao seg2 ──────────────
+        const geo3 = new THREE.BoxGeometry(W, L3, T);
+        geo3.translate(0, -L3 / 2, 0);      
+        const seg3 = new THREE.Mesh(geo3, matDedo);
+        seg3.position.set(0, -L2, 0);       
+        
+        // ALTERADO: Fecha a ponta para criar o gancho que agarra o prémio (+60 graus)
+        seg3.rotation.x = Math.PI / 3;      
+        seg3.castShadow = true;
+        seg2.add(seg3);
     }
 
-    // Porta de saída de prémios (frontal)
-    // Fundo escuro na frente da base
-    const fundoBuracoGeo = new THREE.PlaneGeometry(6.6, 6.6);
-    const fundoBuraco = new THREE.Mesh(fundoBuracoGeo, new THREE.MeshBasicMaterial({ color: 0x050505 }));
+    // ── Porta de saída ─────────────────────────────────────────────────────────
+    const fundoBuraco = new THREE.Mesh(
+        new THREE.PlaneGeometry(6.6, 6.6),
+        new THREE.MeshBasicMaterial({ color: 0x050505 })
+    );
     fundoBuraco.position.set(-7.8, 4.5, 14.81);
     group.add(fundoBuraco);
 
-    // Grupo pivot da porta
     const portaPivot = new THREE.Group();
     portaPivot.position.set(-7.8, 7.8, 14.82);
     group.add(portaPivot);
 
-    // Porta
-    const portaMat = new THREE.MeshPhongMaterial({
-        color: 0xeeeeee,
-        transparent: true,
-        opacity: 0.5,
-        shininess: 90,
-        side: THREE.DoubleSide
-    });
     const portaGeo = new THREE.BoxGeometry(6.8, 6.8, 0.1);
-    portaGeo.translate(0, -3.4, 0); 
-    const porta = new THREE.Mesh(portaGeo, portaMat);
+    portaGeo.translate(0, -3.4, 0);
+    const porta = new THREE.Mesh(portaGeo,
+        new THREE.MeshPhongMaterial({ color: 0xeeeeee, transparent: true, opacity: 0.5, shininess: 90, side: THREE.DoubleSide })
+    );
     portaPivot.add(porta);
 
     return {
-        caixa: group,
+        caixa:         group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
-        dedos: dedos,
-        cabo: cabo, 
-        porta: porta, // Exportar a porta
+        dedos:         dedos,        // seg1 de cada dedo — animar rotation.x
+        dedoPivots:    dedoPivots,   // pivots — world matrix para Rapier
+        cabo:          cabo,
+        porta:         porta,
         controles: {
-            joystick: joyHasteGroup, 
-            botao: btn             
+            joystick: joyHasteGroup,
+            botao:    btn
         }
     };
 }
