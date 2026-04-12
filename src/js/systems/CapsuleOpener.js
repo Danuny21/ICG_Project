@@ -21,7 +21,7 @@ export class CapsuleOpener {
         this.estado           = "INATIVA";
         this.modelo           = null;
         this.capsula          = null;       // { grupo, dobradica }
-        this.capsulaFisica    = null;       // entrada no array de física (para marcar apanhada)
+        this.capsulaFisica    = null;       // Entrada no array de física (para marcar apanhada)
         this.escalaAlvo       = 2;
         this.opacidadeCapsula = 1.0;
 
@@ -30,7 +30,7 @@ export class CapsuleOpener {
         // Posição inicial da cápsula no mundo (para interpolar)
         this._origemMundo = new THREE.Vector3();
         this._frameTransporte = 0;
-        this._FRAMES_TRANSPORTE = 60; // duração do voo em frames
+        this._FRAMES_TRANSPORTE = 60; // Duração do voo em frames
 
         // Hint de UI
         this._hintEl = null;
@@ -40,8 +40,7 @@ export class CapsuleOpener {
         this._onKeyDown = this._onKeyDown.bind(this);
     }
 
-    // ─── API pública ────────────────────────────────────────────────────────
-
+    // ── API pública ──────────────────────────────────────────────────────────────
     /**
      * Chama quando o utilizador clica numa cápsula.
      * @param {object} capsulaObj   { grupo: THREE.Group, dobradica: THREE.Group }
@@ -50,7 +49,7 @@ export class CapsuleOpener {
      * @param {number} escalaFinal  Escala alvo do modelo após abertura
      */
     ativar(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2) {
-        if (this.estado !== "INATIVA") return; // ignora se já está em uso
+        if (this.estado !== "INATIVA") return; // Ignora se já está em uso
 
         this.capsula       = capsulaObj;
         this.capsulaFisica = capsulaFis;
@@ -104,7 +103,7 @@ export class CapsuleOpener {
     update(time) {
         if (this.estado === "INATIVA") return;
 
-        // ── TRANSPORTANDO ──────────────────────────────────────────────────
+        // ── TRANSPORTANDO ────────────────────────────────────────────────────────────
         if (this.estado === "TRANSPORTANDO") {
             this._frameTransporte++;
             const t = Math.min(this._frameTransporte / this._FRAMES_TRANSPORTE, 1);
@@ -123,7 +122,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── AGUARDAR (à espera de SPACE) ───────────────────────────────────
+        // ── AGUARDAR (à espera de SPACE) ─────────────────────────────────────────────
         if (this.estado === "AGUARDAR") {
             // Pequena flutuação para indicar que está interativa
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
@@ -136,7 +135,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── ABRINDO ────────────────────────────────────────────────────────
+        // ── ABRINDO ──────────────────────────────────────────────────────────────────
         if (this.estado === "ABRINDO") {
             const dobradica = this.capsula.dobradica;
             if (dobradica.rotation.x > -Math.PI / 1.2) {
@@ -153,7 +152,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── EXPULSAR ───────────────────────────────────────────────────────
+        // ── EXPULSAR ─────────────────────────────────────────────────────────────────
         if (this.estado === "EXPULSAR") {
             const parteDebaixo = this.capsula.grupo.children[0];
             const parteCima    = this.capsula.dobradica;
@@ -195,7 +194,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── CONTROLO_LIVRE ─────────────────────────────────────────────────
+        // ── CONTROLO_LIVRE ───────────────────────────────────────────────────────────
         if (this.estado === "CONTROLO_LIVRE") {
             if (this.modelo) {
                 this.modelo.rotation.y += 0.005;
@@ -205,8 +204,7 @@ export class CapsuleOpener {
         }
     }
 
-    // ─── Privado ────────────────────────────────────────────────────────────
-
+    // ── Privado ──────────────────────────────────────────────────────────────────
     _onKeyDown(e) {
         if (e.code === "Space" && this.estado === "AGUARDAR") {
             e.preventDefault();

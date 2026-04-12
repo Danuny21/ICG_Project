@@ -82,78 +82,55 @@ export class PhysicsWorld {
         // Um único body fixed para toda a geometria estática
         const staticBody = W.createRigidBody(RAPIER.RigidBodyDesc.fixed());
 
-        const col = (desc) => W.createCollider(desc, staticBody);
+        const col = (desc) => W.createCollider(desc.setFriction(0.3).setRestitution(0.3), staticBody);
 
-        // Chão interior  (y = 14.06)
-        col(RAPIER.ColliderDesc.cuboid(11.9, 0.05, 11.9)
-            .setTranslation(0, 14.06, 0)
-            .setFriction(0.6).setRestitution(0.3));
+        // 1. Base Oca inferior
+        col(RAPIER.ColliderDesc.cuboid(5.0, 0.475, 5.0).setTranslation(-6.5, 0.5, 9.8));
+        
+        // 2. Paredes da Base
+        col(RAPIER.ColliderDesc.cuboid(12.0, 7.0, 0.5).setTranslation(0, 7, -11.5));     
+        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(11.5, 7, 0));      
+        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(-11.5, 7, 0));     
+        col(RAPIER.ColliderDesc.cuboid(7.95, 7.0, 0.5).setTranslation(3.55, 7, 11.5));   
 
-        // Parede esquerda
-        col(RAPIER.ColliderDesc.cuboid(0.05, 13.5, 11)
-            .setTranslation(-11.45, 27.5, 0)
-            .setFriction(0.3).setRestitution(0.4));
+        // 3. Vidros Superiores (e Postes)
+        const wallH = 13.5;
+        const wallW = 11.45;
+        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(-11.45, 27.5, 0));     
+        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(11.45, 27.5, 0));      
+        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, -11.45));     
+        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, 11.45));      
 
-        // Parede direita
-        col(RAPIER.ColliderDesc.cuboid(0.05, 13.5, 11)
-            .setTranslation(11.45, 27.5, 0)
-            .setFriction(0.3).setRestitution(0.4));
+        // Teto
+        col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));             // teto
 
-        // Parede traseira
-        col(RAPIER.ColliderDesc.cuboid(11, 13.5, 0.05)
-            .setTranslation(0, 27.5, -11.45)
-            .setFriction(0.3).setRestitution(0.4));
+        // 4. Chão interior (Buraco)
+        col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));        // chaoDir
+        col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));   // chaoEsq
 
-        // Parede frontal — excluindo o corredor do buraco (x: -11.1 a -4.5)
-        // Parte direita: x de -4.5 a +11.45  → centro = 3.475, metade = 7.975
-        col(RAPIER.ColliderDesc.cuboid(7.975, 13.5, 0.05)
-            .setTranslation(3.475, 27.5, 11.45)
-            .setFriction(0.3).setRestitution(0.4));
+        // 5. Divisores internos de vidro do buraco
+        col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));        // divDir
+        col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));        // divTras
 
-        // ── Divisores internos de vidro (colisão) ───────────────────────────
-        // divDir: parede paralela ao eixo Z, à direita do buraco
-        col(RAPIER.ColliderDesc.cuboid(0.05, 5, 3.6)
-            .setTranslation(-4.3, 19.1, 7.85)
-            .setFriction(0.3).setRestitution(0.4));
+        // 6. Rampa de Deslize
+        // Rampa: rotation.x = 1 radian.
+        col(RAPIER.ColliderDesc.cuboid(3.3, 0.25, 7.0)
+            .setTranslation(-7.8, 5.5, 8.0)
+            .setRotation({ x: Math.sin(1/2), y: 0, z: 0, w: Math.cos(1/2) }));                   // rampa
 
-        // divTras: parede paralela ao eixo X, atrás do buraco
-        col(RAPIER.ColliderDesc.cuboid(3.6, 5, 0.05)
-            .setTranslation(-7.85, 19.1, 4.3)
-            .setFriction(0.3).setRestitution(0.4));
+        // 7. Túnel
+        // Superfícies frontais do painel da porta
+        col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));         // supDir
+        col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));        // supEsq
+        col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));        // supTopo
 
-        // ── Rampa do buraco de saída ──────────────────────────────────────────
-        //  De: z=4.5,  y=13.0   (início do buraco, ao nível do chão interior)
-        //  Para: z=15.0, y=0    (exterior)
-        //
-        //  A rampa desce em Z ao aumentar o Z, pelo que o ângulo de rotação em X
-        //  é positivo (ponta +Z vai para baixo).
-        //
-        const RAMP_Z0 = 4.5, RAMP_Z1 = 15.0;
-        const RAMP_Y0 = 13.0, RAMP_Y1 = CHAO_EXT_Y;
-        const deltaZ  = RAMP_Z1 - RAMP_Z0;                   // 10.5
-        const deltaY  = RAMP_Y0 - RAMP_Y1;                   // 13.0  (queda)
-        const rampLen = Math.sqrt(deltaZ * deltaZ + deltaY * deltaY); // ≈ 16.71
-        const angle   = Math.atan2(deltaY, deltaZ);           // ≈ 0.892 rad
+        // Paredes laterais interiores do túnel
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-11.1, 8.5, 9.5));          // lateral esquerda do túnel
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-4.5, 8.5, 9.5));           // lateral direita do túnel
+        col(RAPIER.ColliderDesc.cuboid(3.1, 5.0, 0.2).setTranslation(-7.8, 8.5, 4.5));           // traseira do túnel
 
-        // Quaternion: rotação em torno do eixo X por +angle
-        const qx = Math.sin(angle / 2);
-        const qw = Math.cos(angle / 2);
-
-        col(RAPIER.ColliderDesc.cuboid(3.3, 0.15, rampLen / 2)
-            .setTranslation(-7.8, (RAMP_Y0 + RAMP_Y1) / 2, (RAMP_Z0 + RAMP_Z1) / 2)
-            .setRotation({ x: qx, y: 0, z: 0, w: qw })
-            .setFriction(0.35).setRestitution(0.2));
-
-        // Paredes laterais do corredor do buraco
-        col(RAPIER.ColliderDesc.cuboid(0.05, 5, 5.25)
-            .setTranslation(-11.1, 9, 9.75));
-        col(RAPIER.ColliderDesc.cuboid(0.05, 5, 5.25)
-            .setTranslation(-4.5, 9, 9.75));
-
-        // Chão exterior (plano invisível para cápsulas não caírem)
-        col(RAPIER.ColliderDesc.cuboid(40, 0.1, 40)
-            .setTranslation(0, CHAO_EXT_Y - 0.1, 15)
-            .setFriction(0.6).setRestitution(0.2));
+        // 8. Chão exterior p/ evitar fugas da simulação
+        col(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, CHAO_EXT_Y - 0.1, 15).setFriction(0.6));
     }
 
     // ── Corpos das cápsulas ───────────────────────────────────────────────────
@@ -181,42 +158,38 @@ export class PhysicsWorld {
     }
 
     // ── Corpos cinemáticos dos dedos ──────────────────────────────────────────
-    //
-    //  Cada dedo é representado por um cuboide cujas dimensões e offset local
-    //  correspondem exactamente à BoxGeometry do dedoSup:
-    //    BoxGeometry(0.6, 2.4, 0.84) com geometry.translate(0, -1.2, 0.48)
-    //  → half-extents (0.3, 1.2, 0.42), offset local (0, -1.2, 0.48)
-    //
-    //  Cada frame, posicionamos o body na world-position do dedoSup mesh
-    //  (que representa o pivot/origem do segmento superior do dedo).
-    //  O Rapier aplica o offset local do colider automaticamente no espaço do body.
-    //
     _criarFingerBodies(clawMachine) {
         for (const dedo of clawMachine.dedos) {
-            const body = this.world.createRigidBody(
-                RAPIER.RigidBodyDesc.kinematicPositionBased()
-                    .setTranslation(0, 0, 0)
-            );
+            const seg1 = dedo;
+            const seg2 = dedo.children[0];
+            const seg3 = seg2.children[0];
 
-            this.world.createCollider(
-                RAPIER.ColliderDesc.cuboid(0.3, 1.2, 0.42)
-                    .setTranslation(0, -1.2, 0.48)   // mesmo offset da geo
-                    .setFriction(0.9)
-                    .setRestitution(0.05),
-                body
-            );
+            const segments = [
+                { mesh: seg1, h: [0.25, 1.50, 0.20], t: [0, -1.50, 1.0] },
+                { mesh: seg2, h: [0.25, 1.10, 0.20], t: [0, -1.10, 0.0] },
+                { mesh: seg3, h: [0.25, 0.65, 0.20], t: [0, -0.65, 0.0] }
+            ];
 
-            this._fingerBodies.push({ body, dedo });
+            for (const seg of segments) {
+                const body = this.world.createRigidBody(
+                    RAPIER.RigidBodyDesc.kinematicPositionBased()
+                        .setTranslation(0, 0, 0)
+                );
+
+                this.world.createCollider(
+                    RAPIER.ColliderDesc.cuboid(seg.h[0], seg.h[1], seg.h[2])
+                        .setTranslation(seg.t[0], seg.t[1], seg.t[2])
+                        .setFriction(0.9)
+                        .setRestitution(0.05),
+                    body
+                );
+
+                this._fingerBodies.push({ body, dedo: seg.mesh });
+            }
         }
     }
 
     // ── Corpo cinemático da porta ─────────────────────────────────────────────
-    //
-    //  O pivot da porta está em (-7.8, 7.8, 14.82).
-    //  A geometria é BoxGeometry(6.8, 6.8, 0.1) com translate(0, -3.4, 0),
-    //  portanto o offset local do colider é (0, -3.4, 0).
-    //  Quando a porta roda em X, o colider gira em torno do pivot correctamente.
-    //
     _criarPortaBody(clawMachine) {
         if (!clawMachine.porta) return;
 
@@ -228,8 +201,7 @@ export class PhysicsWorld {
         this.world.createCollider(
             RAPIER.ColliderDesc.cuboid(3.4, 3.4, 0.05)
                 .setTranslation(0, -3.4, 0)
-                .setFriction(0.3)
-                .setRestitution(0.25),
+                .setSensor(true), // Sensor: deteta colisões sem exercer força física
             this._portaBody
         );
     }
@@ -257,7 +229,7 @@ export class PhysicsWorld {
         }
     }
 
-    // ── Física da porta (mola JS) + sync Rapier ───────────────────────────────
+    // ── Física da porta e sincronização visual ────────────────────────────────
     _updatePorta(capsulas, clawMachine) {
         if (!clawMachine.porta || !this._portaBody) return;
 
@@ -275,18 +247,13 @@ export class PhysicsWorld {
             const xNoCorreder = t.x < CHUTE_X_MAX && t.x > CHUTE_X_MIN;
             const tocarNaPorta = xNoCorreder &&
                                  t.y < PORTA_ALTURA &&
-                                 t.z > (PORTA_Z - RAIO_CAPSULA) &&
+                                 t.z > (PORTA_Z - RAIO_CAPSULA * 1.5) &&
                                  t.z < (PORTA_Z + RAIO_CAPSULA);
 
             if (tocarNaPorta) {
-                // Transferir momento Z da cápsula para a porta
-                this._portaVelAng -= v.z * 0.008;
-
-                // Resistência: se a porta ainda está muito fechada, bloquear a cápsula
-                const abertura = Math.abs(clawMachine.porta.rotation.x) / Math.abs(PORTA_ABERTURA_MAX);
-                if (abertura < 0.35) {
-                    body.setLinvel({ x: v.x, y: v.y, z: Math.min(v.z, 0) }, true);
-                }
+                // Agita visualmente a porta
+                const forcaBater = Math.max(v.z, 6); 
+                this._portaVelAng -= forcaBater * 0.035;
             }
         }
 
@@ -325,7 +292,20 @@ export class PhysicsWorld {
             c.mesh.quaternion.set(r.x, r.y, r.z, r.w);
 
             // Marcar cápsulas que saíram pela porta
-            if (!c.saiu && t.z >= PORTA_Z) c.saiu = true;
+            if (!c.saiu && t.z >= PORTA_Z) {
+                c.saiu = true;
+            }
+
+            // Desaceleração da cápsula fora da máquina
+            if (c.saiu) {
+                const v = body.linvel();
+                const av = body.angvel();
+                // Reduz atrito horizontal da velocidade na saída da cápsula
+                body.setLinvel({ x: v.x * 0.97, y: v.y, z: v.z * 0.97 }, true);
+                
+                // Reduz velocidade de rotação
+                body.setAngvel({ x: av.x * 0.97, y: av.y * 0.97, z: av.z * 0.97 }, true);
+            }
         }
     }
 }

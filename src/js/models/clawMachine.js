@@ -11,11 +11,32 @@ export function criarClawMachine(scene) {
     const matMecanismo = new THREE.MeshPhongMaterial({ color: 0x333333 });
     const matDedo      = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 60 });
 
-    // Base
-    const base = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 24), matEstrutura);
-    base.position.y = 7;
-    base.castShadow = base.receiveShadow = true;
-    group.add(base);
+    // ── Base Oca ─────────────────────────────────────────────────────────────────
+    const esp = 1; // Espessura das paredes
+
+    const baseFundo = new THREE.Mesh(new THREE.BoxGeometry(10, 0.95, 10), matEstrutura);
+    baseFundo.position.set(-6.5, 0.5, 9.8);
+    group.add(baseFundo);
+
+    // Parede Traseira
+    const baseTras = new THREE.Mesh(new THREE.BoxGeometry(24, 14, esp), matEstrutura);
+    baseTras.position.set(0, 7, -11.5);
+    group.add(baseTras);
+
+    // Parede Direita
+    const baseDir = new THREE.Mesh(new THREE.BoxGeometry(esp, 14, 24), matEstrutura);
+    baseDir.position.set(11.5, 7, 0);
+    group.add(baseDir);
+
+    // Parede Esquerda
+    const baseEsq = new THREE.Mesh(new THREE.BoxGeometry(esp, 14, 24), matEstrutura);
+    baseEsq.position.set(-11.5, 7, 0);
+    group.add(baseEsq);
+
+    // Parede Frontal (com abertura à esquerda para a saída dos prémios)
+    const baseFrenteDir = new THREE.Mesh(new THREE.BoxGeometry(15.9, 14, esp), matEstrutura);
+    baseFrenteDir.position.set(3.55, 7, 11.5); 
+    group.add(baseFrenteDir);
 
     // Teto
     const teto = new THREE.Mesh(new THREE.BoxGeometry(24, 2.4, 24), matEstrutura);
@@ -40,24 +61,47 @@ export function criarClawMachine(scene) {
     const vt = new THREE.Mesh(vFront, matVidro); vt.position.set(0, 27.5, -11.45);     group.add(vt);
     const vf = new THREE.Mesh(vFront, matVidro); vf.position.set(0, 27.5,  11.45);     group.add(vf);
 
-    // Chão interior
-    const chao = new THREE.Mesh(new THREE.BoxGeometry(23.8, 0.1, 23.8), matChao);
-    chao.position.y = 14.06;
-    chao.receiveShadow = true;
-    group.add(chao);
+    // ── Chão interior dividido em dois blocos (O Buraco) ─────────────────────────
+    // Bloco direito (Ocupa a largura livre à direita da divisória)
+    const chaoDir = new THREE.Mesh(new THREE.BoxGeometry(15.7, 0.1, 22.8), matChao);
+    chaoDir.position.set(3.55, 14.06, 0); 
+    chaoDir.receiveShadow = true;
+    group.add(chaoDir);
 
-    // Buraco de saída
-    const saida = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.2, 6.6),
-        new THREE.MeshPhongMaterial({ color: 0x111111 }));
-    saida.position.set(-7.8, 14.15, 7.8);
-    group.add(saida);
+    // Bloco traseiro esquerdo (Encaixa perfeitamente no canto traseiro)
+    const chaoEsq = new THREE.Mesh(new THREE.BoxGeometry(7.1, 0.1, 15.7), matChao);
+    chaoEsq.position.set(-7.85, 14.06, -3.55); 
+    chaoEsq.receiveShadow = true;
+    group.add(chaoEsq);
 
-    const moldura = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 7),
-        new THREE.MeshPhongMaterial({ color: 0xffa500 }));
-    moldura.position.set(-7.8, 14.08, 7.8);
-    group.add(moldura);
+    // ── Moldura Vazada do Buraco ─────────────────────────────────────────────────
+    const matMoldura = new THREE.MeshPhongMaterial({ color: 0xffa500 });
+    const molduraGroup = new THREE.Group();
+    molduraGroup.position.set(-7.8, 14.08, 7.8);
+    
+    const tamExt = 7;      
+    const espessura = 0.4; 
+    const altura = 0.3;    
+    
+    const geoH = new THREE.BoxGeometry(tamExt, altura, espessura);
+    const geoV = new THREE.BoxGeometry(espessura, altura, tamExt - (espessura * 2));
+    
+    const bordaFrente = new THREE.Mesh(geoH, matMoldura);
+    bordaFrente.position.set(0, 0, tamExt/2 - espessura/2);
+    
+    const bordaTras = new THREE.Mesh(geoH, matMoldura);
+    bordaTras.position.set(0, 0, -tamExt/2 + espessura/2);
+    
+    const bordaEsq = new THREE.Mesh(geoV, matMoldura);
+    bordaEsq.position.set(-tamExt/2 + espessura/2, 0, 0);
+    
+    const bordaDir = new THREE.Mesh(geoV, matMoldura);
+    bordaDir.position.set(tamExt/2 - espessura/2, 0, 0);
+    
+    molduraGroup.add(bordaFrente, bordaTras, bordaEsq, bordaDir);
+    group.add(molduraGroup);
 
-    // Divisores do buraco
+    // Divisores de vidro do buraco
     const divDir = new THREE.Mesh(new THREE.BoxGeometry(0.1, 10, 7.2), matVidro);
     divDir.position.set(-4.3, 19.1, 7.85);
     group.add(divDir);
@@ -65,16 +109,44 @@ export function criarClawMachine(scene) {
     divTras.position.set(-7.85, 19.1, 4.3);
     group.add(divTras);
 
-    // Painel de controlo
-    const suporte = new THREE.Mesh(new THREE.BoxGeometry(24, 13, 4), matEstrutura);
-    suporte.position.set(0, 6.5, 12.8);
-    suporte.castShadow = suporte.receiveShadow = true;
-    group.add(suporte);
+    // ── Painel de Controlo e Túnel Oco ───────────────────────────────────────────
+    // Parte Direita do Suporte (Sólida, suporta o joystick e botão)
+    const supDir = new THREE.Mesh(new THREE.BoxGeometry(15.9, 13, 4), matEstrutura);
+    supDir.position.set(3.55, 6.5, 12.8);
+    group.add(supDir);
 
+    // Parede esquerda do túnel da porta
+    const supEsq = new THREE.Mesh(new THREE.BoxGeometry(0.5, 13, 4), matEstrutura);
+    supEsq.position.set(-11.5, 6.5, 12.8);
+    group.add(supEsq);
+
+    // Topo do túnel (Encaixa acima da porta transparente)
+    const supTopo = new THREE.Mesh(new THREE.BoxGeometry(7.5, 5.2, 4), matEstrutura);
+    supTopo.position.set(-7.5, 10.4, 12.8); 
+    group.add(supTopo);
+
+    // Paredes interiores opacas do túnel
+    // Lateral Esquerda interior
+    const tunelEsq = new THREE.Mesh(new THREE.BoxGeometry(0.4, 10.0, 11.0), matEstrutura);
+    tunelEsq.position.set(-11.1, 8.5, 9); 
+    group.add(tunelEsq);
+    
+    // Lateral Direita interior
+    const tunelDir = new THREE.Mesh(new THREE.BoxGeometry(0.4, 10.0, 11.0), matEstrutura);
+    tunelDir.position.set(-4.5, 8.5, 9); 
+    group.add(tunelDir);
+
+    // Parede Traseira do túnel
+    const tunelTras = new THREE.Mesh(new THREE.BoxGeometry(6.2, 9.0, 0.4), matEstrutura);
+    tunelTras.position.set(-7.8, 9.0, 4.5);
+    group.add(tunelTras);
+
+    // Grupo do painel inclinado (Joystick e Botão)
     const painelGroup = new THREE.Group();
     painelGroup.position.set(0, 13, 13.5);
     painelGroup.rotation.x = Math.PI / 6;
     group.add(painelGroup);
+    
     const painelMesh = new THREE.Mesh(new THREE.BoxGeometry(24, 3, 5.2), matEstrutura);
     painelMesh.castShadow = true;
     painelGroup.add(painelMesh);
@@ -121,7 +193,7 @@ export function criarClawMachine(scene) {
     btnLight.position.set(5, 4, 0);
     painelGroup.add(btnLight);
 
-    // ── Mecanismo da garra ─────────────────────────────────────────────────────
+    // ── Mecanismo da Garra ───────────────────────────────────────────────────────
     const garraTetoGroup = new THREE.Group();
     garraTetoGroup.position.set(0, 42.2, 0);
     group.add(garraTetoGroup);
@@ -141,73 +213,61 @@ export function criarClawMachine(scene) {
     cabo.castShadow = true;
     garraCaboGroup.add(cabo);
 
-    // Cabeça central (aro onde os dedos se encaixam)
+    // Cabeça central
     const cabeca = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 1.8, 8), matMecanismo);
     cabeca.castShadow = true;
     garraCaboGroup.add(cabeca);
 
-    // ── 3 Dedos, cada um com 3 paralelepípedos planos ─────────────────────────
-    
-    // DEDOS MAIORES
-    const W     = 0.50;  // largura de cada placa (aumentado)
-    const T     = 0.40;  // espessura
-    const L1    = 3.0;   // comprimento do segmento 1 (aumentado)
-    const L2    = 2.2;   // comprimento do segmento 2 (aumentado)
-    const L3    = 1.3;   // comprimento do gancho (aumentado)
-    const Z_OFF = 1.0;   // deslocamento radial mais afastado do centro (ligeiramente maior)
+    // 3 Dedos
+    const W     = 0.50;  
+    const T     = 0.40;  
+    const L1    = 3.0;   
+    const L2    = 2.2;   
+    const L3    = 1.3;   
+    const Z_OFF = 1.0;   
 
-    const dedos      = [];  // seg1 de cada dedo — animados em main.js
-    const dedoPivots = [];  // pivots — world matrix lida pelo Rapier
+    const dedos      = [];  
+    const dedoPivots = [];  
 
     for (let i = 0; i < 3; i++) {
         const pivot = new THREE.Group();
         pivot.position.y  = -0.9;
-        pivot.rotation.y  = (Math.PI * 2 / 3) * i;   // 0°, 120°, 240°
+        pivot.rotation.y  = (Math.PI * 2 / 3) * i;   
         garraCaboGroup.add(pivot);
         dedoPivots.push(pivot);
 
-        // ── Segmento 1 — superior, animado ────────────────────────────────
         const geo1 = new THREE.BoxGeometry(W, L1, T);
         geo1.translate(0, -L1 / 2, Z_OFF);  
         const seg1 = new THREE.Mesh(geo1, matDedo);
-        
-        // ALTERADO: Ângulo negativo para a base abrir ligeiramente para fora (-18 graus)
         seg1.rotation.x = -Math.PI / 10;     
         seg1.castShadow = true;
         pivot.add(seg1);
         dedos.push(seg1);                    
 
-        // ── Segmento 2 — intermédio, fixo relativo ao seg1 ────────────────
         const geo2 = new THREE.BoxGeometry(W, L2, T);
         geo2.translate(0, -L2 / 2, 0);      
         const seg2 = new THREE.Mesh(geo2, matDedo);
         seg2.position.set(0, -L1, Z_OFF);   
-        
-        // ALTERADO: Dobra bem para dentro para formar a curvatura da garra (+45 graus)
         seg2.rotation.x = Math.PI / 4;      
         seg2.castShadow = true;
         seg1.add(seg2);
 
-        // ── Segmento 3 — gancho/ponta, fixo relativo ao seg2 ──────────────
         const geo3 = new THREE.BoxGeometry(W, L3, T);
         geo3.translate(0, -L3 / 2, 0);      
         const seg3 = new THREE.Mesh(geo3, matDedo);
         seg3.position.set(0, -L2, 0);       
-        
-        // ALTERADO: Fecha a ponta para criar o gancho que agarra o prémio (+60 graus)
         seg3.rotation.x = Math.PI / 3;      
         seg3.castShadow = true;
         seg2.add(seg3);
     }
 
-    // ── Porta de saída ─────────────────────────────────────────────────────────
-    const fundoBuraco = new THREE.Mesh(
-        new THREE.PlaneGeometry(6.6, 6.6),
-        new THREE.MeshBasicMaterial({ color: 0x050505 })
-    );
-    fundoBuraco.position.set(-7.8, 4.5, 14.81);
-    group.add(fundoBuraco);
+    // ── Rampa de Deslize e Porta ─────────────────────────────────────────────────
+    const rampa = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.5, 14), matEstrutura);
+    rampa.position.set(-7.8, 6, 8);  
+    rampa.rotation.x = 1;
+    group.add(rampa);
 
+    // Portinhola de Acrílico (Pivot e Rotação)
     const portaPivot = new THREE.Group();
     portaPivot.position.set(-7.8, 7.8, 14.82);
     group.add(portaPivot);
@@ -223,8 +283,8 @@ export function criarClawMachine(scene) {
         caixa:         group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
-        dedos:         dedos,        // seg1 de cada dedo — animar rotation.x
-        dedoPivots:    dedoPivots,   // pivots — world matrix para Rapier
+        dedos:         dedos,       
+        dedoPivots:    dedoPivots,
         cabo:          cabo,
         porta:         porta,
         controles: {
