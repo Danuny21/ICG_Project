@@ -5,10 +5,10 @@ export function criarConfetis(scene) {
     const coresConfetis = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffffff];
     
     // Gerar meshes
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < 500; i++) {
         const cor = coresConfetis[Math.floor(Math.random() * coresConfetis.length)];
         const confMaterial = new THREE.MeshPhongMaterial({ color: cor, flatShading: true });
-        const confGeo = new THREE.ConeGeometry(0.15, 0.15, 3);
+        const confGeo = new THREE.ConeGeometry(0.35, 0.35, 3);
         const confMesh = new THREE.Mesh(confGeo, confMaterial);
         
         confMesh.visible = false; 
@@ -28,9 +28,9 @@ export function criarConfetis(scene) {
                 c.mesh.position.set(0, 0.5, 0); 
                 c.mesh.visible = true;
                 c.velocidade.set(
-                    (Math.random() - 0.5) * 0.3, 
-                    Math.random() * 0.4 + 0.2, 
-                    (Math.random() - 0.5) * 0.3
+                    (Math.random() - 0.5) * 0.5, 
+                    Math.random() * 0.6 + 0.3, 
+                    (Math.random() - 0.5) * 0.5
                 );
             });
         },

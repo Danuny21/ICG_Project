@@ -73,18 +73,17 @@ export class CapsuleOpener {
         this._alvoMundo.copy(this.camera.position).add(dir.multiplyScalar(20));
         this._alvoMundo.y -= 2; // Desce ligeiramente (offset visual)
 
-        // Reset do modelo (escondido)
-        if (this.modelo) {
-            this.modelo.scale.set(0, 0, 0);
-            this.modelo.rotation.set(0, 0, 0);
-        }
-
-        // Reset opacidade da cápsula
+        // Reset opacidade da cápsula (inicializa variável base para o fade-out)
         this.opacidadeCapsula = 1.0;
         this.capsula.grupo.traverse(child => {
             if (child.isMesh) {
+                // Guarda a opacidade original se ainda não tiver sido guardada
+                if (child.material.userData.originalOpacity === undefined) {
+                    child.material.userData.originalOpacity = child.material.opacity;
+                }
                 child.material.transparent = true;
-                child.material.opacity = 1.0;
+                // Restaura a opacidade original em vez de forçar 1.0 (para manter o vidro)
+                child.material.opacity = child.material.userData.originalOpacity;
             }
         });
 
@@ -163,23 +162,30 @@ export class CapsuleOpener {
             parteCima.position.y    -= 0.2;
             parteCima.position.z    -= 0.1;
 
+            // Se o modelo ainda for filho da cápsula, extrair para a root da cena (sem alterar posição/rotação visuais)
+            if (this.modelo && this.modelo.parent !== this.scene) {
+                this.scene.attach(this.modelo);
+            }
+
             // Modelo cresce
             if (this.modelo && this.modelo.scale.x < this.escalaAlvo) {
-                // Coloca o modelo na mesma posição da cápsula (world space)
-                this.modelo.position.copy(this.capsula.grupo.position);
+                // Flutua o modelo ligeiramente acima da posição inicial
                 const passo   = this.escalaAlvo / 20;
-                // Aumenta 25% o tamanho do prémio
-                const novoTam = Math.min(this.modelo.scale.x + passo, this.escalaAlvo * 1.25);
+                // Aumenta 25% o tamanho do prémio face à escalaAlvo
+                const limiteTam = this.escalaAlvo * 1.25;
+                const novoTam = Math.min(this.modelo.scale.x + passo, limiteTam);
                 this.modelo.scale.set(novoTam, novoTam, novoTam);
                 this.modelo.position.y += 0.05;
             }
 
-            // Fade-out da cápsula
+            // Fade-out da cápsula baseando-se na opacidade base de cada componente
             this.opacidadeCapsula -= 0.02;
             this.capsula.grupo.traverse(child => {
                 if (child.isMesh) {
+                    const opOriginal = child.material.userData.originalOpacity ?? 1.0;
                     child.material.transparent = true;
-                    child.material.opacity     = Math.max(0, this.opacidadeCapsula);
+                    // Multiplica, de forma a ir desaparecendo consoante o início
+                    child.material.opacity = Math.max(0, opOriginal * this.opacidadeCapsula);
                 }
             });
 

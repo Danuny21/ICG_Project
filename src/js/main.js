@@ -45,7 +45,7 @@ scene.add(pointLight);
 const clawMachine = criarClawMachine(scene);
 
 // ── Cápsulas ─────────────────────────────────────────────────────────────────
-const numCapsulas = 100;
+const numCapsulas = 50;
 const capsulas    = [];
 
 for (let i = 0; i < numCapsulas; i++) {
@@ -59,17 +59,20 @@ for (let i = 0; i < numCapsulas; i++) {
     }
 
     grupo.position.set(posX, 22 + Math.random() * 12, posZ);
+    // Para renderizar correctamente dentro da esfera
     scene.add(grupo);
 
-    capsulas.push({
+    const capsulaObj = {
         mesh:     grupo,
         dobradica: dobradica,
-        vel:      new THREE.Vector3(),   // Mantido para compatibilidade (não usado pelo Rapier)
+        modeloInterno: null,
+        vel:      new THREE.Vector3(),
         radius:   RAIO_CAPSULA,
         apanhada: false,
         saiu:     false,
         aberta:   false
-    });
+    };
+    capsulas.push(capsulaObj);
 }
 
 // ── Teclado ──────────────────────────────────────────────────────────────────
@@ -171,12 +174,19 @@ window.addEventListener("click", (e) => {
 
     capsulaFis.aberta = true;
 
-    carregarPremio("frog.glb", scene, (modelo) => {
+    // Carrega o animal agora que clicámos e a animação vai começar
+    carregarPremio("frog.glb", capsulaFis.mesh, (modelo) => {
+        // Inicializa o tamanho do animal dentro da cápsula (um pouco maior)
+        modelo.scale.set(0.025, 0.025, 0.025);
+        // Centraliza mais a rã, levantando a base em direção ao "equador" da esfera
+        modelo.position.set(0, -0.3, 0); 
+        capsulaFis.modeloInterno = modelo;
+
         capsuleOpener.ativar(
             { grupo: capsulaFis.mesh, dobradica: capsulaFis.dobradica },
             capsulaFis,
             modelo,
-            0.05
+            0.05 // escala final flutuante alvo da rã
         );
     });
 });
