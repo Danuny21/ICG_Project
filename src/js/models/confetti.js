@@ -1,8 +1,9 @@
 import * as THREE from "three";
+import { THEME } from "../config/theme.js";
 
 export function criarConfetis(scene) {
     const confettis = [];
-    const coresConfetis = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffffff];
+    const coresConfetis = THEME.PALETA_CORES;
     
     // Gerar meshes
     for (let i = 0; i < 500; i++) {
@@ -51,6 +52,12 @@ export function criarConfetis(scene) {
                         c.mesh.visible = false;
                     }
                 }
+            });
+        },
+        atualizarCores: function(novaPaleta) {
+            confettis.forEach(c => {
+                const novaCor = novaPaleta[Math.floor(Math.random() * novaPaleta.length)];
+                c.mesh.material.color.set(novaCor);
             });
         }
     };

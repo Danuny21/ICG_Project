@@ -1,14 +1,15 @@
 import * as THREE from "three";
+import { THEME } from "../config/theme.js";
 
 export function criarCapsula() {
     const capsuleGroup = new THREE.Group();
 
-    const coresCapsulas = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffaa00, 0xff007f];
+    const coresCapsulas = THEME.PALETA_CORES;
     const corAleatoria = coresCapsulas[Math.floor(Math.random() * coresCapsulas.length)];
 
     const matBottom = new THREE.MeshPhongMaterial({ color: corAleatoria, flatShading: true, shininess: 100, side: THREE.DoubleSide }); 
     // Começa opaco (sem transparência). O Abridor de Cápsulas vai torná-lo transparente e com opacidade 0.4 quando ativado.
-    const matTop = new THREE.MeshPhongMaterial({ color: 0x00ccff, flatShading: true, shininess: 100, transparent: false, opacity: 1.0, side: THREE.DoubleSide }); 
+    const matTop = new THREE.MeshPhongMaterial({ color: THEME.CAPSULA_TOPO, flatShading: true, shininess: 100, transparent: false, opacity: 1.0, side: THREE.DoubleSide }); 
     // Guardamos o 0.4 como userData para ser utilizado mais tarde
     matTop.userData.originalOpacity = 0.4;
 
@@ -31,7 +32,7 @@ export function criarCapsula() {
     hinge.add(topHalf); 
 
     const ringGeo = new THREE.TorusGeometry(1.54, 0.075, 6, 12);
-    const ring = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({color: 0xffffff, flatShading: true}));
+    const ring = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({color: THEME.CAPSULA_ANEL, flatShading: true}));
     ring.rotation.x = Math.PI / 2;
     bottomHalf.add(ring);
 
