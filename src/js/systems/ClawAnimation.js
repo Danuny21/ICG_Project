@@ -45,8 +45,8 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     let novoEstado = estadoJogo;
     let novoTime = timeAnim;
 
-    // Suaviza a rotação da garra de volta para 0 se não estiver a regressar nem a subir
-    if (novoEstado !== "REGRESSAR" && novoEstado !== "SUBIR") {
+    // Suaviza a rotação da garra de volta para 0 se não estiver a regressar, a subir, nem livre a andar
+    if (novoEstado !== "REGRESSAR" && novoEstado !== "SUBIR" && novoEstado !== "LIVRE") {
         clawMachine.mecanismoGarra.rotation.z = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.z, 0, 0.1);
         clawMachine.mecanismoGarra.rotation.x = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.x, 0, 0.1);
     }
@@ -56,35 +56,43 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
         estadoRepousoGarra(clawMachine);
 
         const pos = clawMachine.mecanismoTeto.position;
+        let dx = 0;
+        let dz = 0;
 
-        if (teclas.up) {
-            const novaPos = pos.z - velMovimento;
-            // O buraco está à frente (Z positivo), logo mover para cima (Z negativo) está sempre a sair ou a afastar-se do buraco
-            if (novaPos - RAIO_GARRA > -limites.z) {
-                pos.z = novaPos;
-            }
+        if (teclas.up)    dz -= 1;
+        if (teclas.down)  dz += 1;
+        if (teclas.left)  dx -= 1;
+        if (teclas.right) dx += 1;
+
+        // Normalização diagonal
+        if (dx !== 0 && dz !== 0) {
+            const length = Math.sqrt(dx * dx + dz * dz);
+            dx /= length;
+            dz /= length;
         }
-        if (teclas.down) {
-            const novaPos = pos.z + velMovimento;
-            // Bloqueia apenas se estiver a ENTAR no buraco vindo de trás
-            if (novaPos + RAIO_GARRA < limites.z && !colideComBuraco(pos.x, novaPos)) {
-                pos.z = novaPos;
-            }
+
+        if (dz < 0) { // UP
+            const novaPos = pos.z + dz * velMovimento;
+            if (novaPos - RAIO_GARRA > -limites.z) pos.z = novaPos;
         }
-        if (teclas.left) {
-            const novaPos = pos.x - velMovimento;
-            // Bloqueia apenas se estiver a ENTRAR no buraco vindo da direita
-            if (novaPos - RAIO_GARRA > -limites.x && !colideComBuraco(novaPos, pos.z)) {
-                pos.x = novaPos;
-            }
+        if (dz > 0) { // DOWN
+            const novaPos = pos.z + dz * velMovimento;
+            if (novaPos + RAIO_GARRA < limites.z && !colideComBuraco(pos.x, novaPos)) pos.z = novaPos;
         }
-        if (teclas.right) {
-            const novaPos = pos.x + velMovimento;
-            // O buraco está à esquerda (X negativo), logo mover para a direita (X positivo) é sempre sair do buraco
-            if (novaPos + RAIO_GARRA < limites.x) {
-                pos.x = novaPos;
-            }
+        if (dx < 0) { // LEFT
+            const novaPos = pos.x + dx * velMovimento;
+            if (novaPos - RAIO_GARRA > -limites.x && !colideComBuraco(novaPos, pos.z)) pos.x = novaPos;
         }
+        if (dx > 0) { // RIGHT
+            const novaPos = pos.x + dx * velMovimento;
+            if (novaPos + RAIO_GARRA < limites.x) pos.x = novaPos;
+        }
+        
+        // Abanar a garra levemente com a inércia do movimento
+        const targetRotX = dz * 0.05;
+        const targetRotZ = -dx * 0.05;
+        clawMachine.mecanismoGarra.rotation.x = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.x, targetRotX, 0.1);
+        clawMachine.mecanismoGarra.rotation.z = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.z, targetRotZ, 0.1);
     }
 
     // Animação joystick / botão
