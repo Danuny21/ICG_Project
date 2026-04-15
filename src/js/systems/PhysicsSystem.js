@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as RAPIER from "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
 
-// ── Constantes ─────────────────────────────────────────────────────────────
+// Constantes
 export const RAIO_CAPSULA = 1.5;
 export const PORTA_Z = 11.5;
 export const PORTA_ALTURA = 8.0;
@@ -13,7 +13,6 @@ const PORTA_SPRING = 0.04;
 const PORTA_DAMPING = 0.80;
 const CHAO_EXT_Y = 0;
 
-// ─────────────────────────────────────────────────────────────────────────────
 export class PhysicsWorld {
 
     constructor() {
@@ -29,7 +28,7 @@ export class PhysicsWorld {
         this._tmpEul = new THREE.Euler();
     }
 
-    // ── Inicialização assíncrona (WASM) ───────────────────────────────────────
+    // Inicialização assíncrona (WASM)
     async init(capsulas, clawMachine) {
         await RAPIER.init();
 
@@ -41,7 +40,7 @@ export class PhysicsWorld {
         this._criarPortaBody(clawMachine);
     }
 
-    // ── Passo de física (chamar uma vez por frame) ────────────────────────────
+    // Passo de física (chamar uma vez por frame)
     update(capsulas, clawMachine) {
         this._syncFingerBodies(clawMachine);
         this._updatePorta(capsulas, clawMachine);
@@ -49,9 +48,7 @@ export class PhysicsWorld {
         this._syncMeshes(capsulas);
     }
 
-    // ── API pública para grasp real (removida para grasp puramente físico) ────
-
-    // ── Geometria estática ────────────────────────────────────────────────────
+    // Geometria estática
     _criarGeometriaEstatica() {
         const W = this.world;
 
@@ -60,16 +57,16 @@ export class PhysicsWorld {
 
         const col = (desc) => W.createCollider(desc.setFriction(0.3).setRestitution(0.3), staticBody);
 
-        // 1. Base Oca inferior
+        // Base Oca inferior
         col(RAPIER.ColliderDesc.cuboid(5.0, 0.475, 5.0).setTranslation(-6.5, 0.5, 9.8));
 
-        // 2. Paredes da Base
+        // Paredes da Base
         col(RAPIER.ColliderDesc.cuboid(12.0, 7.0, 0.5).setTranslation(0, 7, -11.5));
         col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(11.5, 7, 0));
         col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(-11.5, 7, 0));
         col(RAPIER.ColliderDesc.cuboid(7.95, 7.0, 0.5).setTranslation(3.55, 7, 11.5));
 
-        // 3. Vidros Superiores (e Postes)
+        // Vidros Superiores
         const wallH = 13.5;
         const wallW = 11.45;
         col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(-11.45, 27.5, 0));
@@ -80,20 +77,20 @@ export class PhysicsWorld {
         // Teto
         col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));
 
-        // 4. Chão interior (Buraco)
+        // Chão interior (Buraco)
         col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));
         col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));
 
-        // 5. Divisores internos de vidro do buraco
+        // Divisores internos de vidro do buraco
         col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));
         col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));
 
-        // 6. Rampa de Deslize
+        // Rampa de Deslize
         col(RAPIER.ColliderDesc.cuboid(3.3, 0.25, 7.0)
             .setTranslation(-7.8, 5.5, 8.0)
             .setRotation({ x: Math.sin(1 / 2), y: 0, z: 0, w: Math.cos(1 / 2) }));
 
-        // 7. Túnel
+        // Túnel
         col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));
         col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));
         col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));
@@ -107,7 +104,7 @@ export class PhysicsWorld {
         col(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, CHAO_EXT_Y - 0.1, 15).setFriction(0.6));
     }
 
-    // ── Corpos das cápsulas ───────────────────────────────────────────────────
+    // Corpos das cápsulas
     _criarCapsulaBodies(capsulas) {
         for (const c of capsulas) {
             const p = c.mesh.position;
@@ -131,7 +128,7 @@ export class PhysicsWorld {
         }
     }
 
-    // ── Corpos cinemáticos dos dedos ──────────────────────────────────────────
+    // Corpos cinemáticos dos dedos
     _criarFingerBodies(clawMachine) {
         for (const dedo of clawMachine.dedos) {
             const seg1 = dedo;
@@ -163,7 +160,7 @@ export class PhysicsWorld {
         }
     }
 
-    // ── Corpo cinemático da porta ─────────────────────────────────────────────
+    // Corpo cinemático da porta
     _criarPortaBody(clawMachine) {
         if (!clawMachine.porta) return;
 
@@ -180,7 +177,7 @@ export class PhysicsWorld {
         );
     }
 
-    // ── Sync dos dedos cinemáticos → Rapier ───────────────────────────────────
+    // Sync dos dedos cinemáticos → Rapier
     _syncFingerBodies(clawMachine) {
         for (const { body, dedo } of this._fingerBodies) {
             dedo.updateWorldMatrix(true, false);
@@ -202,7 +199,7 @@ export class PhysicsWorld {
         }
     }
 
-    // ── Sync dos dedos cinemáticos → Rapier ───────────────────────────────────
+    // Sync dos dedos cinemáticos → Rapier
     _updatePorta(capsulas, clawMachine) {
         if (!clawMachine.porta || !this._portaBody) return;
 

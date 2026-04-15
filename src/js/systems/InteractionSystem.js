@@ -17,16 +17,12 @@ export class InteractionSystem {
         this._onMouseClick = this._onMouseClick.bind(this);
     }
 
-    /**
-     * Começa a ouvir eventos de clique.
-     */
+    // Começa a ouvir eventos de clique.    
     init() {
         window.addEventListener("click", this._onMouseClick);
     }
 
-    /**
-     * Para de ouvir eventos de clique (limpeza).
-     */
+    // Para de ouvir eventos de clique (limpeza).
     dispose() {
         window.removeEventListener("click", this._onMouseClick);
     }
@@ -44,14 +40,14 @@ export class InteractionSystem {
 
         // Filtra as cápsulas que estão no depósito (saiu) e que ainda não foram abertas ou apanhadas
         const disponiveis = this.capsulas.filter(c => c.saiu && !c.aberta && !c.apanhada);
-        
+
         // Verifica interseções
         const hits = this.raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
         if (!hits.length) return;
 
         // Obtém o primeiro objeto atingido
         const hit = hits[0].object;
-        
+
         // Encontra o objeto lógico da cápsula associado à mesh atingida
         const capsulaLogic = disponiveis.find(c => {
             let found = false;

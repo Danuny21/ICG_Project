@@ -45,7 +45,7 @@ export class CapsuleOpener {
         this.nomeExibicao = "";
         this.temaAtual = "classico";
 
-        // Ouvinte do teclado (só ativo quando necessário)
+        // Ouvinte do teclado
         this._onKeyDown = this._onKeyDown.bind(this);
     }
 
@@ -53,8 +53,8 @@ export class CapsuleOpener {
      * Chamado quando o utilizador clica numa cápsula.
      * @param {object} capsulaObj   { grupo: THREE.Group, dobradica: THREE.Group }
      * @param {object} capsulaFis   Entrada no array de física { mesh, vel, apanhada, ... }
-     * @param {string} nomeAnimacao  Nome da animação inicial (opcional)
-     * @param {string} nomeExibicao  Nome legível para mostrar na UI
+     * @param {string} nomeAnimacao  Nome da animação inicial (opcional) do modelo
+     * @param {string} nomeExibicao  Nome legível para mostrar na UI do prémio
      */
     abrirCapsula(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2, clipes = [], nomeAnimacao = null, nomeExibicao = "") {
         if (this.estado !== "INATIVA") return; // Ignora se já estiver a ser usado
@@ -68,8 +68,6 @@ export class CapsuleOpener {
         // Setup Animações se existirem
         if (clipes && clipes.length > 0) {
             this.mixer = new THREE.AnimationMixer(this.modelo);
-
-            // Prioriza o nome configurado (exata ou case-insensitive), senão procura por "Idle", senão usa a primeira
             let idleClip = null;
             if (nomeAnimacao) {
                 // Tenta correspondência exata
@@ -83,18 +81,15 @@ export class CapsuleOpener {
                         return clipName === targetName || clipName.includes(targetName) || targetName.includes(clipName);
                     });
                 }
-
             }
-
             if (!idleClip) {
                 // Fallback padrão se não houver nome configurado ou não for encontrado
                 idleClip = clipes.find(c => c.name.toLowerCase().includes("idle")) || clipes[0];
             }
-
+            // Rodar animação
             const action = this.mixer.clipAction(idleClip);
             action.play();
         }
-
 
         // Congela a cápsula na física
         if (this.capsulaFisica) {
@@ -111,9 +106,9 @@ export class CapsuleOpener {
 
         // A cápsula vem parar à frente do utilizador
         this._alvoMundo.copy(this.camera.position).add(dir.multiplyScalar(20));
-        this._alvoMundo.y -= 6; 
+        this._alvoMundo.y -= 6;
 
-        // Reposição da opacidade da cápsula (inicializa variável base para o fade-out)
+        // Reposição da opacidade da cápsula
         this.opacidadeCapsula = 1.0;
         this.capsula.grupo.traverse(child => {
             if (child.isMesh) {
@@ -128,7 +123,7 @@ export class CapsuleOpener {
         });
 
         // Reset dobradiça e orientação da cápsula
-        this.capsula.grupo.rotation.set(0, 0, 0); // Fica horizontal
+        this.capsula.grupo.rotation.set(0, 0, 0);
         this.capsula.dobradica.rotation.set(0, 0, 0);
         this.capsula.dobradica.position.set(0, 0, -1.5);
         this.capsula.grupo.children[0].position.set(0, 0, 0);
@@ -140,7 +135,7 @@ export class CapsuleOpener {
         if (this.controls) this.controls.enabled = false;
     }
 
-    update(time) {
+    atualizarCapsula(time) {
         if (this.estado === "INATIVA") return;
 
         // Calcula delta para o mixer
@@ -187,8 +182,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── ABRIR ──────────────────────────────────────────────────────────────────
-
+        // ABRIR
         if (this.estado === "ABRIR") {
             const dobradica = this.capsula.dobradica;
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
@@ -212,7 +206,7 @@ export class CapsuleOpener {
             }
         }
 
-        // ── DESAPARECER ─────────────────────────────────────────────────────────────────
+        // DESAPARECER
         if (this.estado === "DESAPARECER") {
             const parteDebaixo = this.capsula.grupo.children[0];
             const parteCima = this.capsula.dobradica;
@@ -232,11 +226,9 @@ export class CapsuleOpener {
             // Modelo cresce
             if (this.modelo && this.modelo.scale.x < this.escalaAlvo) {
                 const passo = this.escalaAlvo / 20;
-                // Aumenta 25% o tamanho do prémio face à escalaAlvo
                 const limiteTam = this.escalaAlvo * 1.25;
                 const novoTam = Math.min(this.modelo.scale.x + passo, limiteTam);
                 this.modelo.scale.set(novoTam, novoTam, novoTam);
-                // Posiciona o modelo ligeiramente acima do alvo mundo para não ficar no chão
                 this.modelo.position.y = this._alvoMundo.y + 0.5;
             }
 
@@ -277,7 +269,6 @@ export class CapsuleOpener {
         if (this.estado === "ENCERRAR") {
             this._esconderNomePremio();
             if (this.modelo) {
-                // Diminui 10% do tamanho atual por frame
                 this.modelo.scale.multiplyScalar(0.9);
                 this.modelo.rotation.y += 0.1;
 
@@ -366,12 +357,12 @@ export class CapsuleOpener {
         this._nomePremioEl = document.createElement("div");
         Object.assign(this._nomePremioEl.style, {
             position: "fixed",
-            top: "15%", 
+            top: "15%",
             left: "50%",
             transform: "translateX(-50%) scale(0.5)",
             color: "#fff",
             fontFamily: "'Outfit', sans-serif",
-            fontSize: "3.5rem", 
+            fontSize: "3.5rem",
             fontWeight: "900",
             textTransform: "uppercase",
             letterSpacing: "0.1em",

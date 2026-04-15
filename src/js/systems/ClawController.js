@@ -9,11 +9,11 @@ export class ClawController {
         this.confetis = confetis;
 
         // Estado do jogo
-        this.estado = "ESPERANDO"; // ESPERANDO, JOGANDO, RETORNANDO
+        this.estado = "ESPERA"; // ESPERA, JOGA, RETORNA
         this.pontos = 0;
         this.brinquedosApanhados = 0;
 
-        // Controles
+        // Comandos
         this.keys = {};
         this.velocidadeMovimento = 0.15;
         this.velocidadeDepth = 0.15;
@@ -25,20 +25,20 @@ export class ClawController {
             depth: { min: -3, max: 2 }
         };
 
-        // Tempo de controle
+        // Tempos
         this.tempoJogo = 0;
         this.tempoMaxJogo = 30; // 30 segundos por tentativa
         this.emJogo = false;
 
         // Setup de inputs
-        this.setupControles();
+        this.setupComandos();
     }
 
-    setupControles() {
+    setupComandos() {
         window.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
-            
-            if (e.key === ' ' && this.estado === 'ESPERANDO') {
+
+            if (e.key === ' ' && this.estado === 'ESPERA') {
                 this.iniciarJogo();
             }
             if (e.key === 'Enter') {
@@ -52,15 +52,14 @@ export class ClawController {
     }
 
     iniciarJogo() {
-        console.log('Use as setas para mover, ENTER para apanhar!');
-        this.estado = 'JOGANDO';
+        this.estado = 'JOGA';
         this.tempoJogo = 0;
         this.brinquedosApanhados = 0;
         this.emJogo = true;
     }
 
     atualizarDeltas() {
-        if (this.estado !== 'JOGANDO') return;
+        if (this.estado !== 'JOGA') return;
 
         const deltaX = (this.keys['arrowright'] ? 1 : 0) - (this.keys['arrowleft'] ? 1 : 0);
         const deltaZ = (this.keys['arrowdown'] ? 1 : 0) - (this.keys['arrowup'] ? 1 : 0);
@@ -92,17 +91,14 @@ export class ClawController {
     }
 
     fecharGarras() {
-        if (this.estado !== 'JOGANDO') return;
+        if (this.estado !== 'JOGA') return;
 
-        console.log('👁️ Fechando garras...');
-        
         // Verificar colisões
         this.verificarColisoes();
-        
+
         // Simular movimento de retorno
         setTimeout(() => {
-            this.estado = 'RETORNANDO';
-            console.log(`📦 Apanhados: ${this.brinquedosApanhados}`);
+            this.estado = 'RETORNA';
         }, 500);
 
         // Reposicionar garras ao topo
@@ -111,7 +107,6 @@ export class ClawController {
             this.clawMachine.eixoGrupo.position.set(0, 14, 0);
             this.clawMachine.eixoCentral.position.y = 0;
             this.estado = 'ESPERANDO';
-            console.log('✅ Garras retornadas! Pressione SPACE para jogar novamente.');
         }, 2000);
     }
 
@@ -128,9 +123,8 @@ export class ClawController {
             if (brinquedo.userData.apanhado) return;
 
             const distancia = brinquedo.position.distanceTo(posGarras);
-            
+
             if (distancia < raioApanha) {
-                console.log(`✨ Apanhaste: ${brinquedo.userData.tipo || 'brinquedo'}`);
                 this.apanharBrinquedo(brinquedo);
             }
         });
@@ -151,11 +145,11 @@ export class ClawController {
 
         const animacao = setInterval(() => {
             brinquedo.position.lerp(targetPos, 0.1);
-            
+
             if (brinquedo.position.y < -4) {
                 clearInterval(animacao);
                 this.scene.remove(brinquedo);
-                
+
                 // Disparar confetis
                 if (this.confetis) {
                     this.confetis.disparar();
@@ -167,7 +161,7 @@ export class ClawController {
     update(time) {
         if (this.estado === 'JOGANDO') {
             this.tempoJogo += 0.016; // ~60fps
-            
+
             // Atualizar movimento
             this.atualizarDeltas();
 
@@ -184,13 +178,6 @@ export class ClawController {
     finalizarJogo() {
         this.estado = 'ESPERANDO';
         this.emJogo = false;
-        console.log(`
-╔═══════════════════════════════╗
-║      FIM DO JOGO              ║
-║ Pontos: ${this.pontos}              ║
-║ Brinquedos: ${this.brinquedosApanhados}         ║
-╚═══════════════════════════════╝
-        `);
     }
 
     obterPontos() {

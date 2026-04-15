@@ -4,7 +4,7 @@ import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
 const cacheModelos = {}; // { caminho: { scene: THREE.Group, animations: AnimationClip[] } }
 
-// ── Carregar prémio p/ cache ou cena ─────────────────────────────────────────
+// Carregar prémio pa cache e cena
 export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
     if (cacheModelos[caminhoFicheiro]) {
         const cached = cacheModelos[caminhoFicheiro];
@@ -29,15 +29,13 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
             if (node.isMesh) {
                 node.castShadow = true;
                 node.receiveShadow = true;
-                
-                // Garante que o modelo é visível de ambos os lados (corrige buracos em modelos simples)
+
                 if (node.material) {
                     node.material.side = THREE.DoubleSide;
                 }
             }
         });
 
-        // Guardamos o master e as animações na cache!
         cacheModelos[caminhoFicheiro] = { scene: baseScene, animations: animations };
 
         const cloneInicial = SkeletonUtils.clone(baseScene);

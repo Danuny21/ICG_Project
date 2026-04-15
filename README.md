@@ -1,114 +1,67 @@
 # Claw Machine - Projeto ICG (Three.js)
 
-Projeto de Introdução à Computação Gráfica com tema de **Claw Machine** - uma máquina de garras para ganhar prémios!
+Uma experiência interativa de máquina de garras (arcade) desenvolvida com **Three.js**, focada em física realista, estética modular e personalização.
+
+## Funcionalidades Principais
+
+- **Física Realista (Rapier3D)**: Simulação completa de colisões, gravidade e o mecanismo de garra.
+- **Arquitetura Modular**: Lógica separada em sistemas especializados (`Physics`, `Spawner`, `Interaction`, `Opener`).
+- **Sistema de Prémios**: Mais de 22 modelos de animais (`Kenney Assets`), totalmente localizados para PT-PT e com suporte a animações.
+- **Temas Dinâmicos**: Três modos visuais distintos:
+  - **Clássico**: A estética tradicional das arcades.
+  - **Cyberpunk**: Cores vibrantes, néons e atmosfera futurista.
+  - **Floresta**: Ambiente natural e tons orgânicos.
+- **Efeitos Visuais**: Sistema de confetis, UI dinâmica de revelação de prémio e transições de câmara suaves.
+
+## Como Jogar
+
+### Controles
+
+- **Setas (◄ ▲ ► ▼)**: Mover a garra nas direções X e Z.
+- **ESPAÇO**: Descer a garra e tentar apanhar uma cápsula.
+- **ESPAÇO (após apanhar)**: Abrir a cápsula e revelar o prémio.
+- **Orbit Controls (Rato)**: Rodar e fazer zoom para ver a máquina de qualquer ângulo.
+
+### Executar Localmente
+
+Para evitar problemas de CORS com os loaders de modelos 3D, recomenda-se o uso de um servidor local:
+
+```bash
+# Exemplo com Python
+python -m http.server 8000
+# Aceder em: http://localhost:8000
+```
 
 ## Estrutura do Projeto
 
 ```text
-claw-machine/
-├── index.html                 # Ficheiro principal (entrypoint)
-├── src/                       # Código-fonte
-│   ├── js/
-│   │   ├── main.js           # Script principal (inicialização da cena)
-│   │   ├── systems/          # Sistemas de lógica
-│   │   │   └── CapsuleOpener.js   # Sistema de abertura da cápsula
-│   │   ├── models/           # Modelos 3D e loaders
-│   │   │   ├── capsuleModel.js    # Cápsula (geometria própria)
-│   │   │   ├── animalLoader.js    # Loader de modelos de animais
-│   │   │   └── confetti.js        # Sistema de confetis
-│   │   └── utils/            # Utilitários (em desenvolvimento)
-│   └── styles/
-│       └── style.css         # Estilos globais
-│
-├── assets/                    # Assets (modelos, texturas)
-│   ├── models/               # Modelos 3D importados
-│   │   └── kenney_cube-pets/  # Assets de animais (Kenney)
-│   └── textures/             # Texturas (em desenvolvimento)
-│
-└── README.md                  # Este ficheiro
-
+src/
+├── js/
+│   ├── main.js              # Ponto de entrada e orquestração
+│   ├── systems/             # Sistemas de lógica operacional
+│   │   ├── PhysicsSystem.js   # Simulação física com Rapier3D
+│   │   ├── CapsuleSpawner.js  # Lógica de geração de cápsulas e exclusão
+│   │   ├── InteractionSystem.js # Gestão de cliques e seleção de cápsulas
+│   │   ├── CapsuleOpener.js   # Fluxo de abertura (atualizarCapsula)
+│   │   └── ClawAnimation.js   # Máquina de estados da garra (atualizarAnimacaoGarra)
+│   ├── models/              # Definições geométricas (Three.js)
+│   │   ├── clawMachine.js     # Estrutura 3D da arcade
+│   │   ├── capsuleModel.js    # Geometria da cápsula e dobradiça
+│   │   ├── confetti.js        # Sistema de partículas (confetis)
+│   │   └── PrizeLoader.js     # Carregador assíncrono de modelos GLB
+│   ├── config/              # Parâmetros, Temas e Dificuldade
+│   └── utils/               # Funções matemáticas auxiliares
+└── styles/                  # Estilização da interface (CSS)
 ```
 
-## Como Usar
+## Tecnologias
 
-### Executar o Projeto
-
-```bash
-# Simples - abrir index.html num browser
-# Ou usar um servidor local (recomendado para evitar CORS)
-
-python -m http.server 8000
-# Depois aceder a: http://localhost:8000
-```
-
-## Pastas e Responsabilidades
-
-| Pasta | Descrição |
-| ------- | ----------- |
-| `/src/js/main.js` | Inicialização: cena, câmara, renderer, controles |
-| `/src/js/systems/` | Lógica complexa (CapsuleOpener, Claw logic, etc) |
-| `/src/js/models/` | Modelos 3D e loaders (GLB, OBJ, etc) |
-| `/src/js/utils/` | Funções auxiliares (math, helpers, etc) |
-| `/src/styles/` | CSS e styling |
-| `/assets/models/` | Modelos 3D importados (third-party, Kenney, etc) |
-| `/assets/textures/` | Texturas e materiais |
-
-## Componentes Principais
-
-### Claw Machine (`src/js/models/clawMachine.js`)
-
-Modelo completo 3D da máquina de garras incluindo:
-
-- **Base e estrutura** - Caixa principal com paredes
-- **Teto e motor** - Cilindro vermelho rotativo
-- **Sistema de garras** - 4 garras posicionadas radialmente
-- **Brinquedos** - Objectos coloridos que podem ser apanhados
-
-**Uso:**
-
-```javascript
-const clawMachine = criarClawMachine();
-scene.add(clawMachine.grupo);
-
-const brinquedos = criarBrinquedos(scene, 8);
-```
-
-### ClawController (`src/js/systems/ClawController.js`)
-
-Sistema de controle completo do jogo:
-
-- **Movimento das garras** (X, Z, profundidade)
-- **Colisão e apanha** de brinquedos
-- **Sistema de pontuação**
-- **Timer de 30 segundos**
-- **Controles de teclado**
-
-**Controles:**
-
-- Setas - Mover garras (X e Z)
-- `A / D` - Aprofundar/Retirar garras
-- `ENTER` - Fechar garras e tentar apanhar
-- `SPACE` - Iniciar jogo
-
-**Uso:**
-
-```javascript
-const gameController = new ClawController(clawMachine, brinquedos, scene, confetis);
-gameController.update(time); // Cada frame
-```
-
-### CapsuleOpener (`src/js/systems/CapsuleOpener.js`)
-
-Sistema antigo (ainda disponível) para animação de cápsula com prémio.
-
-### Confetis (`src/js/models/confetti.js`)
-
-Sistema de partículas que dispara quando apanhas um brinquedo.
-
-## Documentação
-
-- **[SETUP.md](SETUP.md)** - Como jogar e configurar
+- **Three.js**: Motor gráfico para renderização 3D.
+- **Rapier3D**: Motor de física de alta performance.
+- **lil-gui**: Controlos de interface para depuração e troca de temas.
+- **JavaScript (ES6+)**: Lógica e modularização.
 
 ---
-
-**Autor**: Projeto ICG 2º Semestre - Universidade de Aveiro
+**Autor**: Daniel Nunes
+**Âmbito**: Projeto para a cadeira de Introdução à Computação Gráfica.
+**UA - Universidade de Aveiro**

@@ -8,17 +8,17 @@ export function criarClawMachine(scene) {
     // Materiais
     const materiais = {
         estrutura: new THREE.MeshPhongMaterial({ color: THEME.ESTRUTURA, flatShading: true, shininess: 100 }),
-        vidro:     new THREE.MeshPhongMaterial({ color: THEME.VIDRO, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide }),
-        chao:      new THREE.MeshPhongMaterial({ color: THEME.CHAO, flatShading: true }),
-        metal:     new THREE.MeshPhongMaterial({ color: THEME.METAL }),
-        mecanismo: new THREE.MeshPhongMaterial({ color: THEME.MECANISMO }),
-        dedo:      new THREE.MeshPhongMaterial({ color: THEME.GARRA_DEDO, flatShading: true, shininess: 60 }),
-        moldura:   new THREE.MeshPhongMaterial({ color: THEME.MODURA }),
-        joyBase:   new THREE.MeshPhongMaterial({ color: THEME.JOY_BASE }),
-        joyBola:   new THREE.MeshPhongMaterial({ color: THEME.JOY_BOLA, shininess: 100 }),
-        btnBase:   new THREE.MeshPhongMaterial({ color: THEME.BTN_BASE }),
-        btn:       new THREE.MeshPhongMaterial({ color: THEME.BTN_PRINCIPAL, shininess: 80 }),
-        porta:     new THREE.MeshPhongMaterial({ color: THEME.PORTA, transparent: true, opacity: 0.5, shininess: 90, side: THREE.DoubleSide })
+        vidro: new THREE.MeshPhongMaterial({ color: THEME.VIDRO, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide }),
+        chao: new THREE.MeshPhongMaterial({ color: THEME.CHAO, flatShading: true }),
+        metal: new THREE.MeshPhongMaterial({ color: THEME.METAL }),             // Haste do joystick e cabo
+        mecanismo: new THREE.MeshPhongMaterial({ color: THEME.MECANISMO }),     // Base dos dedos da garra
+        dedo: new THREE.MeshPhongMaterial({ color: THEME.GARRA_DEDO, flatShading: true, shininess: 60 }),
+        moldura: new THREE.MeshPhongMaterial({ color: THEME.MODURA }),
+        joyBase: new THREE.MeshPhongMaterial({ color: THEME.JOY_BASE }),
+        joyBola: new THREE.MeshPhongMaterial({ color: THEME.JOY_BOLA, shininess: 100 }),
+        btnBase: new THREE.MeshPhongMaterial({ color: THEME.BTN_BASE }),
+        btn: new THREE.MeshPhongMaterial({ color: THEME.BTN_PRINCIPAL, shininess: 80 }),
+        porta: new THREE.MeshPhongMaterial({ color: THEME.PORTA, transparent: true, opacity: 0.5, shininess: 90, side: THREE.DoubleSide })
     };
 
     const { estrutura: matEstrutura, vidro: matVidro, chao: matChao, metal: matMetal, mecanismo: matMecanismo, dedo: matDedo, moldura: matMoldura } = materiais;
@@ -26,31 +26,38 @@ export function criarClawMachine(scene) {
     // ── Base Oca ─────────────────────────────────────────────────────────────────
     const esp = 1;
 
+    // Chao da porta
     const baseFundo = new THREE.Mesh(new THREE.BoxGeometry(10, 0.95, 10), matEstrutura);
     baseFundo.position.set(-6.5, 0.5, 9.8);
     group.add(baseFundo);
 
+    // Parede da base tras
     const baseTras = new THREE.Mesh(new THREE.BoxGeometry(24, 14, esp), matEstrutura);
     baseTras.position.set(0, 7, -11.5);
     group.add(baseTras);
 
+    // Parede da base direita
     const baseDir = new THREE.Mesh(new THREE.BoxGeometry(esp, 14, 24), matEstrutura);
     baseDir.position.set(11.5, 7, 0);
     group.add(baseDir);
 
+    // Parede da base esquerda
     const baseEsq = new THREE.Mesh(new THREE.BoxGeometry(esp, 14, 24), matEstrutura);
     baseEsq.position.set(-11.5, 7, 0);
     group.add(baseEsq);
 
+    // Parede da base frente direita
     const baseFrenteDir = new THREE.Mesh(new THREE.BoxGeometry(15.9, 14, esp), matEstrutura);
     baseFrenteDir.position.set(3.55, 7, 11.5);
     group.add(baseFrenteDir);
 
+    // Teto
     const teto = new THREE.Mesh(new THREE.BoxGeometry(24, 2.4, 24), matEstrutura);
     teto.position.y = 42.2;
     teto.castShadow = true;
     group.add(teto);
 
+    // Postes/Colunas
     const posteGeo = new THREE.BoxGeometry(1, 27, 1);
     [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]].forEach(([px, pz]) => {
         const poste = new THREE.Mesh(posteGeo, matEstrutura);
@@ -59,6 +66,7 @@ export function criarClawMachine(scene) {
         group.add(poste);
     });
 
+    // Vidros
     const vLado = new THREE.BoxGeometry(0.1, 27, 22);
     const vFront = new THREE.BoxGeometry(22, 27, 0.1);
     const ve = new THREE.Mesh(vLado, matVidro); ve.position.set(-11.45, 27.5, 0); group.add(ve);
@@ -66,7 +74,8 @@ export function criarClawMachine(scene) {
     const vt = new THREE.Mesh(vFront, matVidro); vt.position.set(0, 27.5, -11.45); group.add(vt);
     const vf = new THREE.Mesh(vFront, matVidro); vf.position.set(0, 27.5, 11.45); group.add(vf);
 
-    // ── Chão interior dividido em dois blocos ───────────────────────────────────
+    // Chão interior dividido em dois blocos 
+    // (Para conseguir ter um buraco para as cápsulas caírem)
     const chaoDir = new THREE.Mesh(new THREE.BoxGeometry(15.7, 0.1, 22.8), matChao);
     chaoDir.position.set(3.55, 14.06, 0);
     chaoDir.receiveShadow = true;
@@ -77,32 +86,26 @@ export function criarClawMachine(scene) {
     chaoEsq.receiveShadow = true;
     group.add(chaoEsq);
 
-    // ── Moldura Vazada do Buraco ────────────────────────────────────────────────
+    // Moldura entre buraco e vidros
     const molduraGroup = new THREE.Group();
     molduraGroup.position.set(-7.8, 14.08, 7.8);
-
     const tamExt = 7;
     const espessura = 0.4;
     const altura = 0.3;
-
     const geoH = new THREE.BoxGeometry(tamExt, altura, espessura);
     const geoV = new THREE.BoxGeometry(espessura, altura, tamExt - (espessura * 2));
-
     const bordaFrente = new THREE.Mesh(geoH, matMoldura);
     bordaFrente.position.set(0, 0, tamExt / 2 - espessura / 2);
-
     const bordaTras = new THREE.Mesh(geoH, matMoldura);
     bordaTras.position.set(0, 0, -tamExt / 2 + espessura / 2);
-
     const bordaEsq = new THREE.Mesh(geoV, matMoldura);
     bordaEsq.position.set(-tamExt / 2 + espessura / 2, 0, 0);
-
     const bordaDir = new THREE.Mesh(geoV, matMoldura);
     bordaDir.position.set(tamExt / 2 - espessura / 2, 0, 0);
-
     molduraGroup.add(bordaFrente, bordaTras, bordaEsq, bordaDir);
     group.add(molduraGroup);
 
+    // Vidros divisores entre buraco e cápsulas
     const divDir = new THREE.Mesh(new THREE.BoxGeometry(0.1, 10, 7.2), matVidro);
     divDir.position.set(-4.3, 19.1, 7.85);
     group.add(divDir);
@@ -110,7 +113,7 @@ export function criarClawMachine(scene) {
     divTras.position.set(-7.85, 19.1, 4.3);
     group.add(divTras);
 
-    // ── Painel de Controlo e Túnel Oco ──────────────────────────────────────────
+    // Painel de Controlo
     const supDir = new THREE.Mesh(new THREE.BoxGeometry(15.9, 13, 4), matEstrutura);
     supDir.position.set(3.55, 6.5, 12.8);
     group.add(supDir);
@@ -123,12 +126,13 @@ export function criarClawMachine(scene) {
     supTopo.position.set(-7.5, 10.4, 12.8);
     group.add(supTopo);
 
+    // Túnel Oco
     const tunelEsq = new THREE.Mesh(new THREE.BoxGeometry(0.4, 10.0, 11.0), matEstrutura);
     tunelEsq.position.set(-11.1, 8.5, 9);
     group.add(tunelEsq);
 
-    const tunelDir = new THREE.Mesh(new THREE.BoxGeometry(0.4, 10.0, 11.0), matEstrutura);
-    tunelDir.position.set(-4.5, 8.5, 9);
+    const tunelDir = new THREE.Mesh(new THREE.BoxGeometry(0.4, 12, 11.0), matEstrutura);
+    tunelDir.position.set(-4.5, 7.5, 9);
     group.add(tunelDir);
 
     const tunelTras = new THREE.Mesh(new THREE.BoxGeometry(6.2, 9.0, 0.4), matEstrutura);
@@ -181,11 +185,11 @@ export function criarClawMachine(scene) {
     btn.castShadow = true;
     btnGroup.add(btn);
     const btnLight = new THREE.PointLight(THEME.BTN_PRINCIPAL, 0.5, 8);
-    btnLight.userData.isThemeLight = true; // Flag para localizar mais tarde se necessário
+    btnLight.userData.isThemeLight = true;
     btnLight.position.set(5, 4, 0);
     painelGroup.add(btnLight);
 
-    // ── Mecanismo da Garra ──────────────────────────────────────────────────────
+    // Mecanismo da Garra
     const garraTetoGroup = new THREE.Group();
     garraTetoGroup.position.set(0, 42.2, 0);
     group.add(garraTetoGroup);
@@ -205,7 +209,7 @@ export function criarClawMachine(scene) {
     cabo.castShadow = true;
     garraCaboGroup.add(cabo);
 
-    // ── Cabeça central
+    // Cabeça central
     const garraCabecaGroup = new THREE.Group();
     garraCaboGroup.add(garraCabecaGroup);
 
@@ -213,7 +217,7 @@ export function criarClawMachine(scene) {
     cabeca.castShadow = true;
     garraCabecaGroup.add(cabeca);
 
-    // ── 3 Dedos ───────────────────────────────────────────────────────────────
+    // 3 Dedos da garra
     const W = 0.55;
     const T = 0.45;
     const L1 = 3.2;
@@ -256,7 +260,7 @@ export function criarClawMachine(scene) {
         seg2.add(seg3);
     }
 
-    // ── Rampa de Deslize e Porta ───────────────────────────────────────────────
+    //Rampa de Deslize
     const rampa = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.5, 14), matEstrutura);
     rampa.position.set(-7.8, 6, 8);
     rampa.rotation.x = 1;
@@ -273,17 +277,17 @@ export function criarClawMachine(scene) {
     portaPivot.add(porta);
 
     return {
-        caixa:         group,
+        caixa: group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
         mecanismoGarra: garraCabecaGroup,
-        dedos:         dedos,       
-        dedoPivots:    dedoPivots,
-        cabo:          cabo,
-        porta:         porta,
+        dedos: dedos,
+        dedoPivots: dedoPivots,
+        cabo: cabo,
+        porta: porta,
         controles: {
             joystick: joyHasteGroup,
-            botao:    btn
+            botao: btn
         },
         atualizarTema: (tema) => {
             materiais.estrutura.color.set(tema.ESTRUTURA);

@@ -67,5 +67,4 @@ export const TEMAS = {
     }
 };
 
-// Exportar o tema padrão inicial
 export const THEME = TEMAS.classico;

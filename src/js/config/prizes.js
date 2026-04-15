@@ -4,6 +4,7 @@
  * escala: tamanho do prémio dentro da cápsula
  * escalaAlvo: tamanho do prémio quando sai da cápsula
  * offsetY: posição vertical do prémio
+ * idle: animação que corre ao sair da cápsula
  */
 
 export const LISTA_PREMIOS = [

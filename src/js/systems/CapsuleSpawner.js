@@ -18,7 +18,7 @@ export class CapsuleSpawner {
         for (let i = 0; i < quantidade; i++) {
             const { grupo, dobradica } = criarCapsula();
 
-            // Posicionamento aleatório (evitando o buraco da rampa)
+            // Posicionamento aleatório (evitando o buraco)
             let posX, posZ, caiuNoBuraco = true;
             while (caiuNoBuraco) {
                 posX = (Math.random() - 0.5) * 20;
