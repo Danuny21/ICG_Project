@@ -1,15 +1,15 @@
 import * as THREE from "three";
 
 /**
- * CapsuleOpener — Fluxo completo de abertura de cápsula
+ * CapsuleOpener — Fluxo completo de abertura da cápsula
  *
  * Estados:
- *  INATIVA        → à espera de ser ativada via .ativar()
- *  TRANSPORTANDO  → cápsula voa suavemente para a frente da câmara
- *  AGUARDAR       → cápsula parada à frente, à espera de SPACE
- *  ABRINDO        → animação da dobradiça a abrir
- *  EXPULSAR       → cápsula parte-se, modelo cresce
- *  CONTROLO_LIVRE → modelo flutua, câmara orbita à volta
+ *  INATIVA        → à espera de ser ativada através de .ativar()
+ *  A_TRANSPORTAR  → a cápsula voa suavemente para a frente da câmara
+ *  A_A_A_AGUARDAR       → a cápsula está parada à frente, à espera da tecla ESPAÇO
+ *  A_ABRIR        → animação da dobradiça a abrir
+ *  EXPULSAR       → a cápsula parte-se, o modelo cresce
+ *  CONTROLO_LIVRE → o modelo flutua, a câmara orbita à volta
  */
 export class CapsuleOpener {
     constructor(scene, camera, controls, confetis) {
@@ -32,24 +32,24 @@ export class CapsuleOpener {
         this._frameTransporte = 0;
         this._FRAMES_TRANSPORTE = 60; // Duração do voo em frames
 
-        // Hint de UI
+        // Dica de interface
         this._hintEl = null;
         this._criarHint();
 
-        // Listener de teclado (só ativo quando necessário)
+        // Ouvinte do teclado (só ativo quando necessário)
         this._onKeyDown = this._onKeyDown.bind(this);
     }
 
     // ── API pública ──────────────────────────────────────────────────────────────
     /**
-     * Chama quando o utilizador clica numa cápsula.
+     * Chamado quando o utilizador clica numa cápsula.
      * @param {object} capsulaObj   { grupo: THREE.Group, dobradica: THREE.Group }
      * @param {object} capsulaFis   Entrada no array de física { mesh, vel, apanhada, ... }
      * @param {object} modeloObj    THREE.Object3D do prémio (já adicionado à cena)
      * @param {number} escalaFinal  Escala alvo do modelo após abertura
      */
     ativar(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2) {
-        if (this.estado !== "INATIVA") return; // Ignora se já está em uso
+        if (this.estado !== "INATIVA") return; // Ignora se já estiver a ser usado
 
         this.capsula       = capsulaObj;
         this.capsulaFisica = capsulaFis;
@@ -62,18 +62,18 @@ export class CapsuleOpener {
             this.capsulaFisica.vel.set(0, 0, 0);
         }
 
-        // Guarda posição de origem (world space)
+        // Guarda a posição de origem (world space)
         this._origemMundo.copy(this.capsula.grupo.position);
 
-        // Calcula posição alvo: 20 unidades à frente da câmara
+        // Calcula a posição alvo: 20 unidades à frente da câmara
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
         
         // A cápsula vem parar à frente do utilizador, a uma altura confortável
         this._alvoMundo.copy(this.camera.position).add(dir.multiplyScalar(20));
-        this._alvoMundo.y -= 2; // Desce ligeiramente (offset visual)
+        this._alvoMundo.y -= 2; // Desce ligeiramente (desvio visual)
 
-        // Reset opacidade da cápsula (inicializa variável base para o fade-out)
+        // Reposição da opacidade da cápsula (inicializa variável base para o fade-out)
         this.opacidadeCapsula = 1.0;
         this.capsula.grupo.traverse(child => {
             if (child.isMesh) {
@@ -93,7 +93,7 @@ export class CapsuleOpener {
         this.capsula.grupo.children[0].position.set(0, 0, 0);
 
         this._frameTransporte = 0;
-        this.estado = "TRANSPORTANDO";
+        this.estado = "A_TRANSPORTAR";
 
         // Desabilita o orbit durante o transporte
         if (this.controls) this.controls.enabled = false;
@@ -102,8 +102,8 @@ export class CapsuleOpener {
     update(time) {
         if (this.estado === "INATIVA") return;
 
-        // ── TRANSPORTANDO ────────────────────────────────────────────────────────────
-        if (this.estado === "TRANSPORTANDO") {
+        // ── A_TRANSPORTAR ────────────────────────────────────────────────────────────
+        if (this.estado === "A_TRANSPORTAR") {
             this._frameTransporte++;
             const t = Math.min(this._frameTransporte / this._FRAMES_TRANSPORTE, 1);
             // Easing suave (ease-in-out cúbico)
@@ -115,14 +115,14 @@ export class CapsuleOpener {
             this.capsula.grupo.rotation.y += 0.04;
 
             if (t >= 1) {
-                this.estado = "AGUARDAR";
+                this.estado = "A_A_AGUARDAR";
                 this._mostrarHint("Prima ESPAÇO para abrir a cápsula");
                 window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
-        // ── AGUARDAR (à espera de SPACE) ─────────────────────────────────────────────
-        if (this.estado === "AGUARDAR") {
+        // ── A_A_AGUARDAR (à espera de SPACE) ─────────────────────────────────────────────
+        if (this.estado === "A_A_AGUARDAR") {
             // Pequena flutuação para indicar que está interativa
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
             this.capsula.grupo.position.x = this._alvoMundo.x;
@@ -136,8 +136,8 @@ export class CapsuleOpener {
             }
         }
 
-        // ── ABRINDO ──────────────────────────────────────────────────────────────────
-        if (this.estado === "ABRINDO") {
+        // ── A_ABRIR ──────────────────────────────────────────────────────────────────
+        if (this.estado === "A_ABRIR") {
             const dobradica = this.capsula.dobradica;
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
             this.capsula.grupo.position.x = this._alvoMundo.x;
@@ -222,11 +222,11 @@ export class CapsuleOpener {
 
     // ── Privado ──────────────────────────────────────────────────────────────────
     _onKeyDown(e) {
-        if (e.code === "Space" && this.estado === "AGUARDAR") {
+        if (e.code === "Space" && this.estado === "A_A_AGUARDAR") {
             e.preventDefault();
             this._esconderHint();
             window.removeEventListener("keydown", this._onKeyDown);
-            this.estado = "ABRINDO";
+            this.estado = "A_ABRIR";
         }
 
         if (e.code === "Space" && this.estado === "CONTROLO_LIVRE") {

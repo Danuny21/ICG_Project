@@ -23,7 +23,7 @@ export class PhysicsWorld {
         this._portaBody     = null;
         this._portaVelAng   = 0;
 
-        // Gripper system (removido forces limitadas)
+        // Sistema de agarre da garra
         this._graspedCapsules  = new Map();  // capsulaEntry → { body, target }
 
         // reutilizar objectos Three.js para evitar GC

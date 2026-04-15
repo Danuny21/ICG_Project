@@ -195,18 +195,18 @@ export function criarClawMachine(scene) {
     cabo.castShadow = true;
     garraCaboGroup.add(cabo);
 
-    // Cabeça central
+    // ── Cabeça central
     const cabeca = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 1.8, 8), matMecanismo);
     cabeca.castShadow = true;
     garraCaboGroup.add(cabeca);
 
-    // ── 3 Dedos (Otimizados para melhor grasp) ──────────────────────────────────
-    const W     = 0.55;   // ⭐ Aumentado (era 0.50)
-    const T     = 0.45;   // ⭐ Aumentado (era 0.40)
-    const L1    = 3.2;    // ⭐ Ligeiramente mais comprido
-    const L2    = 2.4;    // ⭐ Ligeiramente mais comprido
-    const L3    = 1.4;    // ⭐ Ligeiramente mais comprido
-    const Z_OFF = 0.95;   // ⭐ Ligeiramente mais para dentro (era 1.0)
+    // ── 3 Dedos ───────────────────────────────────────────────────────────────
+    const W     = 0.55;
+    const T     = 0.45;
+    const L1    = 3.2;
+    const L2    = 2.4;
+    const L3    = 1.4;
+    const Z_OFF = 0.95;
 
     const dedos      = [];  
     const dedoPivots = [];  
@@ -249,7 +249,7 @@ export function criarClawMachine(scene) {
     rampa.rotation.x = 1;
     group.add(rampa);
 
-    // Portinhola de Acrílico (Pivot e Rotação)
+    // Portinhola de Acrílico (Pivô e Rotação)
     const portaPivot = new THREE.Group();
     portaPivot.position.set(-7.8, 7.8, 14.82);
     group.add(portaPivot);

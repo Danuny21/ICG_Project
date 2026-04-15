@@ -7,9 +7,9 @@ export function criarCapsula() {
     const corAleatoria = coresCapsulas[Math.floor(Math.random() * coresCapsulas.length)];
 
     const matBottom = new THREE.MeshPhongMaterial({ color: corAleatoria, flatShading: true, shininess: 100, side: THREE.DoubleSide }); 
-    // Começa opaco (sem transparência). O CapsuleOpener vai torná-lo transparente e com opacidade 0.4 quando ativado.
+    // Começa opaco (sem transparência). O Abridor de Cápsulas vai torná-lo transparente e com opacidade 0.4 quando ativado.
     const matTop = new THREE.MeshPhongMaterial({ color: 0x00ccff, flatShading: true, shininess: 100, transparent: false, opacity: 1.0, side: THREE.DoubleSide }); 
-    // Guardamos o 0.4 como userData para ser usado depois
+    // Guardamos o 0.4 como userData para ser utilizado mais tarde
     matTop.userData.originalOpacity = 0.4;
 
     const bottomGeo = new THREE.SphereGeometry(1.5, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);

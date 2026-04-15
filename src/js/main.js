@@ -1,5 +1,7 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { setupScene } from "./setup/sceneSetup.js";
+import { setupLighting } from "./setup/lighting.js";
+import { setupOrbitControls, setupKeyboard } from "./setup/controls.js";
 import { criarClawMachine } from "./models/clawMachine.js";
 import { criarCapsula } from "./models/capsuleModel.js";
 import { PhysicsWorld, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
@@ -8,38 +10,11 @@ import { carregarPremio } from "./systems/PrizeLoader.js";
 import { criarConfetis } from "./models/confetti.js";
 
 // ── Cena ─────────────────────────────────────────────────────────────────────
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a);
-
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 30, 60);
-scene.add(camera);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.target.set(0, 18, 0);
-controls.update();
+const { scene, camera, renderer } = setupScene();
+const controls = setupOrbitControls(camera, renderer);
 
 // ── Iluminação ───────────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(36, 72, 24);
-dirLight.castShadow = true;
-dirLight.shadow.camera.left  = -24;
-dirLight.shadow.camera.right =  24;
-dirLight.shadow.camera.top   =  40;
-dirLight.shadow.camera.bottom = -20;
-scene.add(dirLight);
-
-const pointLight = new THREE.PointLight(0xffffff, 1.5, 36);
-pointLight.position.set(0, 18, 0);
-scene.add(pointLight);
+setupLighting(scene);
 
 // ── Modelo da máquina ────────────────────────────────────────────────────────
 const clawMachine = criarClawMachine(scene);
@@ -81,7 +56,6 @@ const limites      = { x: 9, z: 9 };
 
 let estadoJogo       = "LIVRE";
 let timeAnim         = 0;
-let capsulaApanhada  = null;   // Única cápsula agarrada pela garra (ou null)
 
 // ── Funções de animação da garra ─────────────────────────────────────────────
 function estadoRepousoGarra() {
@@ -102,23 +76,11 @@ function fecharGarra() {
     });
 }
 
-// ── Helpers da garra ─────────────────────────────────────────────────────────
-/**
- * Centro da garra (pivot dos dedos) em coordenadas mundo.
- */
-function getClawCenterWorld() {
-    return new THREE.Vector3(
-        clawMachine.mecanismoTeto.position.x,
-        42.2 + clawMachine.mecanismoCabo.position.y - 0.72,
-        clawMachine.mecanismoTeto.position.z
-    );
-}
-
 // ── Confetis e CapsuleOpener ─────────────────────────────────────────────────
 const confetisObj   = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
 
-// ── Listeners de teclado ─────────────────────────────────────────────────────
+// ── Ouvintes de teclado ─────────────────────────────────────────────────────
 window.addEventListener("keydown", (e) => {
     if (estadoJogo !== "LIVRE") return;
     if (capsuleOpener.estado !== "INATIVA") return;
@@ -130,7 +92,7 @@ window.addEventListener("keydown", (e) => {
 
     if (e.key === " ") {
         teclas.action = true;
-        estadoJogo = "DESCENDO";
+        estadoJogo = "A DESCER";
         setTimeout(() => (teclas.action = false), 300);
     }
 });
@@ -167,7 +129,7 @@ window.addEventListener("click", (e) => {
 
     capsulaFis.aberta = true;
 
-    // Carrega o animal agora que clicámos e a animação vai começar
+    // Carrega o prémio agora que clicámos e a animação vai começar
     carregarPremio("frog.glb", capsulaFis.mesh, (modelo) => {
         modelo.scale.set(0.025, 0.025, 0.025);
         modelo.position.set(0, -0.3, 0); 
@@ -205,36 +167,36 @@ function animate(time) {
     clawMachine.controles.botao.position.y = THREE.MathUtils.lerp(
         clawMachine.controles.botao.position.y, teclas.action ? 0.45 : 0.65, 0.3);
 
-    // ── DESCENDO ─────────────────────────────────────────────────────────────────
-    if (estadoJogo === "DESCENDO") {
+    // ── A DESCER ─────────────────────────────────────────────────────────────────
+    if (estadoJogo === "A DESCER") {
         abrirGarra();
         if (clawMachine.mecanismoCabo.position.y > -24.5) {
             clawMachine.mecanismoCabo.position.y -= 0.4;
         } else {
-            estadoJogo = "FECHANDO";
+            estadoJogo = "A FECHAR";
             timeAnim   = 0;
         }
     }
 
-    // ── FECHANDO ─────────────────────────────────────────────────────────────────
-    if (estadoJogo === "FECHANDO") {
+    // ── A FECHAR ─────────────────────────────────────────────────────────────────
+    if (estadoJogo === "A FECHAR") {
         fecharGarra();
         timeAnim++;
-        if (timeAnim > 70) estadoJogo = "SUBINDO";
+        if (timeAnim > 70) estadoJogo = "A SUBIR";
     }
 
-    // ── SUBINDO ──────────────────────────────────────────────────────────────────
-    if (estadoJogo === "SUBINDO") {
+    // ── A SUBIR ──────────────────────────────────────────────────────────────────
+    if (estadoJogo === "A SUBIR") {
         fecharGarra();
         if (clawMachine.mecanismoCabo.position.y < -4) {
             clawMachine.mecanismoCabo.position.y += 0.2;
         } else {
-            estadoJogo = "RETORNANDO";
+            estadoJogo = "A REGRESSAR";
         }
     }
 
-    // ── RETORNANDO ───────────────────────────────────────────────────────────────
-    if (estadoJogo === "RETORNANDO") {
+    // ── A REGRESSAR ───────────────────────────────────────────────────────────────
+    if (estadoJogo === "A REGRESSAR") {
         fecharGarra();
         const posTeto = clawMachine.mecanismoTeto.position;
         posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.05);
