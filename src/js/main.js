@@ -14,7 +14,7 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 150;
+const NUM_CAPSULAS = 100;
 
 // Cena
 const { scene, camera, renderer } = setupScene();
