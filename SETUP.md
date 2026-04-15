@@ -1,6 +1,6 @@
 # Setup & Instruções - Claw Machine
 
-## ⚙️ Configuração Inicial
+## Configuração Inicial
 
 ### Requisitos
 - Browser moderno (Chrome, Firefox, Safari, Edge)
@@ -26,7 +26,7 @@ Extensão recomendada: **Live Server** (Ritwick Dey)
 
 ---
 
-## 🎮 Como Jogar a Claw Machine
+## Como Jogar a Claw Machine
 
 ### 1. Iniciar o Jogo
 - Abre `http://localhost:8000` no browser
@@ -37,11 +37,8 @@ Extensão recomendada: **Live Server** (Ritwick Dey)
 
 | Tecla | Ação |
 |-------|------|
-| `⬅️ ➡️` | Mover garras para esquerda/direita |
-| `⬆️ ⬇️` | Mover garras para frente/atrás |
-| `A` | Aprofundar as garras (descer) |
-| `D` | Retirar as garras (subir) |
-| `ENTER` | Fechar garras e tentar apanhar |
+| Setas (esquerda/direita) | Mover garras para esquerda/direita |
+| Setas (cima/baixo) | Mover garras para frente/atrás |
 | `SPACE` | Iniciar novo jogo |
 
 ### 3. Objetivos & Dinâmica
@@ -67,32 +64,30 @@ Extensão recomendada: **Live Server** (Ritwick Dey)
 
 ---
 
-## 🏗️ Setup do Desenvolvimento
+## Setup do Desenvolvimento
 
 ### Estrutura de Pastas
 ```
 src/
 ├── js/
 │   ├── main.js               # Orquestração principal
-│   ├── systems/
-│   │   ├── ClawController.js # Lógica do jogo
-│   │   └── CapsuleOpener.js  # Sistema antigo (backup)
 │   ├── models/
+│   │   ├── capsuleModel.js   # Modelo cápsula
 │   │   ├── clawMachine.js    # Modelo 3D da máquina
 │   │   ├── confetti.js       # Partículas
-│   │   └── animalLoader.js   # Loader de modelos (backup)
-│   └── utils/
+│   ├── systems/
+│   │   ├── CapsuleOpener.js  # Sistema antigo (backup)
+│   │   ├── ClawController.js # Lógica do jogo
+│   │   ├── PhysicsSystem.js  # Física
+│   │   ├── PrizeLoader.js    # Carregamento de prémios
+│   └── glb/                  # (pasta para modelos glb, se existir)
 └── styles/
     └── style.css             # Estilo cyberpunk
-
-assets/
-├── models/                   # Modelos 3D importados
-└── textures/                 # Texturas (futuro)
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### CORS Error / Failed to fetch
 **Problema**: Abriste HTML diretamente no browser (`file://`)
@@ -112,7 +107,7 @@ assets/
 
 ---
 
-## 📝 Convenções Código
+## Convenções Código
 
 ### Nomes de Ficheiros
 - **Classes (Systems)**: `ClawController.js` (CamelCase)
@@ -150,7 +145,7 @@ export class MeuSistema {
 
 ---
 
-## 🏗️ Expandir Funcionalidades
+## Expandir Funcionalidades
 
 ### Adicionar Novos Brinquedos
 Edit `src/js/models/clawMachine.js`:
@@ -188,7 +183,7 @@ const meuSistema = new MeuSistema(scene);
 
 ---
 
-## 🎯 Tips para Ter Sucesso
+## Dicas para Ter Sucesso
 
 1. **Planeamento** - Observa antes de começar onde estão os brinquedos
 2. **Posição** - Move primeiro, depois aprofunda (A/D)
@@ -198,7 +193,7 @@ const meuSistema = new MeuSistema(scene);
 
 ---
 
-## 📚 Recursos Adicionais
+## Recursos Adicionais
 
 - [Three.js Documentação](https://threejs.org/docs/)
 - [WebGL Best Practices](https://www.khronos.org/webgl/)
@@ -206,4 +201,4 @@ const meuSistema = new MeuSistema(scene);
 
 ---
 
-💡 **Dica Final**: Guarda screenshots dos teus melhores scores! 🏆
+**Dica Final**: Guarda screenshots dos teus melhores scores!
