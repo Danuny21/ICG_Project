@@ -7,6 +7,7 @@ import { criarCapsula } from "./models/capsuleModel.js";
 import { PhysicsWorld, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
 import { carregarPremio } from "./systems/PrizeLoader.js";
+import { sortearPremio } from "./config/prizes.js";
 import { criarConfetis } from "./models/confetti.js";
 import { updateClawAnimation } from "./systems/ClawAnimation.js";
 import { MODO_FACIL, MODO_REALISTA } from "./config/dificulty.js";
@@ -14,11 +15,11 @@ import { THEME, TEMAS } from "./config/theme.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 // ── Varáveis Globais de Configuração / Dificuldade ──────────────
-window.CONFIG_JOGO = MODO_FACIL; // Altera para MODO_REALISTA para maior desafio
+window.CONFIG_JOGO = MODO_REALISTA; // Dificuldade padrão alterada para Realista
 
 // Setup lil-gui
-const configUI = { 
-    dificuldade: "fácil",
+const configUI = {
+    dificuldade: "realista",
     tema: "classico"
 };
 const gui = new GUI();
@@ -31,7 +32,10 @@ gui.add(configUI, 'tema', Object.keys(TEMAS)).name("Tema").onChange((val) => {
     const novoTema = TEMAS[val];
     clawMachine.atualizarTema(novoTema);
     confetisObj.atualizarCores(novoTema.PALETA_CORES);
-    
+
+    // Atualizar fundo da cena
+    scene.background.set(novoTema.FUNDO);
+
     // Atualizar cápsulas existentes
     capsulas.forEach(c => {
         // Encontrar o topo (matTop)
@@ -71,8 +75,8 @@ setupLighting(scene);
 const clawMachine = criarClawMachine(scene);
 
 // ── Cápsulas ─────────────────────────────────────────────────────────────────
-const numCapsulas = 10;
-const capsulas    = [];
+const numCapsulas = 150;
+const capsulas = [];
 
 for (let i = 0; i < numCapsulas; i++) {
     const { grupo, dobradica } = criarCapsula();
@@ -88,20 +92,20 @@ for (let i = 0; i < numCapsulas; i++) {
     scene.add(grupo);
 
     const capsulaObj = {
-        mesh:     grupo,
+        mesh: grupo,
         dobradica: dobradica,
         modeloInterno: null,
-        vel:      new THREE.Vector3(),
-        radius:   RAIO_CAPSULA,
+        vel: new THREE.Vector3(),
+        radius: RAIO_CAPSULA,
         apanhada: false,
-        saiu:     false,
-        aberta:   false
+        saiu: false,
+        aberta: false
     };
     capsulas.push(capsulaObj);
 }
 
 // ── Teclado ──────────────────────────────────────────────────────────────────
-let estadoJogo  = "LIVRE";
+let estadoJogo = "LIVRE";
 let timeAnim = 0;
 
 const teclas = setupKeyboard(
@@ -112,20 +116,20 @@ const teclas = setupKeyboard(
 );
 
 const velMovimento = 0.15;
-const limites      = { x: 9, z: 9 };
+const limites = { x: 11.4, z: 11.4 };
 
 // ── Confetis e CapsuleOpener ─────────────────────────────────────────────────
-const confetisObj   = criarConfetis(scene);
+const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
 
 // ── Raycaster (clique nas cápsulas exteriores) ───────────────────────────────
-const raycaster   = new THREE.Raycaster();
+const raycaster = new THREE.Raycaster();
 const pontoClique = new THREE.Vector2();
 
 window.addEventListener("click", (e) => {
     if (capsuleOpener.estado !== "INATIVA") return;
 
-    pontoClique.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    pontoClique.x = (e.clientX / window.innerWidth) * 2 - 1;
     pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pontoClique, camera);
 
@@ -143,17 +147,23 @@ window.addEventListener("click", (e) => {
 
     capsulaFis.aberta = true;
 
-    // Carrega o prémio agora que clicámos e a animação vai começar
-    carregarPremio("frog.glb", capsulaFis.mesh, (modelo) => {
-        modelo.scale.set(0.025, 0.025, 0.025);
-        modelo.position.set(0, -0.3, 0); 
+    // Sorteia um prémio da lista configurada
+    const premioSorteado = sortearPremio();
+
+    // Carrega o prémio sorteado
+    carregarPremio(premioSorteado.ficheiro, capsulaFis.mesh, (modelo, animações) => {
+        const s = premioSorteado.escala;
+        modelo.scale.set(s, s, s);
+        modelo.position.set(0, premioSorteado.offsetY, 0);
         capsulaFis.modeloInterno = modelo;
 
         capsuleOpener.ativar(
             { grupo: capsulaFis.mesh, dobradica: capsulaFis.dobradica },
             capsulaFis,
             modelo,
-            0.05
+            premioSorteado.escalaAlvo,
+            animações,
+            premioSorteado.idle
         );
     });
 });

@@ -21,6 +21,28 @@ export function fecharGarra(clawMachine) {
     });
 }
 
+// Define os limites da moldura do buraco (baseado no clawMachine.js)
+const ZONA_BURACO = {
+    xMin: -11.5,
+    xMax: -4.0,
+    zMin: 4.0,
+    zMax: 11.5
+};
+
+// Estimativa do raio máximo da garra (incluindo dedos abertos)
+const RAIO_GARRA = 3.8;
+
+function colideComBuraco(x, z) {
+    // Verifica se a "Bounding Box" da garra intersecta a zona do buraco
+    const clawXMin = x - RAIO_GARRA;
+    const clawXMax = x + RAIO_GARRA;
+    const clawZMin = z - RAIO_GARRA;
+    const clawZMax = z + RAIO_GARRA;
+
+    return clawXMax > ZONA_BURACO.xMin && clawXMin < ZONA_BURACO.xMax &&
+           clawZMax > ZONA_BURACO.zMin && clawZMin < ZONA_BURACO.zMax;
+}
+
 export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento) {
     let novoEstado = estadoJogo;
     let novoTime = timeAnim;
@@ -34,10 +56,37 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
     // Movimento livre (setas)
     if (novoEstado === "LIVRE") {
         estadoRepousoGarra(clawMachine);
-        if (teclas.up    && clawMachine.mecanismoTeto.position.z > -limites.z) clawMachine.mecanismoTeto.position.z -= velMovimento;
-        if (teclas.down  && clawMachine.mecanismoTeto.position.z <  limites.z) clawMachine.mecanismoTeto.position.z += velMovimento;
-        if (teclas.left  && clawMachine.mecanismoTeto.position.x > -limites.x) clawMachine.mecanismoTeto.position.x -= velMovimento;
-        if (teclas.right && clawMachine.mecanismoTeto.position.x <  limites.x) clawMachine.mecanismoTeto.position.x += velMovimento;
+
+        const pos = clawMachine.mecanismoTeto.position;
+
+        if (teclas.up) {
+            const novaPos = pos.z - velMovimento;
+            // O buraco está à frente (Z positivo), logo mover para cima (Z negativo) está sempre a sair ou a afastar-se do buraco
+            if (novaPos - RAIO_GARRA > -limites.z) {
+                pos.z = novaPos;
+            }
+        }
+        if (teclas.down) {
+            const novaPos = pos.z + velMovimento;
+            // Bloqueia apenas se estiver a ENTAR no buraco vindo de trás
+            if (novaPos + RAIO_GARRA < limites.z && !colideComBuraco(pos.x, novaPos)) {
+                pos.z = novaPos;
+            }
+        }
+        if (teclas.left) {
+            const novaPos = pos.x - velMovimento;
+            // Bloqueia apenas se estiver a ENTRAR no buraco vindo da direita
+            if (novaPos - RAIO_GARRA > -limites.x && !colideComBuraco(novaPos, pos.z)) {
+                pos.x = novaPos;
+            }
+        }
+        if (teclas.right) {
+            const novaPos = pos.x + velMovimento;
+            // O buraco está à esquerda (X negativo), logo mover para a direita (X positivo) é sempre sair do buraco
+            if (novaPos + RAIO_GARRA < limites.x) {
+                pos.x = novaPos;
+            }
+        }
     }
 
     // Animação joystick / botão
@@ -92,7 +141,7 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
         const posTeto = clawMachine.mecanismoTeto.position;
         // Tornou-se ainda mais lento (de 0.02 para 0.01)
         posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.01);
-        posTeto.z = THREE.MathUtils.lerp(posTeto.z,  9.0, 0.01);
+        posTeto.z = THREE.MathUtils.lerp(posTeto.z,  7.5, 0.01);
 
         // Abanar a garra para parecer vida real
         const abano = window.CONFIG_JOGO ? window.CONFIG_JOGO.abano : 0.02;
@@ -101,7 +150,7 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
         clawMachine.mecanismoGarra.rotation.z = Math.sin(tremorTempo) * abano;
         clawMachine.mecanismoGarra.rotation.x = Math.cos(tremorTempo * 1.5) * abano;
 
-        if (Math.abs(posTeto.x - (-7.8)) < 0.3 && Math.abs(posTeto.z - 9) < 0.3) {
+        if (Math.abs(posTeto.x - (-7.8)) < 0.3 && Math.abs(posTeto.z - 7.5) < 0.3) {
             novoEstado = "ABRINDO";
             novoTime   = 0;
         }

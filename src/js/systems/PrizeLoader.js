@@ -1,28 +1,30 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
-const cacheModelos = {};
+const cacheModelos = {}; // { caminho: { scene: THREE.Group, animations: AnimationClip[] } }
 
 // ── Carregar prémio p/ cache ou cena ─────────────────────────────────────────
 export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
     if (cacheModelos[caminhoFicheiro]) {
-        // Se já está em cache, apenas usamos um clone exacto mas instantâneo
-        const clone = cacheModelos[caminhoFicheiro].clone();
-        
-        // Tamanho e base inicial
-        clone.scale.set(0.5, 0.5, 0.5);
+        const cached = cacheModelos[caminhoFicheiro];
+        // SkeletonUtils.clone é essencial para modelos com SkinnedMesh (ossos)
+        const clone = SkeletonUtils.clone(cached.scene);
+
+        clone.scale.set(1, 1, 1);
         clone.position.set(0, 0, 0);
 
         if (parentGroup) parentGroup.add(clone);
-        if (onLoadCallback) onLoadCallback(clone);
+        if (onLoadCallback) onLoadCallback(clone, cached.animations);
         return;
     }
 
     const loader = new GLTFLoader();
-    
+
     loader.load(`./src/js/models/glb/${caminhoFicheiro}`, function (gltf) {
-        const baseScene = gltf.scene; 
-        
+        const baseScene = gltf.scene;
+        const animations = gltf.animations;
+
         baseScene.traverse((node) => {
             if (node.isMesh) {
                 node.castShadow = true;
@@ -30,17 +32,16 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
             }
         });
 
-        // Guardamos o master na cache!
-        cacheModelos[caminhoFicheiro] = baseScene;
+        // Guardamos o master e as animações na cache!
+        cacheModelos[caminhoFicheiro] = { scene: baseScene, animations: animations };
 
-        const cloneInicial = baseScene.clone();
+        const cloneInicial = SkeletonUtils.clone(baseScene);
 
-        // Tamanho e base inicial
-        cloneInicial.scale.set(0.5, 0.5, 0.5);
+        cloneInicial.scale.set(1, 1, 1);
         cloneInicial.position.set(0, 0, 0);
 
         if (parentGroup) parentGroup.add(cloneInicial);
-        if (onLoadCallback) onLoadCallback(cloneInicial);
+        if (onLoadCallback) onLoadCallback(cloneInicial, animations);
 
     }, undefined, function (error) {
         console.error(`Erro a carregar o modelo ${caminhoFicheiro}:`, error);
