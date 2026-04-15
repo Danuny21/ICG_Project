@@ -4,7 +4,7 @@ import * as THREE from "three";
  * CapsuleOpener — Fluxo completo de abertura da cápsula
  *
  * Estados:
- *  INATIVA        → à espera de ser ativada através de .ativar()
+ *  INATIVA        → à espera de ser ativada através de .abrirCapsula()
  *  TRANSPORTAR    → a cápsula voa suavemente para a frente da câmara
  *  AGUARDAR       → a cápsula está parada à frente, à espera da tecla ESPAÇO
  *  ABRIR          → animação da dobradiça a abrir
@@ -20,8 +20,8 @@ export class CapsuleOpener {
 
         this.estado = "INATIVA";
         this.modelo = null;
-        this.capsula = null;       // { grupo, dobradica }
-        this.capsulaFisica = null;       // Entrada no array de física (para marcar apanhada)
+        this.capsula = null;
+        this.capsulaFisica = null;
         this.escalaAlvo = 2;
         this.opacidadeCapsula = 1.0;
 
@@ -38,44 +38,63 @@ export class CapsuleOpener {
 
         // Dica de interface
         this._hintEl = null;
+        this._nomePremioEl = null;
         this._criarHint();
+        this._criarNomePremioUI();
+
+        this.nomeExibicao = "";
+        this.temaAtual = "classico";
 
         // Ouvinte do teclado (só ativo quando necessário)
         this._onKeyDown = this._onKeyDown.bind(this);
     }
 
-    // ── API pública ──────────────────────────────────────────────────────────────
     /**
      * Chamado quando o utilizador clica numa cápsula.
      * @param {object} capsulaObj   { grupo: THREE.Group, dobradica: THREE.Group }
      * @param {object} capsulaFis   Entrada no array de física { mesh, vel, apanhada, ... }
-     * @param {object} modeloObj    THREE.Object3D do prémio (já adicionado à cena)
-     * @param {number} escalaFinal  Escala alvo do modelo após abertura
+     * @param {string} nomeAnimacao  Nome da animação inicial (opcional)
+     * @param {string} nomeExibicao  Nome legível para mostrar na UI
      */
-    ativar(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2, clipes = [], nomeAnimacao = null) {
+    abrirCapsula(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2, clipes = [], nomeAnimacao = null, nomeExibicao = "") {
         if (this.estado !== "INATIVA") return; // Ignora se já estiver a ser usado
 
         this.capsula = capsulaObj;
         this.capsulaFisica = capsulaFis;
         this.modelo = modeloObj;
         this.escalaAlvo = escalaFinal;
+        this.nomeExibicao = nomeExibicao;
 
         // Setup Animações se existirem
         if (clipes && clipes.length > 0) {
             this.mixer = new THREE.AnimationMixer(this.modelo);
-            
-            // Prioriza o nome configurado, senão procura por "Idle", senão usa a primeira
+
+            // Prioriza o nome configurado (exata ou case-insensitive), senão procura por "Idle", senão usa a primeira
             let idleClip = null;
             if (nomeAnimacao) {
+                // Tenta correspondência exata
                 idleClip = clipes.find(c => c.name === nomeAnimacao);
+
+                // Se não encontrar, tenta case-insensitive ou se há sobreposição de nomes
+                if (!idleClip) {
+                    idleClip = clipes.find(c => {
+                        const clipName = c.name.toLowerCase();
+                        const targetName = nomeAnimacao.toLowerCase();
+                        return clipName === targetName || clipName.includes(targetName) || targetName.includes(clipName);
+                    });
+                }
+
             }
+
             if (!idleClip) {
+                // Fallback padrão se não houver nome configurado ou não for encontrado
                 idleClip = clipes.find(c => c.name.toLowerCase().includes("idle")) || clipes[0];
             }
 
             const action = this.mixer.clipAction(idleClip);
             action.play();
         }
+
 
         // Congela a cápsula na física
         if (this.capsulaFisica) {
@@ -90,9 +109,9 @@ export class CapsuleOpener {
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
 
-        // A cápsula vem parar à frente do utilizador, a uma altura confortável
+        // A cápsula vem parar à frente do utilizador
         this._alvoMundo.copy(this.camera.position).add(dir.multiplyScalar(20));
-        this._alvoMundo.y -= 2; // Desce ligeiramente (desvio visual)
+        this._alvoMundo.y -= 6; 
 
         // Reposição da opacidade da cápsula (inicializa variável base para o fade-out)
         this.opacidadeCapsula = 1.0;
@@ -169,6 +188,7 @@ export class CapsuleOpener {
         }
 
         // ── ABRIR ──────────────────────────────────────────────────────────────────
+
         if (this.estado === "ABRIR") {
             const dobradica = this.capsula.dobradica;
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
@@ -179,6 +199,9 @@ export class CapsuleOpener {
                 dobradica.rotation.x -= 0.08;
             } else {
                 this.estado = "DESAPARECER";
+                if (this.nomeExibicao) {
+                    this._mostrarNomePremio(this.nomeExibicao);
+                }
                 if (this.confetis) this.confetis.disparar();
             }
 
@@ -252,6 +275,7 @@ export class CapsuleOpener {
 
         // ── ENCERRAR (encolhe antes de sair) ──────────────────────────────────────
         if (this.estado === "ENCERRAR") {
+            this._esconderNomePremio();
             if (this.modelo) {
                 // Diminui 10% do tamanho atual por frame
                 this.modelo.scale.multiplyScalar(0.9);
@@ -336,5 +360,63 @@ export class CapsuleOpener {
 
     _esconderHint() {
         this._hintEl.style.display = "none";
+    }
+
+    _criarNomePremioUI() {
+        this._nomePremioEl = document.createElement("div");
+        Object.assign(this._nomePremioEl.style, {
+            position: "fixed",
+            top: "15%", 
+            left: "50%",
+            transform: "translateX(-50%) scale(0.5)",
+            color: "#fff",
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: "3.5rem", 
+            fontWeight: "900",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            pointerEvents: "none",
+            display: "none",
+            zIndex: "1000",
+            textShadow: "0 0 20px rgba(255,255,255,0.5), 4px 4px 0px #cc0000",
+            transition: "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+            opacity: "0"
+        });
+        document.body.appendChild(this._nomePremioEl);
+    }
+
+    _mostrarNomePremio(nome) {
+        this._nomePremioEl.textContent = nome;
+        this._nomePremioEl.style.display = "block";
+
+        // Aplicar cores do tema (condizente com o card de comandos)
+        let shadowColor = "#cc0000"; // Clássico
+        if (this.temaAtual === "cyberpunk") shadowColor = "#ff00ff";
+        else if (this.temaAtual === "floresta") shadowColor = "#1b4d3e";
+
+        this._nomePremioEl.style.textShadow = `0 0 20px rgba(255,255,255,0.5), 4px 4px 0px ${shadowColor}`;
+
+        // Force reflow
+        this._nomePremioEl.offsetHeight;
+        this._nomePremioEl.style.transform = "translateX(-50%) scale(1)";
+        this._nomePremioEl.style.opacity = "1";
+    }
+
+    _esconderNomePremio() {
+        this._nomePremioEl.style.transform = "translateX(-50%) scale(1.5)";
+        this._nomePremioEl.style.opacity = "0";
+        setTimeout(() => {
+            if (this.estado !== "DESAPARECER" && this.estado !== "CONTROLO_LIVRE") {
+                this._nomePremioEl.style.display = "none";
+            }
+        }, 500);
+    }
+
+    /**
+     * Atualiza o visual do nome do prémio para condizer com o tema
+     * @param {string} nomeTema 
+     */
+    atualizarTema(nomeTema) {
+        this.temaAtual = nomeTema;
     }
 }

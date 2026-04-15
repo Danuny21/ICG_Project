@@ -1,34 +1,31 @@
 import * as THREE from "three";
 import * as RAPIER from "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
 
-// ── Constantes exportadas (usadas em main.js) ─────────────────────────────────
-export const RAIO_CAPSULA     = 1.5;
-export const PORTA_Z          = 11.5;   
-export const PORTA_ALTURA     = 8.0;    
+// ── Constantes ─────────────────────────────────────────────────────────────
+export const RAIO_CAPSULA = 1.5;
+export const PORTA_Z = 11.5;
+export const PORTA_ALTURA = 8.0;
 export const PORTA_ABERTURA_MAX = -Math.PI / 2.2;
 
 // Gravidade e parâmetros de grasp
-const GRAVITY       = -120;
-const PORTA_SPRING  = 0.04;
+const GRAVITY = -120;
+const PORTA_SPRING = 0.04;
 const PORTA_DAMPING = 0.80;
-const CHAO_EXT_Y   = 0;
+const CHAO_EXT_Y = 0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 export class PhysicsWorld {
 
     constructor() {
-        this.world          = null;
-        this._capsulaBodies = new Map();  // capsulaEntry → RigidBody
-        this._fingerBodies  = [];         // [{ body, dedoSup }]
-        this._portaBody     = null;
-        this._portaVelAng   = 0;
+        this.world = null;
+        this._capsulaBodies = new Map();
+        this._fingerBodies = [];
+        this._portaBody = null;
+        this._portaVelAng = 0;
+        this._graspedCapsules = new Map();
 
-        // Sistema de agarre da garra
-        this._graspedCapsules  = new Map();  // capsulaEntry → { body, target }
-
-        // reutilizar objectos Three.js para evitar GC
-        this._tmpV3  = new THREE.Vector3();
-        this._tmpQ   = new THREE.Quaternion();
+        this._tmpV3 = new THREE.Vector3();
+        this._tmpQ = new THREE.Quaternion();
         this._tmpEul = new THREE.Euler();
     }
 
@@ -65,46 +62,46 @@ export class PhysicsWorld {
 
         // 1. Base Oca inferior
         col(RAPIER.ColliderDesc.cuboid(5.0, 0.475, 5.0).setTranslation(-6.5, 0.5, 9.8));
-        
+
         // 2. Paredes da Base
-        col(RAPIER.ColliderDesc.cuboid(12.0, 7.0, 0.5).setTranslation(0, 7, -11.5));     
-        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(11.5, 7, 0));      
-        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(-11.5, 7, 0));     
-        col(RAPIER.ColliderDesc.cuboid(7.95, 7.0, 0.5).setTranslation(3.55, 7, 11.5));   
+        col(RAPIER.ColliderDesc.cuboid(12.0, 7.0, 0.5).setTranslation(0, 7, -11.5));
+        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(11.5, 7, 0));
+        col(RAPIER.ColliderDesc.cuboid(0.5, 7.0, 12.0).setTranslation(-11.5, 7, 0));
+        col(RAPIER.ColliderDesc.cuboid(7.95, 7.0, 0.5).setTranslation(3.55, 7, 11.5));
 
         // 3. Vidros Superiores (e Postes)
         const wallH = 13.5;
         const wallW = 11.45;
-        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(-11.45, 27.5, 0));     
-        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(11.45, 27.5, 0));      
-        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, -11.45));     
-        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, 11.45));      
+        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(-11.45, 27.5, 0));
+        col(RAPIER.ColliderDesc.cuboid(0.05, wallH, wallW).setTranslation(11.45, 27.5, 0));
+        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, -11.45));
+        col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, 11.45));
 
         // Teto
-        col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));             
+        col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));
 
         // 4. Chão interior (Buraco)
-        col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));        
-        col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));   
+        col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));
+        col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));
 
         // 5. Divisores internos de vidro do buraco
-        col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));        
-        col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));        
+        col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));
+        col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));
 
         // 6. Rampa de Deslize
         col(RAPIER.ColliderDesc.cuboid(3.3, 0.25, 7.0)
             .setTranslation(-7.8, 5.5, 8.0)
-            .setRotation({ x: Math.sin(1/2), y: 0, z: 0, w: Math.cos(1/2) }));                   
+            .setRotation({ x: Math.sin(1 / 2), y: 0, z: 0, w: Math.cos(1 / 2) }));
 
         // 7. Túnel
-        col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));         
-        col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));        
-        col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));        
+        col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));
+        col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));
+        col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));
 
         // Paredes laterais interiores do túnel
-        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-11.1, 8.5, 9.5));          
-        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-4.5, 8.5, 9.5));           
-        col(RAPIER.ColliderDesc.cuboid(3.1, 5.0, 0.2).setTranslation(-7.8, 8.5, 4.5));           
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-11.1, 8.5, 9.5));
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-4.5, 8.5, 9.5));
+        col(RAPIER.ColliderDesc.cuboid(3.1, 5.0, 0.2).setTranslation(-7.8, 8.5, 4.5));
 
         // 8. Chão exterior p/ evitar fugas da simulação
         col(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, CHAO_EXT_Y - 0.1, 15).setFriction(0.6));
@@ -142,7 +139,7 @@ export class PhysicsWorld {
             const seg3 = seg2.children[0];
 
             const segments = [
-                { mesh: seg1, h: [0.35, 1.50, 0.30], t: [0, -1.50, 1.0] },  // Aumentado para melhor grasp
+                { mesh: seg1, h: [0.35, 1.50, 0.30], t: [0, -1.50, 1.0] },
                 { mesh: seg2, h: [0.35, 1.10, 0.30], t: [0, -1.10, 0.0] },
                 { mesh: seg3, h: [0.35, 0.65, 0.30], t: [0, -0.65, 0.0] }
             ];
@@ -178,7 +175,7 @@ export class PhysicsWorld {
         this.world.createCollider(
             RAPIER.ColliderDesc.cuboid(3.4, 3.4, 0.05)
                 .setTranslation(0, -3.4, 0)
-                .setSensor(true), 
+                .setSensor(true),
             this._portaBody
         );
     }
@@ -221,12 +218,12 @@ export class PhysicsWorld {
 
             const xNoCorreder = t.x < CHUTE_X_MAX && t.x > CHUTE_X_MIN;
             const tocarNaPorta = xNoCorreder &&
-                                 t.y < PORTA_ALTURA &&
-                                 t.z > (PORTA_Z - RAIO_CAPSULA * 1.5) &&
-                                 t.z < (PORTA_Z + RAIO_CAPSULA);
+                t.y < PORTA_ALTURA &&
+                t.z > (PORTA_Z - RAIO_CAPSULA * 1.5) &&
+                t.z < (PORTA_Z + RAIO_CAPSULA);
 
             if (tocarNaPorta) {
-                const forcaBater = Math.max(v.z, 6); 
+                const forcaBater = Math.max(v.z, 6);
                 this._portaVelAng -= forcaBater * 0.035;
             }
         }

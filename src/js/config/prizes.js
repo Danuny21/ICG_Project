@@ -6,65 +6,46 @@
  * offsetY: posição vertical do prémio
  */
 
-// export const LISTA_PREMIOS = [
-//     {
-//         id: "frog",
-//         ficheiro: "frog.glb",
-//         peso: 70,       // Comum
-//         escala: 0.025,
-//         escalaAlvo: 0.1,
-//         offsetY: 0
-//     },
-//     {
-//         id: "dog",
-//         ficheiro: "dog.glb",
-//         peso: 30,       // Mais raro
-//         escala: 0.0025,
-//         escalaAlvo: 0.01,
-//         offsetY: -0.5
-//     }
-// ];
-
 export const LISTA_PREMIOS = [
     // ── ANIMALS ──────────────────────────────────────────────────────────────
-    { id: "alpaca", ficheiro: "animals/Alpaca.glb", peso: 10, escala: 0.25, escalaAlvo: 1, offsetY: -0.5, idle: "Idle_2" },
-    { id: "bat", ficheiro: "animals/Bat.glb", peso: 10, escala: 0.25, escalaAlvo: 1, offsetY: 0, idle: "Bat_Flying" },
-    { id: "cow", ficheiro: "animals/Cow.glb", peso: 10, escala: 0.25, escalaAlvo: 1, offsetY: -0.5, idle: "Idle" },
-    { id: "donkey", ficheiro: "animals/Donkey.glb", peso: 10, escala: 0.3, escalaAlvo: 1, offsetY: -0.5, idle: "Eating" },
-    { id: "fox", ficheiro: "animals/Fox.glb", peso: 10, escala: 0.35, escalaAlvo: 1.5, offsetY: -0.5, idle: "Idle_2" },
-    { id: "husky", ficheiro: "animals/Husky.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
-    { id: "shiba", ficheiro: "animals/Shiba Inu.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
-    { id: "stag", ficheiro: "animals/Stag.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Attack_Headbutt" },
-    { id: "white_horse", ficheiro: "animals/White Horse.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Gallop" },
-    { id: "wolf", ficheiro: "animals/Wolf.glb", peso: 10, escala: 0.45, escalaAlvo: 2, offsetY: -0.5, idle: "Attack" },
+    { nome: "Alpaca", ficheiro: "animals/Alpaca.glb", peso: 10, escala: 0.25, escalaAlvo: 1, offsetY: -0.5, idle: "Idle_2" },
+    { nome: "Morcego", ficheiro: "animals/Bat.glb", peso: 10, escala: 0.2, escalaAlvo: 1, offsetY: -0.5, idle: "BatArmature|Bat_Flying" },
+    { nome: "Vaca", ficheiro: "animals/Cow.glb", peso: 10, escala: 0.25, escalaAlvo: 1, offsetY: -0.5, idle: "Idle" },
+    { nome: "Burro", ficheiro: "animals/Donkey.glb", peso: 10, escala: 0.3, escalaAlvo: 1, offsetY: -0.5, idle: "Eating" },
+    { nome: "Raposa", ficheiro: "animals/Fox.glb", peso: 10, escala: 0.35, escalaAlvo: 1.5, offsetY: -0.5, idle: "Idle_2" },
+    { nome: "Husky", ficheiro: "animals/Husky.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
+    { nome: "Shiba Inu", ficheiro: "animals/Shiba Inu.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
+    { nome: "Veado", ficheiro: "animals/Stag.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Attack_Headbutt" },
+    { nome: "Cavalo Branco", ficheiro: "animals/White Horse.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Gallop" },
+    { nome: "Lobo", ficheiro: "animals/Wolf.glb", peso: 10, escala: 0.45, escalaAlvo: 2, offsetY: -0.5, idle: "Attack" },
 
     // ── DINOSAURS ────────────────────────────────────────────────────────────
-    { id: "apatosaurus", ficheiro: "dinossaurs/Apatosaurus.glb", peso: 10, escala: 0.05, escalaAlvo: 0.5, offsetY: 0, idle: "Run" },
-    { id: "parasaurolophus", ficheiro: "dinossaurs/Parasaurolophus.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Parasaurolophus_Run" },
-    { id: "stegosaurus", ficheiro: "dinossaurs/Stegosaurus.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Idle" },
-    { id: "trex", ficheiro: "dinossaurs/T-Rex.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Idle" },
-    { id: "triceratops", ficheiro: "dinossaurs/Triceratops.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Idle" },
-    { id: "velociraptor", ficheiro: "dinossaurs/Velociraptor.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Idle" },
+    { nome: "Apatossauro", ficheiro: "dinossaurs/Apatosaurus.glb", peso: 10, escala: 0.05, escalaAlvo: 0.5, offsetY: 0, idle: "Armature|Apatosaurus_Run" },
+    { nome: "Parassaurolofo", ficheiro: "dinossaurs/Parasaurolophus.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Armature|Parasaurolophus_Run" },
+    { nome: "Estegossauro", ficheiro: "dinossaurs/Stegosaurus.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.2, idle: "Armature|Stegosaurus_Attack" },
+    { nome: "T-Rex", ficheiro: "dinossaurs/T-Rex.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.5, idle: "Armature|TRex_Attack" },
+    { nome: "Triceratops", ficheiro: "dinossaurs/Triceratops.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.2, idle: "Armature|Triceratops_Walk" },
+    { nome: "Velociraptor", ficheiro: "dinossaurs/Velociraptor.glb", peso: 10, escala: 0.18, escalaAlvo: 1, offsetY: -0.3, idle: "Armature|Velociraptor_Run" },
 
     // ── MONSTERS ─────────────────────────────────────────────────────────────
-    { id: "dragon", ficheiro: "monsters/Dragon.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Idle" },
-    { id: "skeleton", ficheiro: "monsters/Skeleton.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.3, idle: "Idle" },
-    { id: "slime", ficheiro: "monsters/Slime.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.3, idle: "Idle" }
+    { nome: "Dragão", ficheiro: "monsters/Dragon.glb", peso: 10, escala: 0.3, escalaAlvo: 2, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
+    { nome: "Esqueleto", ficheiro: "monsters/Skeleton.glb", peso: 10, escala: 0.25, escalaAlvo: 1.5, offsetY: -0.3, idle: "SkeletonArmature|Skeleton_Running" },
+    { nome: "Slime", ficheiro: "monsters/Slime.glb", peso: 10, escala: 0.5, escalaAlvo: 2, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk" }
+
+
 ];
 
 /**
  * Sorteia um prémio com base nos pesos definidos
  */
 export function sortearPremio() {
-    // const totalPesos = LISTA_PREMIOS.reduce((acc, p) => acc + p.peso, 0);
-    // let sorteio = Math.random() * totalPesos;
+    const totalPesos = LISTA_PREMIOS.reduce((acc, p) => acc + p.peso, 0);
+    let sorteio = Math.random() * totalPesos;
 
-    // for (const premio of LISTA_PREMIOS) {
-    //     if (sorteio < premio.peso) return premio;
-    //     sorteio -= premio.peso;
-    // }
+    for (const premio of LISTA_PREMIOS) {
+        if (sorteio < premio.peso) return premio;
+        sorteio -= premio.peso;
+    }
 
-    // TODO Corrigir bat e monsters e dinossauros
-
-    return LISTA_PREMIOS[11]; // Fallback
+    return LISTA_PREMIOS[0]; // Fallback
 }

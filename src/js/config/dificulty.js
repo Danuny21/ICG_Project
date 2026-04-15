@@ -6,6 +6,6 @@ export const MODO_FACIL = {
 
 export const MODO_REALISTA = {
     nome: "realista",
-    aberturaFecho: -Math.PI / 5.5,
+    aberturaFecho: -Math.PI / 5,
     abano: 0.06
 };

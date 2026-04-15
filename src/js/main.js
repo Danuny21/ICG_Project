@@ -3,66 +3,18 @@ import { setupScene } from "./config/scene.js";
 import { setupLighting } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
 import { criarClawMachine } from "./models/clawMachine.js";
-import { criarCapsula } from "./models/capsuleModel.js";
-import { PhysicsWorld, RAIO_CAPSULA } from "./systems/PhysicsSystem.js";
+import { PhysicsWorld } from "./systems/PhysicsSystem.js";
+import { CapsuleSpawner } from "./systems/CapsuleSpawner.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
-import { carregarPremio } from "./systems/PrizeLoader.js";
-import { sortearPremio } from "./config/prizes.js";
 import { criarConfetis } from "./models/confetti.js";
 import { updateClawAnimation } from "./systems/ClawAnimation.js";
-import { MODO_FACIL, MODO_REALISTA } from "./config/dificulty.js";
-import { THEME, TEMAS } from "./config/theme.js";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+import { MODO_REALISTA } from "./config/dificulty.js";
+import { setupWidget } from "./config/widget.js";
+import { InteractionSystem } from "./systems/InteractionSystem.js";
 
-// ── Varáveis Globais de Configuração / Dificuldade ──────────────
-window.CONFIG_JOGO = MODO_REALISTA; // Dificuldade padrão alterada para Realista
-
-// Setup lil-gui
-const configUI = {
-    dificuldade: "realista",
-    tema: "classico"
-};
-const gui = new GUI();
-
-gui.add(configUI, 'dificuldade', ['fácil', 'realista']).name("Dificuldade").onChange((val) => {
-    window.CONFIG_JOGO = val === 'realista' ? MODO_REALISTA : MODO_FACIL;
-});
-
-gui.add(configUI, 'tema', Object.keys(TEMAS)).name("Tema").onChange((val) => {
-    const novoTema = TEMAS[val];
-    clawMachine.atualizarTema(novoTema);
-    confetisObj.atualizarCores(novoTema.PALETA_CORES);
-
-    // Atualizar fundo da cena
-    scene.background.set(novoTema.FUNDO);
-
-    // Atualizar cápsulas existentes
-    capsulas.forEach(c => {
-        // Encontrar o topo (matTop)
-        c.mesh.traverse(child => {
-            if (child.isMesh && child.geometry.type === 'SphereGeometry') {
-                // Se for a parte de cima (geometria de cima começa em 0)
-                if (child.geometry.parameters.phiStart === 0 && child.geometry.parameters.phiLength === Math.PI * 2) {
-                    // Distinguir topo de fundo pelo startAngle do theta
-                    if (child.geometry.parameters.thetaStart === 0) {
-                        child.material.color.set(novoTema.CAPSULA_TOPO);
-                    } else {
-                        // Parte de baixo - escolher cor aleatória da nova paleta
-                        const novaCor = novoTema.PALETA_CORES[Math.floor(Math.random() * novoTema.PALETA_CORES.length)];
-                        child.material.color.set(novaCor);
-                    }
-                }
-            }
-        });
-    });
-
-    // Atualizar sombra do UI para condizer
-    const uiElement = document.getElementById("ui");
-    if (uiElement) {
-        const shadowColor = val === 'cyberpunk' ? '#ff00ff' : (val === 'floresta' ? '#1b4d3e' : '#cc0000');
-        uiElement.style.boxShadow = `4px 4px 0px ${shadowColor}`;
-    }
-});
+// ── Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas ──────────────
+window.CONFIG_JOGO = MODO_REALISTA;
+const NUM_CAPSULAS = 150;
 
 // ── Cena ─────────────────────────────────────────────────────────────────────
 const { scene, camera, renderer } = setupScene();
@@ -75,34 +27,7 @@ setupLighting(scene);
 const clawMachine = criarClawMachine(scene);
 
 // ── Cápsulas ─────────────────────────────────────────────────────────────────
-const numCapsulas = 150;
-const capsulas = [];
-
-for (let i = 0; i < numCapsulas; i++) {
-    const { grupo, dobradica } = criarCapsula();
-
-    let posX, posZ, caiuNoBuraco = true;
-    while (caiuNoBuraco) {
-        posX = (Math.random() - 0.5) * 8;
-        posZ = (Math.random() - 0.5) * 8;
-        caiuNoBuraco = posX < -4.0 && posX > -11.5 && posZ > 4.0 && posZ < 11.5;
-    }
-
-    grupo.position.set(posX, 22 + Math.random() * 12, posZ);
-    scene.add(grupo);
-
-    const capsulaObj = {
-        mesh: grupo,
-        dobradica: dobradica,
-        modeloInterno: null,
-        vel: new THREE.Vector3(),
-        radius: RAIO_CAPSULA,
-        apanhada: false,
-        saiu: false,
-        aberta: false
-    };
-    capsulas.push(capsulaObj);
-}
+const capsulas = CapsuleSpawner.gerarCapsulas(scene, NUM_CAPSULAS);
 
 // ── Teclado ──────────────────────────────────────────────────────────────────
 let estadoJogo = "LIVRE";
@@ -110,9 +35,7 @@ let timeAnim = 0;
 
 const teclas = setupKeyboard(
     () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA",
-    () => {
-        estadoJogo = "A DESCER";
-    }
+    () => { estadoJogo = "A DESCER"; }
 );
 
 const velMovimento = 0.15;
@@ -122,51 +45,12 @@ const limites = { x: 11.4, z: 11.4 };
 const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
 
-// ── Raycaster (clique nas cápsulas exteriores) ───────────────────────────────
-const raycaster = new THREE.Raycaster();
-const pontoClique = new THREE.Vector2();
+// Inicializa o Widget de Configurações
+setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
 
-window.addEventListener("click", (e) => {
-    if (capsuleOpener.estado !== "INATIVA") return;
-
-    pontoClique.x = (e.clientX / window.innerWidth) * 2 - 1;
-    pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(pontoClique, camera);
-
-    const disponiveis = capsulas.filter(c => c.saiu && !c.aberta && !c.apanhada);
-    const hits = raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
-    if (!hits.length) return;
-
-    const hit = hits[0].object;
-    const capsulaFis = disponiveis.find(c => {
-        let found = false;
-        c.mesh.traverse(child => { if (child === hit) found = true; });
-        return found;
-    });
-    if (!capsulaFis) return;
-
-    capsulaFis.aberta = true;
-
-    // Sorteia um prémio da lista configurada
-    const premioSorteado = sortearPremio();
-
-    // Carrega o prémio sorteado
-    carregarPremio(premioSorteado.ficheiro, capsulaFis.mesh, (modelo, animações) => {
-        const s = premioSorteado.escala;
-        modelo.scale.set(s, s, s);
-        modelo.position.set(0, premioSorteado.offsetY, 0);
-        capsulaFis.modeloInterno = modelo;
-
-        capsuleOpener.ativar(
-            { grupo: capsulaFis.mesh, dobradica: capsulaFis.dobradica },
-            capsulaFis,
-            modelo,
-            premioSorteado.escalaAlvo,
-            animações,
-            premioSorteado.idle
-        );
-    });
-});
+// Inicializa o Sistema de Interação (Cliques nas cápsulas)
+const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener);
+interactionSystem.init();
 
 // ── Loop principal ───────────────────────────────────────────────────────────
 function animate(time) {
@@ -176,7 +60,6 @@ function animate(time) {
     estadoJogo = novaAnimacao.novoEstado;
     timeAnim = novaAnimacao.novoTime;
 
-    // ── Sistemas ─────────────────────────────────────────────────────────────────
     physicsWorld.update(capsulas, clawMachine);
     capsuleOpener.update(time);
     confetisObj.atualizarMovimento();

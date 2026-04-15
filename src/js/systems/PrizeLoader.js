@@ -29,6 +29,11 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
             if (node.isMesh) {
                 node.castShadow = true;
                 node.receiveShadow = true;
+                
+                // Garante que o modelo é visível de ambos os lados (corrige buracos em modelos simples)
+                if (node.material) {
+                    node.material.side = THREE.DoubleSide;
+                }
             }
         });
 
