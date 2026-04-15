@@ -46,7 +46,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     let novoTime = timeAnim;
 
     // Suaviza a rotação da garra de volta para 0 se não estiver a regressar nem a subir
-    if (novoEstado !== "A REGRESSAR" && novoEstado !== "A SUBIR") {
+    if (novoEstado !== "REGRESSAR" && novoEstado !== "SUBIR") {
         clawMachine.mecanismoGarra.rotation.z = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.z, 0, 0.1);
         clawMachine.mecanismoGarra.rotation.x = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.x, 0, 0.1);
     }

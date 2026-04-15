@@ -35,7 +35,7 @@ let timeAnim = 0;
 
 const teclas = setupKeyboard(
     () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA",
-    () => { estadoJogo = "A DESCER"; }
+    () => { estadoJogo = "DESCER"; }
 );
 
 const velMovimento = 0.15;
