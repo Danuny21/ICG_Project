@@ -2,25 +2,34 @@ import * as THREE from "three";
 
 export function estadoRepousoGarra(clawMachine) {
     clawMachine.dedos.forEach(d => {
-        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 3.2, 0.05);
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 3.2, 0.02);
     });
 }
 
 export function abrirGarra(clawMachine) {
     clawMachine.dedos.forEach(d => {
-        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 2.2, 0.05);
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 2.2, 0.02);
     });
 }
 
 export function fecharGarra(clawMachine) {
+    const abertFecho = window.CONFIG_JOGO ? window.CONFIG_JOGO.aberturaFecho : -Math.PI / 7;
+
     clawMachine.dedos.forEach(d => {
-        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 7, 0.05);
+        // -Math.PI / 5.5 deixa a garra ligeiramente mais aberta que / 7
+        d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, abertFecho, 0.02);
     });
 }
 
 export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento) {
     let novoEstado = estadoJogo;
     let novoTime = timeAnim;
+
+    // Suaviza a rotação da garra de volta para 0 se não estiver a regressar nem a subir
+    if (novoEstado !== "A REGRESSAR" && novoEstado !== "A SUBIR") {
+        clawMachine.mecanismoGarra.rotation.z = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.z, 0, 0.1);
+        clawMachine.mecanismoGarra.rotation.x = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.x, 0, 0.1);
+    }
 
     // Movimento livre (setas)
     if (novoEstado === "LIVRE") {
@@ -34,19 +43,18 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
     // Animação joystick / botão
     clawMachine.controles.joystick.rotation.x = THREE.MathUtils.lerp(
         clawMachine.controles.joystick.rotation.x,
-        teclas.up ? -Math.PI / 8 : teclas.down ? Math.PI / 8 : 0, 0.15);
+        teclas.up ? -Math.PI / 8 : teclas.down ? Math.PI / 8 : 0, 0.02);
     clawMachine.controles.joystick.rotation.z = THREE.MathUtils.lerp(
         clawMachine.controles.joystick.rotation.z,
-        teclas.left ? Math.PI / 8 : teclas.right ? -Math.PI / 8 : 0, 0.15);
+        teclas.left ? Math.PI / 8 : teclas.right ? -Math.PI / 8 : 0, 0.02);
     clawMachine.controles.botao.position.y = THREE.MathUtils.lerp(
         clawMachine.controles.botao.position.y, teclas.action ? 0.45 : 0.65, 0.3);
 
     // ── A DESCER ─────────────────────────────────────────────────────────────────
     if (novoEstado === "A DESCER") {
         abrirGarra(clawMachine);
-        // Alterado de -24.5 para -20.5 para a garra não descer tão fundo
         if (clawMachine.mecanismoCabo.position.y > -22) {
-            clawMachine.mecanismoCabo.position.y -= 0.4;
+            clawMachine.mecanismoCabo.position.y -= 0.15;
         } else {
             novoEstado = "A FECHAR";
             novoTime   = 0;
@@ -57,14 +65,22 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
     if (novoEstado === "A FECHAR") {
         fecharGarra(clawMachine);
         novoTime++;
-        if (novoTime > 70) novoEstado = "A SUBIR";
+        if (novoTime > 140) novoEstado = "A SUBIR";
     }
 
     // ── A SUBIR ──────────────────────────────────────────────────────────────────
     if (novoEstado === "A SUBIR") {
         fecharGarra(clawMachine);
+        
+        // Tremor para simular vida real também na subida
+        const abano = window.CONFIG_JOGO ? window.CONFIG_JOGO.abano : 0.02;
+
+        const tremorTempo = Date.now() * 0.01;
+        clawMachine.mecanismoGarra.rotation.z = Math.sin(tremorTempo) * abano;
+        clawMachine.mecanismoGarra.rotation.x = Math.cos(tremorTempo * 1.5) * abano;
+
         if (clawMachine.mecanismoCabo.position.y < -4) {
-            clawMachine.mecanismoCabo.position.y += 0.2;
+            clawMachine.mecanismoCabo.position.y += 0.1;
         } else {
             novoEstado = "A REGRESSAR";
         }
@@ -74,8 +90,16 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
     if (novoEstado === "A REGRESSAR") {
         fecharGarra(clawMachine);
         const posTeto = clawMachine.mecanismoTeto.position;
-        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.05);
-        posTeto.z = THREE.MathUtils.lerp(posTeto.z,  9.0, 0.05);
+        // Tornou-se ainda mais lento (de 0.02 para 0.01)
+        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.01);
+        posTeto.z = THREE.MathUtils.lerp(posTeto.z,  9.0, 0.01);
+
+        // Abanar a garra para parecer vida real
+        const abano = window.CONFIG_JOGO ? window.CONFIG_JOGO.abano : 0.02;
+
+        const tremorTempo = Date.now() * 0.01;
+        clawMachine.mecanismoGarra.rotation.z = Math.sin(tremorTempo) * abano;
+        clawMachine.mecanismoGarra.rotation.x = Math.cos(tremorTempo * 1.5) * abano;
 
         if (Math.abs(posTeto.x - (-7.8)) < 0.3 && Math.abs(posTeto.z - 9) < 0.3) {
             novoEstado = "ABRINDO";
@@ -87,7 +111,7 @@ export function updateClawAnimation(estadoJogo, timeAnim, clawMachine, teclas, l
     if (novoEstado === "ABRINDO") {
         abrirGarra(clawMachine);
         novoTime++;
-        if (novoTime > 50) novoEstado = "LIVRE";
+        if (novoTime > 100) novoEstado = "LIVRE";
     }
 
     // Escalar cabo (animação visual)

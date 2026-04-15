@@ -196,9 +196,12 @@ export function criarClawMachine(scene) {
     garraCaboGroup.add(cabo);
 
     // ── Cabeça central
+    const garraCabecaGroup = new THREE.Group();
+    garraCaboGroup.add(garraCabecaGroup);
+
     const cabeca = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 1.8, 8), matMecanismo);
     cabeca.castShadow = true;
-    garraCaboGroup.add(cabeca);
+    garraCabecaGroup.add(cabeca);
 
     // ── 3 Dedos ───────────────────────────────────────────────────────────────
     const W     = 0.55;
@@ -215,7 +218,7 @@ export function criarClawMachine(scene) {
         const pivot = new THREE.Group();
         pivot.position.y  = -0.9;
         pivot.rotation.y  = (Math.PI * 2 / 3) * i;   
-        garraCaboGroup.add(pivot);
+        garraCabecaGroup.add(pivot);
         dedoPivots.push(pivot);
 
         const geo1 = new THREE.BoxGeometry(W, L1, T);
@@ -265,6 +268,7 @@ export function criarClawMachine(scene) {
         caixa:         group,
         mecanismoTeto: garraTetoGroup,
         mecanismoCabo: garraCaboGroup,
+        mecanismoGarra: garraCabecaGroup,
         dedos:         dedos,       
         dedoPivots:    dedoPivots,
         cabo:          cabo,

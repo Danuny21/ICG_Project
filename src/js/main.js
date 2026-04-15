@@ -9,6 +9,18 @@ import { CapsuleOpener } from "./systems/CapsuleOpener.js";
 import { carregarPremio } from "./systems/PrizeLoader.js";
 import { criarConfetis } from "./models/confetti.js";
 import { updateClawAnimation } from "./systems/ClawAnimation.js";
+import { MODO_FACIL, MODO_REALISTA } from "./config.js";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+
+// ── Varáveis Globais de Configuração / Dificuldade ──────────────
+window.CONFIG_JOGO = MODO_FACIL; // Altera para MODO_REALISTA para maior desafio
+
+// Setup lil-gui
+const configUI = { dificuldade: "fácil" };
+const gui = new GUI();
+gui.add(configUI, 'dificuldade', ['fácil', 'realista']).name("Dificuldade").onChange((val) => {
+    window.CONFIG_JOGO = val === 'realista' ? MODO_REALISTA : MODO_FACIL;
+});
 
 // ── Cena ─────────────────────────────────────────────────────────────────────
 const { scene, camera, renderer } = setupScene();
