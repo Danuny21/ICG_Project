@@ -125,6 +125,8 @@ export class CapsuleOpener {
         if (this.estado === "AGUARDAR") {
             // Pequena flutuação para indicar que está interativa
             this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
+            this.capsula.grupo.position.x = this._alvoMundo.x;
+            this.capsula.grupo.position.z = this._alvoMundo.z;
             this.capsula.grupo.rotation.y += 0.01;
 
             // Câmara suavemente focada na cápsula
@@ -137,6 +139,10 @@ export class CapsuleOpener {
         // ── ABRINDO ──────────────────────────────────────────────────────────────────
         if (this.estado === "ABRINDO") {
             const dobradica = this.capsula.dobradica;
+            this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
+            this.capsula.grupo.position.x = this._alvoMundo.x;
+            this.capsula.grupo.position.z = this._alvoMundo.z;
+
             if (dobradica.rotation.x > -Math.PI / 1.2) {
                 dobradica.rotation.x -= 0.08;
             } else {
@@ -164,7 +170,9 @@ export class CapsuleOpener {
 
             // Se o modelo ainda for filho da cápsula, extrair para a root da cena (sem alterar posição/rotação visuais)
             if (this.modelo && this.modelo.parent !== this.scene) {
-                this.scene.attach(this.modelo);
+                // Adiciona à cena ANTES para que possa ser renderizado e calculado
+                this.scene.add(this.modelo);
+                this.modelo.position.copy(this._alvoMundo);
             }
 
             // Modelo cresce
@@ -206,6 +214,8 @@ export class CapsuleOpener {
                 this.modelo.rotation.y += 0.005;
                 // Flutuação suave (igual à versão original)
                 this.modelo.position.y = (this._alvoMundo.y + 1.5) + Math.sin(time * 0.005) * 1;
+                this.modelo.position.x = this._alvoMundo.x;
+                this.modelo.position.z = this._alvoMundo.z;
             }
         }
     }

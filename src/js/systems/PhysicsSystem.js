@@ -3,12 +3,11 @@ import * as RAPIER from "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
 
 // ── Constantes exportadas (usadas em main.js) ─────────────────────────────────
 export const RAIO_CAPSULA     = 1.5;
-export const PORTA_Z          = 11.5;   // Z mundial da porta (deve coincidir com o modelo)
-export const PORTA_ALTURA     = 8.0;    // altura máxima onde a porta interage com cápsulas
+export const PORTA_Z          = 11.5;   
+export const PORTA_ALTURA     = 8.0;    
 export const PORTA_ABERTURA_MAX = -Math.PI / 2.2;
 
-// Gravidade em unidades do jogo por segundo² 
-// (0.15 u/frame × 3600 frames²/s² ≈ 540 → usamos valor moderado para feel arcade)
+// Gravidade e parâmetros de grasp
 const GRAVITY       = -120;
 const PORTA_SPRING  = 0.04;
 const PORTA_DAMPING = 0.80;
@@ -23,6 +22,9 @@ export class PhysicsWorld {
         this._fingerBodies  = [];         // [{ body, dedoSup }]
         this._portaBody     = null;
         this._portaVelAng   = 0;
+
+        // Gripper system (removido forces limitadas)
+        this._graspedCapsules  = new Map();  // capsulaEntry → { body, target }
 
         // reutilizar objectos Three.js para evitar GC
         this._tmpV3  = new THREE.Vector3();
@@ -50,30 +52,7 @@ export class PhysicsWorld {
         this._syncMeshes(capsulas);
     }
 
-    // ── API pública para main.js ──────────────────────────────────────────────
-
-    /** Congela uma cápsula para ser transportada pela garra (cinemático) */
-    freezeBody(c) {
-        const body = this._capsulaBodies.get(c);
-        if (!body) return;
-        body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
-    }
-
-    /** Teleporta o corpo congelado para a posição desejada */
-    setBodyPosition(c, x, y, z) {
-        const body = this._capsulaBodies.get(c);
-        if (!body) return;
-        body.setNextKinematicTranslation({ x, y, z });
-    }
-
-    /** Devolve a cápsula à simulação dinâmica */
-    unfreezeBody(c) {
-        const body = this._capsulaBodies.get(c);
-        if (!body) return;
-        body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
-        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    }
+    // ── API pública para grasp real (removida para grasp puramente físico) ────
 
     // ── Geometria estática ────────────────────────────────────────────────────
     _criarGeometriaEstatica() {
@@ -102,32 +81,30 @@ export class PhysicsWorld {
         col(RAPIER.ColliderDesc.cuboid(wallW, wallH, 0.05).setTranslation(0, 27.5, 11.45));      
 
         // Teto
-        col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));             // teto
+        col(RAPIER.ColliderDesc.cuboid(12.0, 1.2, 12.0).setTranslation(0, 42.2, 0));             
 
         // 4. Chão interior (Buraco)
-        col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));        // chaoDir
-        col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));   // chaoEsq
+        col(RAPIER.ColliderDesc.cuboid(7.85, 0.05, 11.4).setTranslation(3.55, 14.06, 0));        
+        col(RAPIER.ColliderDesc.cuboid(3.55, 0.05, 7.85).setTranslation(-7.85, 14.06, -3.55));   
 
         // 5. Divisores internos de vidro do buraco
-        col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));        // divDir
-        col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));        // divTras
+        col(RAPIER.ColliderDesc.cuboid(0.05, 5.0, 3.6).setTranslation(-4.3, 19.1, 7.85));        
+        col(RAPIER.ColliderDesc.cuboid(3.6, 5.0, 0.05).setTranslation(-7.85, 19.1, 4.3));        
 
         // 6. Rampa de Deslize
-        // Rampa: rotation.x = 1 radian.
         col(RAPIER.ColliderDesc.cuboid(3.3, 0.25, 7.0)
             .setTranslation(-7.8, 5.5, 8.0)
-            .setRotation({ x: Math.sin(1/2), y: 0, z: 0, w: Math.cos(1/2) }));                   // rampa
+            .setRotation({ x: Math.sin(1/2), y: 0, z: 0, w: Math.cos(1/2) }));                   
 
         // 7. Túnel
-        // Superfícies frontais do painel da porta
-        col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));         // supDir
-        col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));        // supEsq
-        col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));        // supTopo
+        col(RAPIER.ColliderDesc.cuboid(7.95, 6.5, 2.0).setTranslation(3.55, 6.5, 12.8));         
+        col(RAPIER.ColliderDesc.cuboid(0.25, 6.5, 2.0).setTranslation(-11.5, 6.5, 12.8));        
+        col(RAPIER.ColliderDesc.cuboid(3.75, 2.6, 2.0).setTranslation(-7.5, 10.4, 12.8));        
 
         // Paredes laterais interiores do túnel
-        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-11.1, 8.5, 9.5));          // lateral esquerda do túnel
-        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-4.5, 8.5, 9.5));           // lateral direita do túnel
-        col(RAPIER.ColliderDesc.cuboid(3.1, 5.0, 0.2).setTranslation(-7.8, 8.5, 4.5));           // traseira do túnel
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-11.1, 8.5, 9.5));          
+        col(RAPIER.ColliderDesc.cuboid(0.2, 5.0, 5.5).setTranslation(-4.5, 8.5, 9.5));           
+        col(RAPIER.ColliderDesc.cuboid(3.1, 5.0, 0.2).setTranslation(-7.8, 8.5, 4.5));           
 
         // 8. Chão exterior p/ evitar fugas da simulação
         col(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, CHAO_EXT_Y - 0.1, 15).setFriction(0.6));
@@ -165,9 +142,9 @@ export class PhysicsWorld {
             const seg3 = seg2.children[0];
 
             const segments = [
-                { mesh: seg1, h: [0.25, 1.50, 0.20], t: [0, -1.50, 1.0] },
-                { mesh: seg2, h: [0.25, 1.10, 0.20], t: [0, -1.10, 0.0] },
-                { mesh: seg3, h: [0.25, 0.65, 0.20], t: [0, -0.65, 0.0] }
+                { mesh: seg1, h: [0.35, 1.50, 0.30], t: [0, -1.50, 1.0] },  // Aumentado para melhor grasp
+                { mesh: seg2, h: [0.35, 1.10, 0.30], t: [0, -1.10, 0.0] },
+                { mesh: seg3, h: [0.35, 0.65, 0.30], t: [0, -0.65, 0.0] }
             ];
 
             for (const seg of segments) {
@@ -201,7 +178,7 @@ export class PhysicsWorld {
         this.world.createCollider(
             RAPIER.ColliderDesc.cuboid(3.4, 3.4, 0.05)
                 .setTranslation(0, -3.4, 0)
-                .setSensor(true), // Sensor: deteta colisões sem exercer força física
+                .setSensor(true), 
             this._portaBody
         );
     }
@@ -209,7 +186,6 @@ export class PhysicsWorld {
     // ── Sync dos dedos cinemáticos → Rapier ───────────────────────────────────
     _syncFingerBodies(clawMachine) {
         for (const { body, dedo } of this._fingerBodies) {
-            // Forçar atualização das matrizes mundo antes de as ler
             dedo.updateWorldMatrix(true, false);
 
             dedo.getWorldPosition(this._tmpV3);
@@ -229,7 +205,7 @@ export class PhysicsWorld {
         }
     }
 
-    // ── Física da porta e sincronização visual ────────────────────────────────
+    // ── Sync dos dedos cinemáticos → Rapier ───────────────────────────────────
     _updatePorta(capsulas, clawMachine) {
         if (!clawMachine.porta || !this._portaBody) return;
 
@@ -237,7 +213,6 @@ export class PhysicsWorld {
 
         // Cápsulas que tocam na porta empurram-na para abrir
         for (const c of capsulas) {
-            if (c.apanhada) continue;
             const body = this._capsulaBodies.get(c);
             if (!body) continue;
 
@@ -251,13 +226,12 @@ export class PhysicsWorld {
                                  t.z < (PORTA_Z + RAIO_CAPSULA);
 
             if (tocarNaPorta) {
-                // Agita visualmente a porta
                 const forcaBater = Math.max(v.z, 6); 
                 this._portaVelAng -= forcaBater * 0.035;
             }
         }
 
-        // Mola: puxa a porta para posição fechada (rotation.x = 0)
+        // Mola: puxa a porta para posição fechada
         this._portaVelAng += (0 - clawMachine.porta.rotation.x) * PORTA_SPRING;
         this._portaVelAng *= PORTA_DAMPING;
         clawMachine.porta.rotation.x += this._portaVelAng;
@@ -280,7 +254,7 @@ export class PhysicsWorld {
     // ── Sync Rapier → meshes Three.js ─────────────────────────────────────────
     _syncMeshes(capsulas) {
         for (const c of capsulas) {
-            if (c.apanhada) continue;
+            if (c.apanhada) continue; // Ignora as cápsulas que estão a ser abertas
 
             const body = this._capsulaBodies.get(c);
             if (!body) continue;
@@ -300,10 +274,7 @@ export class PhysicsWorld {
             if (c.saiu) {
                 const v = body.linvel();
                 const av = body.angvel();
-                // Reduz atrito horizontal da velocidade na saída da cápsula
                 body.setLinvel({ x: v.x * 0.97, y: v.y, z: v.z * 0.97 }, true);
-                
-                // Reduz velocidade de rotação
                 body.setAngvel({ x: av.x * 0.97, y: av.y * 0.97, z: av.z * 0.97 }, true);
             }
         }

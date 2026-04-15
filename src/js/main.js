@@ -45,7 +45,7 @@ scene.add(pointLight);
 const clawMachine = criarClawMachine(scene);
 
 // ── Cápsulas ─────────────────────────────────────────────────────────────────
-const numCapsulas = 50;
+const numCapsulas = 100;
 const capsulas    = [];
 
 for (let i = 0; i < numCapsulas; i++) {
@@ -59,7 +59,6 @@ for (let i = 0; i < numCapsulas; i++) {
     }
 
     grupo.position.set(posX, 22 + Math.random() * 12, posZ);
-    // Para renderizar correctamente dentro da esfera
     scene.add(grupo);
 
     const capsulaObj = {
@@ -84,24 +83,20 @@ let estadoJogo       = "LIVRE";
 let timeAnim         = 0;
 let capsulaApanhada  = null;   // Única cápsula agarrada pela garra (ou null)
 
-// Os listeners de teclado são adicionados após a instância do capsuleOpener
-// (declarado mais abaixo) ser criada.
-
 // ── Funções de animação da garra ─────────────────────────────────────────────
-// Estado de repouso (default): igual ao aberto atual
 function estadoRepousoGarra() {
     clawMachine.dedos.forEach(d => {
         d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 3.2, 0.1);
     });
 }
-// Garra aberta: menos aberta que antes
+
 function abrirGarra() {
     clawMachine.dedos.forEach(d => {
         d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 2.2, 0.1);
     });
 }
+
 function fecharGarra() {
-    // Fechar: igual ao abrir mas menos rotação (menos aberto)
     clawMachine.dedos.forEach(d => {
         d.rotation.x = THREE.MathUtils.lerp(d.rotation.x, -Math.PI / 7, 0.1);
     });
@@ -110,9 +105,6 @@ function fecharGarra() {
 // ── Helpers da garra ─────────────────────────────────────────────────────────
 /**
  * Centro da garra (pivot dos dedos) em coordenadas mundo.
- * garraTetoGroup está em (mecanismoTeto.x, 42.2, mecanismoTeto.z) mundo.
- * garraCaboGroup.position.y é relativo a garraTetoGroup.
- * dedoPivot.position.y = -0.72 relativo a garraCaboGroup.
  */
 function getClawCenterWorld() {
     return new THREE.Vector3(
@@ -142,6 +134,7 @@ window.addEventListener("keydown", (e) => {
         setTimeout(() => (teclas.action = false), 300);
     }
 });
+
 window.addEventListener("keyup", (e) => {
     if (e.key === "ArrowUp")    teclas.up    = false;
     if (e.key === "ArrowDown")  teclas.down  = false;
@@ -176,9 +169,7 @@ window.addEventListener("click", (e) => {
 
     // Carrega o animal agora que clicámos e a animação vai começar
     carregarPremio("frog.glb", capsulaFis.mesh, (modelo) => {
-        // Inicializa o tamanho do animal dentro da cápsula (um pouco maior)
         modelo.scale.set(0.025, 0.025, 0.025);
-        // Centraliza mais a rã, levantando a base em direção ao "equador" da esfera
         modelo.position.set(0, -0.3, 0); 
         capsulaFis.modeloInterno = modelo;
 
@@ -186,7 +177,7 @@ window.addEventListener("click", (e) => {
             { grupo: capsulaFis.mesh, dobradica: capsulaFis.dobradica },
             capsulaFis,
             modelo,
-            0.05 // escala final flutuante alvo da rã
+            0.05
         );
     });
 });
@@ -215,10 +206,6 @@ function animate(time) {
         clawMachine.controles.botao.position.y, teclas.action ? 0.45 : 0.65, 0.3);
 
     // ── DESCENDO ─────────────────────────────────────────────────────────────────
-    // A garra desce com os dedos abertos.
-    // A física de colisão real é tratada pelo Rapier através dos finger bodies
-    // Cinemáticos que são actualizados em physicsWorld.update() → _syncFingerBodies.
-    // Os dedos empurram fisicamente as cápsulas ao descer.
     if (estadoJogo === "DESCENDO") {
         abrirGarra();
         if (clawMachine.mecanismoCabo.position.y > -24.5) {
@@ -230,30 +217,9 @@ function animate(time) {
     }
 
     // ── FECHANDO ─────────────────────────────────────────────────────────────────
-    // Os dedos fecham-se fisicamente (animação rotation.x) e os finger bodies
-    // Do Rapier seguem a mesma rotação, empurrando as cápsulas para o centro.
-    // // Ao frame 55 (~85% fechados), verificamos quais as cápsulas que ficaram
-    // Dentro do raio de captura — são as que os dedos conseguiram envolver.
-    // Nenhum imã: se a cápsula escapou antes dos dedos fecharem, não é apanhada.
     if (estadoJogo === "FECHANDO") {
-        fecharGarra(); // Garantir animação contínua
+        fecharGarra();
         timeAnim++;
-
-        if (timeAnim === 55) {
-            const centro    = getClawCenterWorld();
-            const raioGrab  = 2.8; // Raio de captura após fechar os dedos
-
-            for (const c of capsulas) {
-                if (c.apanhada || c.saiu) continue;
-                if (c.mesh.position.distanceTo(centro) < raioGrab) {
-                    c.apanhada = true;
-                    capsulaApanhada = c;
-                    physicsWorld.freezeBody(c);
-                    break; // Garra real apanha no máximo uma cápsula
-                }
-            }
-        }
-
         if (timeAnim > 70) estadoJogo = "SUBINDO";
     }
 
@@ -284,25 +250,10 @@ function animate(time) {
     if (estadoJogo === "ABRINDO") {
         abrirGarra();
         timeAnim++;
-
-        if (timeAnim === 40 && capsulaApanhada) {
-            // Devolver à simulação dinâmica — a cápsula cai por si própria
-            physicsWorld.unfreezeBody(capsulaApanhada);
-            capsulaApanhada.apanhada = false;
-            capsulaApanhada = null;
-        }
-
         if (timeAnim > 50) estadoJogo = "LIVRE";
     }
 
-    // ── Manter cápsula colada à garra durante o transporte ───────────────────────
-    if (capsulaApanhada) {
-        const c = getClawCenterWorld();
-        // Posicionar ligeiramente abaixo do pivot dos dedos
-        physicsWorld.setBodyPosition(capsulaApanhada, c.x, c.y - 2.0, c.z);
-    }
-
-    // Escalar cabo
+    // Escalar cabo (animação visual)
     const dif = Math.abs(clawMachine.mecanismoCabo.position.y);
     clawMachine.cabo.scale.y = Math.max(0.1, dif);
 
