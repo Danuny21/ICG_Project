@@ -17,12 +17,12 @@ export const LISTA_PREMIOS = [
     { nome: "Husky", ficheiro: "animals/Husky.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
     { nome: "Shiba Inu", ficheiro: "animals/Shiba Inu.glb", peso: 10, escala: 0.4, escalaAlvo: 2, offsetY: -0.5, idle: "Gallop" },
     { nome: "Veado", ficheiro: "animals/Stag.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Attack_Headbutt" },
-    { nome: "Cavalo Branco", ficheiro: "animals/White Horse.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Gallop" },
+    { nome: "Cavalo", ficheiro: "animals/White Horse.glb", peso: 10, escala: 0.3, escalaAlvo: 1.5, offsetY: -0.5, idle: "Gallop" },
     { nome: "Lobo", ficheiro: "animals/Wolf.glb", peso: 10, escala: 0.45, escalaAlvo: 2, offsetY: -0.5, idle: "Attack" },
 
     // ── DINOSAURS ────────────────────────────────────────────────────────────
     { nome: "Apatossauro", ficheiro: "dinossaurs/Apatosaurus.glb", peso: 10, escala: 0.05, escalaAlvo: 0.5, offsetY: 0, idle: "Armature|Apatosaurus_Run" },
-    { nome: "Parassaurolofo", ficheiro: "dinossaurs/Parasaurolophus.glb", peso: 10, escala: 0.25, escalaAlvo: 0.5, offsetY: -0.5, idle: "Armature|Parasaurolophus_Run" },
+    { nome: "Parassaurolofo", ficheiro: "dinossaurs/Parasaurolophus.glb", peso: 10, escala: 0.2, escalaAlvo: 1, offsetY: -0.5, idle: "Armature|Parasaurolophus_Run" },
     { nome: "Estegossauro", ficheiro: "dinossaurs/Stegosaurus.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.2, idle: "Armature|Stegosaurus_Attack" },
     { nome: "T-Rex", ficheiro: "dinossaurs/T-Rex.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.5, idle: "Armature|TRex_Attack" },
     { nome: "Triceratops", ficheiro: "dinossaurs/Triceratops.glb", peso: 10, escala: 0.08, escalaAlvo: 0.5, offsetY: -0.2, idle: "Armature|Triceratops_Walk" },
