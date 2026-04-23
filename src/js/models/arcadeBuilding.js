@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { carregarConjuntoTexturas } from "../systems/TextureLoader.js";
 
 /**
  * Cria um edifício arcade retro com janela, porta, balcão, perciana e decorações extras.
@@ -74,33 +75,31 @@ export function criarArcadeBuilding(scene) {
   }); // Amarelo letreiro
 
   // ── PISO ─────────────────────────────────────────────────────────────────────
-  const pisoGeom = new THREE.BoxGeometry(LARGURA, ESPESSURA, PROFUNDIDADE);
-  const piso = new THREE.Mesh(pisoGeom, matPiso);
-  piso.position.set(0, -ESPESSURA / 2, 0);
-  buildingGroup.add(piso);
+  // --- Carregamento do Chão via Sistema ---
+  const tamanhoAzulejo = 20;
+  const repete = { x: LARGURA / tamanhoAzulejo, y: PROFUNDIDADE / tamanhoAzulejo };
+  
+  const t = carregarConjuntoTexturas(
+    "./src/js/textures/floor/Tiles074_1K-JPG",
+    ["Color", "NormalGL", "Roughness", "Displacement"],
+    repete
+  );
 
-  // Padrão xadrez
-  const tileSize = 5;
-  const tilesX = LARGURA / tileSize;
-  const tilesZ = PROFUNDIDADE / tileSize;
+  const matChao = new THREE.MeshPhongMaterial({
+    map: t.color,
+    normalMap: t.normal,
+    displacementMap: t.displacement,
+    displacementScale: 0.1,
+    specularMap: t.roughness,
+    shininess: 60,
+    specular: 0x444444
+  });
 
-  for (let i = 0; i < tilesX; i++) {
-    for (let j = 0; j < tilesZ; j++) {
-      if ((i + j) % 2 === 0) {
-        const tile = new THREE.Mesh(
-          new THREE.PlaneGeometry(tileSize, tileSize),
-          new THREE.MeshPhongMaterial({ color: 0x222244, shininess: 50 }),
-        );
-        tile.rotation.x = -Math.PI / 2;
-        tile.position.set(
-          i * tileSize - LARGURA / 2 + tileSize / 2,
-          0.01,
-          j * tileSize - PROFUNDIDADE / 2 + tileSize / 2,
-        );
-        buildingGroup.add(tile);
-      }
-    }
-  }
+  // Aumentar segmentos da geometria para o displacementMap funcionar
+  const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE, 64, 64), matChao);
+  chao.rotation.x = -Math.PI / 2;
+  chao.receiveShadow = true;
+  buildingGroup.add(chao);
 
   // ── PAREDES ──────────────────────────────────────────────────────────────────
 
@@ -243,7 +242,7 @@ export function criarArcadeBuilding(scene) {
   // Ajustado para evitar clipping com o novo comprimento
   balcaoGroup.position.set(-(LARGURA / 2) + 8, 0, PROFUNDIDADE / 2 - 15);
 
-  const balcaoAltura = 8; 
+  const balcaoAltura = 8;
   const balcaoBase = new THREE.Mesh(
     new THREE.BoxGeometry(8, balcaoAltura, 31.25), // 25 * 1.25
     matBalcao,
