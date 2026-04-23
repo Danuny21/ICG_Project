@@ -27,12 +27,10 @@ export class CapsuleOpener {
         this.escalaAlvo = 2;
         this.opacidadeCapsula = 1.0;
 
-        // Pedestal e Luzes de destaque
-        this._pedestal = this._criarPedestal();
-        this._luzCima = new THREE.PointLight(0xffffff, 0, 40); // Luz de preenchimento
-        this._luzBaixo = new THREE.SpotLight(0xffffff, 0, 30, Math.PI / 4, 0.5, 1); // Projetor do pedestal
+        // Luzes de destaque para o prémio
+        this._luzCima = new THREE.PointLight(0xffffff, 0, 50);
+        this._luzBaixo = new THREE.PointLight(0xffffff, 0, 50);
         
-        this.scene.add(this._pedestal);
         this.scene.add(this._luzCima);
         this.scene.add(this._luzBaixo);
 
@@ -142,18 +140,12 @@ export class CapsuleOpener {
         this._frameTransporte = 0;
         this.estado = "TRANSPORTAR";
 
-        // Reset pedestal e luzes
-        this._pedestal.visible = false;
-        this._pedestal.scale.set(0.01, 0.01, 0.01);
+        // Reset luzes
         this._luzCima.intensity = 0;
         this._luzBaixo.intensity = 0;
         
-        this._luzCima.position.copy(this._alvoMundo).add(new THREE.Vector3(0, 12, 0));
-        this._luzBaixo.position.copy(this._alvoMundo).add(new THREE.Vector3(0, -1, 0));
-        this._luzBaixo.target.position.copy(this._alvoMundo).add(new THREE.Vector3(0, 5, 0));
-        this.scene.add(this._luzBaixo.target); // Necessário para SpotLight
-        
-        this._pedestal.position.copy(this._alvoMundo).add(new THREE.Vector3(0, -2, 0));
+        this._luzCima.position.copy(this._alvoMundo).add(new THREE.Vector3(0, 8, 0));
+        this._luzBaixo.position.copy(this._alvoMundo).add(new THREE.Vector3(0, -8, 0));
 
         // Desabilita o orbit durante o transporte
         if (this.controls) this.controls.enabled = false;
@@ -259,18 +251,9 @@ export class CapsuleOpener {
                 this.modelo.position.y = this._alvoMundo.y + 0.5;
             }
 
-            // Pedestal e Luzes aparecem progressivamente
-            if (this._pedestal.scale.x < 1) {
-                this._pedestal.scale.addScalar(0.05);
-            }
-            this._luzCima.intensity = THREE.MathUtils.lerp(this._luzCima.intensity, 1.5, 0.1);
-            this._luzBaixo.intensity = THREE.MathUtils.lerp(this._luzBaixo.intensity, 10, 0.1);
-            
-            // Fazer o topo do pedestal brilhar
-            const topo = this._pedestal.children[1];
-            if (topo && topo.material) {
-                topo.material.emissiveIntensity = THREE.MathUtils.lerp(topo.material.emissiveIntensity, 2, 0.1);
-            }
+            // Luzes aparecem progressivamente
+            this._luzCima.intensity = THREE.MathUtils.lerp(this._luzCima.intensity, 3, 0.1);
+            this._luzBaixo.intensity = THREE.MathUtils.lerp(this._luzBaixo.intensity, 2, 0.1);
 
             // Fade-out da cápsula (mais devagar)
             this.opacidadeCapsula -= 0.01; // Reduzido de 0.02
@@ -323,12 +306,10 @@ export class CapsuleOpener {
             }
         }
 
-        // Encolher pedestal e luzes ao encerrar
+        // Encolher luzes ao encerrar
         if (this.estado === "ENCERRAR") {
-            this._pedestal.scale.multiplyScalar(0.9);
-            this._luzCima.intensity *= 0.9;
-            this._luzBaixo.intensity *= 0.9;
-            if (this._pedestal.scale.x < 0.01) this._pedestal.visible = false;
+            this._luzCima.intensity *= 0.8;
+            this._luzBaixo.intensity *= 0.8;
         }
     }
 
@@ -461,35 +442,5 @@ export class CapsuleOpener {
      */
     atualizarTema(nomeTema) {
         this.temaAtual = nomeTema;
-    }
-
-    _criarPedestal() {
-        const group = new THREE.Group();
-        
-        // Base maior
-        const geoBase = new THREE.CylinderGeometry(6, 7, 1, 32);
-        const matBase = new THREE.MeshStandardMaterial({ 
-            color: 0x222222, 
-            metalness: 0.8, 
-            roughness: 0.2 
-        });
-        const base = new THREE.Mesh(geoBase, matBase);
-        group.add(base);
-
-        // Topo brilhante
-        const geoTopo = new THREE.CylinderGeometry(5.8, 5.8, 0.2, 32);
-        const matTopo = new THREE.MeshStandardMaterial({ 
-            color: 0xffffff, 
-            emissive: 0xffffff,
-            emissiveIntensity: 0,
-            metalness: 1.0, 
-            roughness: 0.1 
-        });
-        const topo = new THREE.Mesh(geoTopo, matTopo);
-        topo.position.y = 0.6;
-        group.add(topo);
-
-        group.visible = false;
-        return group;
     }
 }
