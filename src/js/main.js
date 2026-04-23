@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { setupScene } from "./config/scene.js";
 import { setupLighting } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
-import { criarArcadeBuilding } from "./models/glb/arcadeBuilding.js";
+import { criarArcadeBuilding } from "./models/arcadeBuilding.js";
 import { criarClawMachine } from "./models/clawMachine.js";
 import { PhysicsWorld } from "./systems/PhysicsSystem.js";
 import { CapsuleSpawner } from "./systems/CapsuleSpawner.js";
@@ -15,7 +15,7 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 100;
+const NUM_CAPSULAS = 200;
 
 // Cena
 const { scene, camera, renderer } = setupScene();

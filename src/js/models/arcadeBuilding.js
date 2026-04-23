@@ -221,7 +221,7 @@ export function criarArcadeBuilding(scene) {
 
   // Vidro (recuado para dar espaço à perciana)
   const vidro = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA * 0.1, janelaAltura, janelaLargura),
+    new THREE.BoxGeometry(ESPESSURA * 0.1, janelaAltura - 0.1, janelaLargura - 0.1),
     matVidro,
   );
   vidro.position.set(
@@ -252,7 +252,7 @@ export function criarArcadeBuilding(scene) {
 
   for (let i = 0; i < numLaminas * extensaoPerciana; i++) {
     const lamina = new THREE.Mesh(
-      new THREE.BoxGeometry(ESPESSURA * 0.2, alturaLamina, janelaLargura + 1), // Ligeiramente mais larga que o vão
+      new THREE.BoxGeometry(ESPESSURA * 0.2, alturaLamina, janelaLargura - 0.1), // Ajustado para evitar flickaring nas bordas
       matPerciana,
     );
     // Ângulo das lâminas
@@ -263,7 +263,7 @@ export function criarArcadeBuilding(scene) {
   }
   // Barra inferior mais grossa
   const barraInferior = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA * 0.4, 1.2, janelaLargura + 1),
+    new THREE.BoxGeometry(ESPESSURA * 0.4, 1.2, janelaLargura - 0.1),
     matMetal,
   );
   barraInferior.position.y =
