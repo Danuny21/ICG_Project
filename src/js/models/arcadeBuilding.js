@@ -10,7 +10,7 @@ export function criarArcadeBuilding(scene) {
   // ── CONFIGURAÇÕES DE DIMENSÃO ──────────────────────────────────────────────
   const LARGURA = 80;
   const ALTURA = 50;
-  const PROFUNDIDADE = 70;
+  const PROFUNDIDADE = 100;
   const ESPESSURA = 2;
 
   // ── MATERIAIS ────────────────────────────────────────────────────────────────
@@ -104,13 +104,36 @@ export function criarArcadeBuilding(scene) {
 
   // ── PAREDES ──────────────────────────────────────────────────────────────────
 
-  // 1. Parede Traseira
-  const paredeTras = new THREE.Mesh(
-    new THREE.BoxGeometry(LARGURA, ALTURA, ESPESSURA),
-    matParede,
+  // 1. Parede Traseira (COM JANELA E PERCIANA)
+  const paredeTraseiraZ = -(PROFUNDIDADE / 2) - ESPESSURA / 2;
+  const janelaLargura = 30;
+  const janelaAltura = 18;
+  const janelaPeitoril = 12;
+  const largAsa = (LARGURA - janelaLargura) / 2;
+
+  const trasEsq = new THREE.Mesh(new THREE.BoxGeometry(largAsa, ALTURA, ESPESSURA), matParede);
+  trasEsq.position.set(-(LARGURA / 2) + largAsa / 2, ALTURA / 2, paredeTraseiraZ);
+  buildingGroup.add(trasEsq);
+
+  const trasDir = new THREE.Mesh(new THREE.BoxGeometry(largAsa, ALTURA, ESPESSURA), matParede);
+  trasDir.position.set(LARGURA / 2 - largAsa / 2, ALTURA / 2, paredeTraseiraZ);
+  buildingGroup.add(trasDir);
+
+  const trasBaixo = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, janelaPeitoril, ESPESSURA), matParede);
+  trasBaixo.position.set(0, janelaPeitoril / 2, paredeTraseiraZ);
+  buildingGroup.add(trasBaixo);
+
+  const altCimaTras = ALTURA - janelaPeitoril - janelaAltura;
+  const trasCima = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, altCimaTras, ESPESSURA), matParede);
+  trasCima.position.set(0, ALTURA - altCimaTras / 2, paredeTraseiraZ);
+  buildingGroup.add(trasCima);
+
+  const vidroTras = new THREE.Mesh(
+    new THREE.BoxGeometry(janelaLargura - 0.1, janelaAltura - 0.1, ESPESSURA * 0.1),
+    matVidro,
   );
-  paredeTras.position.set(0, ALTURA / 2, -(PROFUNDIDADE / 2) - ESPESSURA / 2);
-  buildingGroup.add(paredeTras);
+  vidroTras.position.set(0, janelaPeitoril + janelaAltura / 2, paredeTraseiraZ + ESPESSURA * 0.3);
+  buildingGroup.add(vidroTras);
 
   // 2. Parede Esquerda
   const compLateral = PROFUNDIDADE + ESPESSURA * 2;
@@ -175,110 +198,54 @@ export function criarArcadeBuilding(scene) {
   portaGroup.rotation.y = -Math.PI / 5;
   buildingGroup.add(portaGroup);
 
-  // 4. Parede Direita (COM JANELA E PERCIANA)
+  // 4. Parede Direita (SÓLIDA)
   const paredeDirX = LARGURA / 2 + ESPESSURA / 2;
-  const janelaLargura = 35;
-  const janelaAltura = 18;
-  const janelaPeitoril = 12;
-  const largLateral = (compLateral - janelaLargura) / 2;
-
-  const latTras = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, ALTURA, largLateral),
+  const compLateralDir = PROFUNDIDADE + ESPESSURA * 2;
+  const paredeDir = new THREE.Mesh(
+    new THREE.BoxGeometry(ESPESSURA, ALTURA, compLateralDir),
     matParede,
   );
-  latTras.position.set(
-    paredeDirX,
-    ALTURA / 2,
-    -(compLateral / 2) + largLateral / 2,
-  );
-  buildingGroup.add(latTras);
+  paredeDir.position.set(paredeDirX, ALTURA / 2, 0);
+  buildingGroup.add(paredeDir);
 
-  const latFrente = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, ALTURA, largLateral),
-    matParede,
-  );
-  latFrente.position.set(
-    paredeDirX,
-    ALTURA / 2,
-    compLateral / 2 - largLateral / 2,
-  );
-  buildingGroup.add(latFrente);
-
-  const latBaixo = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, janelaPeitoril, janelaLargura),
-    matParede,
-  );
-  latBaixo.position.set(paredeDirX, janelaPeitoril / 2, 0);
-  buildingGroup.add(latBaixo);
-
-  const altCimaJanela = ALTURA - janelaPeitoril - janelaAltura;
-  const latCima = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, altCimaJanela, janelaLargura),
-    matParede,
-  );
-  latCima.position.set(paredeDirX, ALTURA - altCimaJanela / 2, 0);
-  buildingGroup.add(latCima);
-
-  // Vidro (recuado para dar espaço à perciana)
-  const vidro = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA * 0.1, janelaAltura - 0.1, janelaLargura - 0.1),
-    matVidro,
-  );
-  vidro.position.set(
-    paredeDirX + ESPESSURA * 0.3,
-    janelaPeitoril + janelaAltura / 2,
-    0,
-  );
-  buildingGroup.add(vidro);
-
-  // ── PERCIANA / ESTORE (NOVO) ────────────────────────────────────────────────
+  // ── PERCIANA NA PAREDE TRASEIRA ───────────────────────────────────────────
   const percianaGroup = new THREE.Group();
-  percianaGroup.position.set(
-    paredeDirX - ESPESSURA * 0.3,
-    janelaPeitoril + janelaAltura,
-    0,
-  );
+  percianaGroup.position.set(0, janelaPeitoril + janelaAltura, paredeTraseiraZ + ESPESSURA * 0.3);
 
-  const numLaminas = 25;
+  const numLaminas = 22;
   const alturaLamina = 0.6;
   const espacamentoLamina = 0.1;
-  const extensaoPerciana = 0.7; // 70% baixada
+  const extensaoPerciana = 0.7;
 
-  const matPerciana = new THREE.MeshPhongMaterial({
-    color: 0x33333d,
-    shininess: 80,
-    side: THREE.DoubleSide,
-  });
+  const matPerciana = new THREE.MeshPhongMaterial({ color: 0x33333d, shininess: 80, side: THREE.DoubleSide });
 
   for (let i = 0; i < numLaminas * extensaoPerciana; i++) {
     const lamina = new THREE.Mesh(
-      new THREE.BoxGeometry(ESPESSURA * 0.2, alturaLamina, janelaLargura - 0.1), // Ajustado para evitar flickaring nas bordas
+      new THREE.BoxGeometry(janelaLargura - 0.1, alturaLamina, ESPESSURA * 0.2),
       matPerciana,
     );
-    // Ângulo das lâminas
-    lamina.rotation.z = Math.PI / 8;
-    lamina.position.y =
-      -(i * (alturaLamina + espacamentoLamina)) - alturaLamina / 2;
+    lamina.rotation.x = -Math.PI / 8;
+    lamina.position.y = -(i * (alturaLamina + espacamentoLamina)) - alturaLamina / 2;
     percianaGroup.add(lamina);
   }
-  // Barra inferior mais grossa
+
   const barraInferior = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA * 0.4, 1.2, janelaLargura - 0.1),
+    new THREE.BoxGeometry(janelaLargura - 0.1, 1.2, ESPESSURA * 0.4),
     matMetal,
   );
-  barraInferior.position.y =
-    -(numLaminas * extensaoPerciana * (alturaLamina + espacamentoLamina)) - 0.6;
+  barraInferior.position.y = -(numLaminas * extensaoPerciana * (alturaLamina + espacamentoLamina)) - 0.6;
   percianaGroup.add(barraInferior);
-
   buildingGroup.add(percianaGroup);
 
   // ── O BALCÃO DE ATENDIMENTO ──────────────────────────────────────────────
   const balcaoGroup = new THREE.Group();
-  balcaoGroup.position.set(-(LARGURA / 2) + 20, 0, PROFUNDIDADE / 4 + 5);
+  // Encostado à parede frontal (porta), na parede esquerda
+  // Ajustado para evitar clipping com o novo comprimento
+  balcaoGroup.position.set(-(LARGURA / 2) + 8, 0, PROFUNDIDADE / 2 - 15);
 
-  const balcaoAltura = 12;
+  const balcaoAltura = 8; 
   const balcaoBase = new THREE.Mesh(
-    new THREE.BoxGeometry(8, balcaoAltura, 25),
+    new THREE.BoxGeometry(8, balcaoAltura, 31.25), // 25 * 1.25
     matBalcao,
   );
   balcaoBase.position.set(0, balcaoAltura / 2, 0);
@@ -286,17 +253,17 @@ export function criarArcadeBuilding(scene) {
 
   const tampoAltura = 1;
   const balcaoTampo = new THREE.Mesh(
-    new THREE.BoxGeometry(9, tampoAltura, 26),
+    new THREE.BoxGeometry(9, tampoAltura, 32.5), // 26 * 1.25
     matMetal,
   );
   balcaoTampo.position.set(0, balcaoAltura + tampoAltura / 2, 0);
   balcaoGroup.add(balcaoTampo);
 
   const neonBalcao = new THREE.Mesh(
-    new THREE.BoxGeometry(8.2, 0.4, 25.2),
+    new THREE.BoxGeometry(8.2, 0.4, 31.5), // 25.2 * 1.25
     matNeonCiana,
   );
-  neonBalcao.position.set(0, 8, 0);
+  neonBalcao.position.set(0, 5, 0);
   balcaoGroup.add(neonBalcao);
 
   balcaoGroup.scale.set(0.8, 0.8, 0.8);

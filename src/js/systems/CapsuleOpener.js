@@ -12,11 +12,13 @@ import * as THREE from "three";
  *  CONTROLO_LIVRE → o modelo flutua, a câmara orbita à volta
  */
 export class CapsuleOpener {
-    constructor(scene, camera, controls, confetis) {
+    constructor(scene, camera, controls, confetis, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0) {
         this.scene = scene;
         this.camera = camera;
         this.controls = controls;
         this.confetis = confetis;
+        this.basePos = basePos;
+        this.baseRotY = baseRotY;
 
         this.estado = "INATIVA";
         this.modelo = null;
@@ -297,8 +299,12 @@ export class CapsuleOpener {
 
         if (this.controls) {
             this.controls.enabled = true;
-            this.controls.target.set(0, 18, 0);
-            this.camera.position.set(0, 30, 60);
+            this.controls.target.set(this.basePos.x, this.basePos.y + 18, this.basePos.z);
+            
+            const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
+            const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
+            this.camera.position.set(this.basePos.x + camOffset.x, this.basePos.y + camOffset.y, this.basePos.z + camOffset.z);
+            
             this.controls.update();
         }
     }

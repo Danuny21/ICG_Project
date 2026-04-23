@@ -15,7 +15,9 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 200;
+const NUM_CAPSULAS = 100;
+const POS_MAQUINA = new THREE.Vector3(-67, 0, 20);
+const ROT_MAQUINA = Math.PI / 2;
 
 // Cena
 const { scene, camera, renderer } = setupScene();
@@ -31,9 +33,11 @@ arcadeBuilding.grupo.scale.set(2, 2, 2);
 
 // Modelo da máquina
 const clawMachine = criarClawMachine(scene);
+clawMachine.caixa.position.copy(POS_MAQUINA);
+clawMachine.caixa.rotation.y = ROT_MAQUINA;
 
 // Cápsulas
-const capsulas = CapsuleSpawner.gerarCapsulas(scene, NUM_CAPSULAS);
+const capsulas = CapsuleSpawner.gerarCapsulas(scene, NUM_CAPSULAS, POS_MAQUINA, ROT_MAQUINA);
 
 // Teclado
 let estadoJogo = "LIVRE";
@@ -49,7 +53,14 @@ const limites = { x: 11.4, z: 11.4 };
 
 // Confetis e CapsuleOpener
 const confetisObj = criarConfetis(scene);
-const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj);
+const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA);
+
+// Ajusta câmara inicial para focar na máquina (tamanho original)
+const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ROT_MAQUINA);
+const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
+camera.position.set(POS_MAQUINA.x + camOffset.x, 30, POS_MAQUINA.z + camOffset.z);
+controls.target.set(POS_MAQUINA.x, 18, POS_MAQUINA.z);
+controls.update();
 
 // Inicializa o Widget de Configurações
 setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
@@ -77,7 +88,7 @@ function animate(time) {
 // Inicialização assíncrona (Rapier usa WASM)
 const physicsWorld = new PhysicsWorld();
 
-physicsWorld.init(capsulas, clawMachine).then(() => {
+physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA).then(() => {
     animate();
 }).catch(err => {
     console.error("Erro ao inicializar Rapier:", err);

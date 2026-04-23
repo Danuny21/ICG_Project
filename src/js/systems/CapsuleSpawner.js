@@ -12,7 +12,7 @@ export class CapsuleSpawner {
      * @param {number} quantidade 
      * @returns {Array} Lista de objetos de cápsula inicializados
      */
-    static gerarCapsulas(scene, quantidade) {
+    static gerarCapsulas(scene, quantidade, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0) {
         const capsulas = [];
 
         for (let i = 0; i < quantidade; i++) {
@@ -27,7 +27,9 @@ export class CapsuleSpawner {
             }
 
             // Altura inicial para efeito de "chuva"
-            grupo.position.set(posX, 22 + Math.random() * 12, posZ);
+            const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), baseRotY);
+            const relPos = new THREE.Vector3(posX, 22 + Math.random() * 12, posZ).applyQuaternion(quat);
+            grupo.position.set(basePos.x + relPos.x, basePos.y + relPos.y, basePos.z + relPos.z);
             scene.add(grupo);
 
             // Estrutura de dados da cápsula para os sistemas de física e interação
