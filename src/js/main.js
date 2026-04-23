@@ -15,7 +15,7 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 120;
+const NUM_CAPSULAS = 200;
 const POS_MAQUINA = new THREE.Vector3(-67, 0, 20);
 const ROT_MAQUINA = Math.PI / 2;
 
