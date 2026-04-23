@@ -59,9 +59,9 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
         let dx = 0;
         let dz = 0;
 
-        if (teclas.up)    dz -= 1;
-        if (teclas.down)  dz += 1;
-        if (teclas.left)  dx -= 1;
+        if (teclas.up) dz -= 1;
+        if (teclas.down) dz += 1;
+        if (teclas.left) dx -= 1;
         if (teclas.right) dx += 1;
 
         // Normalização diagonal
@@ -87,7 +87,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
             const novaPos = pos.x + dx * velMovimento;
             if (novaPos + RAIO_GARRA < limites.x) pos.x = novaPos;
         }
-        
+
         // Abanar a garra levemente com a inércia do movimento
         const targetRotX = dz * 0.05;
         const targetRotZ = -dx * 0.05;
@@ -109,7 +109,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "DESCER") {
         abrirGarra(clawMachine);
         if (clawMachine.mecanismoCabo.position.y > -22) {
-            clawMachine.mecanismoCabo.position.y -= 0.15;
+            clawMachine.mecanismoCabo.position.y -= 0.25; // Aumentado de 0.15
         } else {
             novoEstado = "FECHAR";
             novoTime = 0;
@@ -120,7 +120,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "FECHAR") {
         fecharGarra(clawMachine);
         novoTime++;
-        if (novoTime > 140) novoEstado = "SUBIR";
+        if (novoTime > 80) novoEstado = "SUBIR"; // Reduzido de 140
     }
 
     // A SUBIR
@@ -135,7 +135,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
         clawMachine.mecanismoGarra.rotation.x = Math.cos(tremorTempo * 1.5) * abano;
 
         if (clawMachine.mecanismoCabo.position.y < -4) {
-            clawMachine.mecanismoCabo.position.y += 0.1;
+            clawMachine.mecanismoCabo.position.y += 0.2; // Aumentado de 0.1
         } else {
             novoEstado = "REGRESSAR";
         }
@@ -145,8 +145,8 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "REGRESSAR") {
         fecharGarra(clawMachine);
         const posTeto = clawMachine.mecanismoTeto.position;
-        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.01);
-        posTeto.z = THREE.MathUtils.lerp(posTeto.z, 7.5, 0.01);
+        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.015);
+        posTeto.z = THREE.MathUtils.lerp(posTeto.z, 7.5, 0.015);
 
         const abano = window.CONFIG_JOGO ? window.CONFIG_JOGO.abano : 0.02;
 
@@ -164,7 +164,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "ABRIR") {
         abrirGarra(clawMachine);
         novoTime++;
-        if (novoTime > 100) novoEstado = "LIVRE";
+        if (novoTime > 30) novoEstado = "LIVRE"; // Reduzido de 60
     }
 
     // Escalar cabo (animação visual)
