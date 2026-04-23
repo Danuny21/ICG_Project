@@ -3,14 +3,14 @@ import * as RAPIER from "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
 
 // Constantes
 export const RAIO_CAPSULA = 1.5;
-export const PORTA_Z = 11.5;
+export const PORTA_Z = 14.82; // Sincronizado com o modelo
 export const PORTA_ALTURA = 8.0;
 export const PORTA_ABERTURA_MAX = -Math.PI / 2.2;
 
 // Gravidade e parâmetros de grasp
 const GRAVITY = -120;
-const PORTA_SPRING = 0.04;
-const PORTA_DAMPING = 0.80;
+const PORTA_SPRING = 0.015; // Mola super leve (papel)
+const PORTA_DAMPING = 0.95;  // Balanço livre
 const CHAO_EXT_Y = 0;
 
 export class PhysicsWorld {
@@ -248,8 +248,9 @@ export class PhysicsWorld {
                 loc.z < (pz + RAIO_CAPSULA);
 
             if (tocarNaPorta) {
-                const forcaBater = Math.max(v.z, 6);
-                this._portaVelAng -= forcaBater * 0.035;
+                // Muito mais sensível ao toque (papel)
+                const forcaBater = Math.max(v.z, 2); 
+                this._portaVelAng -= forcaBater * 0.15; 
             }
         }
 
