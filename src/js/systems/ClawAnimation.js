@@ -109,7 +109,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "DESCER") {
         abrirGarra(clawMachine);
         if (clawMachine.mecanismoCabo.position.y > -22) {
-            clawMachine.mecanismoCabo.position.y -= 0.25; // Aumentado de 0.15
+            clawMachine.mecanismoCabo.position.y -= 0.1; // Reduzido para ser mais lento
         } else {
             novoEstado = "FECHAR";
             novoTime = 0;
@@ -120,7 +120,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "FECHAR") {
         fecharGarra(clawMachine);
         novoTime++;
-        if (novoTime > 80) novoEstado = "SUBIR"; // Reduzido de 140
+        if (novoTime > 150) novoEstado = "SUBIR"; // Aumentado para dar peso
     }
 
     // A SUBIR
@@ -135,7 +135,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
         clawMachine.mecanismoGarra.rotation.x = Math.cos(tremorTempo * 1.5) * abano;
 
         if (clawMachine.mecanismoCabo.position.y < -4) {
-            clawMachine.mecanismoCabo.position.y += 0.2; // Aumentado de 0.1
+            clawMachine.mecanismoCabo.position.y += 0.08; // Reduzido para ser mais lento
         } else {
             novoEstado = "REGRESSAR";
         }
@@ -145,8 +145,8 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "REGRESSAR") {
         fecharGarra(clawMachine);
         const posTeto = clawMachine.mecanismoTeto.position;
-        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.015);
-        posTeto.z = THREE.MathUtils.lerp(posTeto.z, 7.5, 0.015);
+        posTeto.x = THREE.MathUtils.lerp(posTeto.x, -7.8, 0.01);
+        posTeto.z = THREE.MathUtils.lerp(posTeto.z, 7.5, 0.01);
 
         const abano = window.CONFIG_JOGO ? window.CONFIG_JOGO.abano : 0.02;
 
@@ -164,7 +164,7 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
     if (novoEstado === "ABRIR") {
         abrirGarra(clawMachine);
         novoTime++;
-        if (novoTime > 30) novoEstado = "LIVRE"; // Reduzido de 60
+        if (novoTime > 80) novoEstado = "LIVRE"; // Aumentado para ser mais lento
     }
 
     // Escalar cabo (animação visual)

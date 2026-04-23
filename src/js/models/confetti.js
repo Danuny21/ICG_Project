@@ -29,9 +29,9 @@ export function criarConfetis(scene) {
                 c.mesh.position.copy(posicao);
                 c.mesh.visible = true;
                 c.velocidade.set(
-                    (Math.random() - 0.5) * 0.5,
-                    Math.random() * 0.6 + 0.3,
-                    (Math.random() - 0.5) * 0.5
+                    (Math.random() - 0.5) * 0.3, // Reduzido de 0.5
+                    Math.random() * 0.4 + 0.2,   // Reduzido de 0.6+0.3
+                    (Math.random() - 0.5) * 0.3  // Reduzido de 0.5
                 );
             });
         },
@@ -41,12 +41,12 @@ export function criarConfetis(scene) {
         atualizarMovimento: function () {
             confettis.forEach(c => {
                 if (c.mesh.visible) {
-                    c.velocidade.y -= 0.01;
+                    c.velocidade.y -= 0.005; // Gravidade reduzida de 0.01
                     c.mesh.position.add(c.velocidade);
 
-                    c.mesh.rotation.x += c.rotacaoSpd.x * 0.2;
-                    c.mesh.rotation.y += c.rotacaoSpd.y * 0.2;
-                    c.mesh.rotation.z += c.rotacaoSpd.z * 0.2;
+                    c.mesh.rotation.x += c.rotacaoSpd.x * 0.1; // Reduzido de 0.2
+                    c.mesh.rotation.y += c.rotacaoSpd.y * 0.1;
+                    c.mesh.rotation.z += c.rotacaoSpd.z * 0.1;
 
                     if (c.mesh.position.y < -10) {
                         c.mesh.visible = false;

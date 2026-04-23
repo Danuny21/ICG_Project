@@ -27,6 +27,12 @@ export class CapsuleOpener {
         this.escalaAlvo = 2;
         this.opacidadeCapsula = 1.0;
 
+        // Pedestal e Luz de destaque
+        this._pedestal = this._criarPedestal();
+        this._luzPremio = new THREE.PointLight(0xffffff, 0, 40);
+        this.scene.add(this._pedestal);
+        this.scene.add(this._luzPremio);
+
         // Animação do prémio
         this.mixer = null;
         this._prevTime = 0;
@@ -36,7 +42,7 @@ export class CapsuleOpener {
         // Posição inicial da cápsula no mundo (para interpolar)
         this._origemMundo = new THREE.Vector3();
         this._frameTransporte = 0;
-        this._FRAMES_TRANSPORTE = 60; // Duração do voo em frames
+        this._FRAMES_TRANSPORTE = 100; // Duração do voo aumentada de 60
 
         // Dica de interface
         this._hintEl = null;
@@ -133,6 +139,13 @@ export class CapsuleOpener {
         this._frameTransporte = 0;
         this.estado = "TRANSPORTAR";
 
+        // Reset pedestal e luz
+        this._pedestal.visible = false;
+        this._pedestal.scale.set(0.01, 0.01, 0.01);
+        this._luzPremio.intensity = 0;
+        this._luzPremio.position.copy(this._alvoMundo).add(new THREE.Vector3(0, 10, 0));
+        this._pedestal.position.copy(this._alvoMundo).add(new THREE.Vector3(0, -2, 0));
+
         // Desabilita o orbit durante o transporte
         if (this.controls) this.controls.enabled = false;
     }
@@ -192,13 +205,16 @@ export class CapsuleOpener {
             this.capsula.grupo.position.z = this._alvoMundo.z;
 
             if (dobradica.rotation.x > -Math.PI / 1.2) {
-                dobradica.rotation.x -= 0.08;
+                dobradica.rotation.x -= 0.04; // Reduzido de 0.08
             } else {
                 this.estado = "DESAPARECER";
                 if (this.nomeExibicao) {
                     this._mostrarNomePremio(this.nomeExibicao);
                 }
                 if (this.confetis) this.confetis.disparar(this.capsula.grupo.position);
+                
+                // Ativa pedestal e luz
+                this._pedestal.visible = true;
             }
 
             // Mantém a câmara focada
@@ -213,11 +229,11 @@ export class CapsuleOpener {
             const parteDebaixo = this.capsula.grupo.children[0];
             const parteCima = this.capsula.dobradica;
 
-            // Cápsula parte-se
-            parteDebaixo.position.y -= 0.2;
-            parteDebaixo.position.z += 0.1;
-            parteCima.position.y -= 0.2;
-            parteCima.position.z -= 0.1;
+            // Cápsula parte-se (mais devagar)
+            parteDebaixo.position.y -= 0.1;
+            parteDebaixo.position.z += 0.05;
+            parteCima.position.y -= 0.1;
+            parteCima.position.z -= 0.05;
 
             // Se o modelo ainda for filho da cápsula, extrair para a root da cena (sem alterar posição/rotação visuais)
             if (this.modelo && this.modelo.parent !== this.scene) {
@@ -225,17 +241,23 @@ export class CapsuleOpener {
                 this.modelo.position.copy(this._alvoMundo);
             }
 
-            // Modelo cresce
+            // Modelo cresce (mais devagar)
             if (this.modelo && this.modelo.scale.x < this.escalaAlvo) {
-                const passo = this.escalaAlvo / 20;
+                const passo = this.escalaAlvo / 50; // Reduzido de 20
                 const limiteTam = this.escalaAlvo * 1.25;
                 const novoTam = Math.min(this.modelo.scale.x + passo, limiteTam);
                 this.modelo.scale.set(novoTam, novoTam, novoTam);
                 this.modelo.position.y = this._alvoMundo.y + 0.5;
             }
 
-            // Fade-out da cápsula baseando-se na opacidade base de cada componente
-            this.opacidadeCapsula -= 0.02;
+            // Pedestal e Luz aparecem progressivamente
+            if (this._pedestal.scale.x < 1) {
+                this._pedestal.scale.addScalar(0.05);
+            }
+            this._luzPremio.intensity = THREE.MathUtils.lerp(this._luzPremio.intensity, 2.5, 0.1);
+
+            // Fade-out da cápsula (mais devagar)
+            this.opacidadeCapsula -= 0.01; // Reduzido de 0.02
             this.capsula.grupo.traverse(child => {
                 if (child.isMesh) {
                     const opOriginal = child.material.userData.originalOpacity ?? 1.0;
@@ -283,6 +305,13 @@ export class CapsuleOpener {
             } else {
                 this._finalizarEncerramento();
             }
+        }
+
+        // Encolher pedestal e luz ao encerrar
+        if (this.estado === "ENCERRAR") {
+            this._pedestal.scale.multiplyScalar(0.9);
+            this._luzPremio.intensity *= 0.9;
+            if (this._pedestal.scale.x < 0.01) this._pedestal.visible = false;
         }
     }
 

@@ -1,4 +1,5 @@
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+import Stats from 'three/addons/libs/stats.module.js';
 import { MODO_FACIL, MODO_REALISTA } from "./dificulty.js";
 import { TEMAS } from "./theme.js";
 
@@ -13,10 +14,22 @@ import { TEMAS } from "./theme.js";
 export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener) {
     const configUI = {
         dificuldade: "realista",
-        tema: "classico"
+        tema: "classico",
+        mostrarStats: true
     };
 
     const gui = new GUI({ title: "Configurações" });
+
+    // Inicializa o Stats (Painel de FPS/Performance)
+    const stats = new Stats();
+    stats.setMode(0);
+    stats.domElement.style.position = 'fixed';
+    stats.domElement.style.right = '0px';
+    stats.domElement.style.bottom = '0px';
+    stats.domElement.style.left = 'auto';
+    stats.domElement.style.top = 'auto';
+    stats.domElement.style.zIndex = '10000';
+    document.body.appendChild(stats.domElement);
 
     gui.add(configUI, 'dificuldade', ['fácil', 'realista']).name("Dificuldade").onChange((val) => {
         window.CONFIG_JOGO = val === 'realista' ? MODO_REALISTA : MODO_FACIL;
@@ -64,5 +77,9 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
         }
     });
 
-    return gui;
+    gui.add(configUI, 'mostrarStats').name("Mostrar FPS").onChange((val) => {
+        stats.domElement.style.display = val ? 'block' : 'none';
+    });
+
+    return { gui, stats };
 }

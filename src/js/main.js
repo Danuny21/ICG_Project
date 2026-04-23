@@ -15,7 +15,7 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 200;
+const NUM_CAPSULAS = 120;
 const POS_MAQUINA = new THREE.Vector3(-67, 0, 20);
 const ROT_MAQUINA = Math.PI / 2;
 
@@ -48,7 +48,7 @@ const teclas = setupKeyboard(
     () => { estadoJogo = "DESCER"; }
 );
 
-const velMovimento = 0.25;
+const velMovimento = 0.15;
 const limites = { x: 11.4, z: 11.4 };
 
 // Confetis e CapsuleOpener
@@ -62,8 +62,8 @@ camera.position.set(POS_MAQUINA.x + camOffset.x, 30, POS_MAQUINA.z + camOffset.z
 controls.target.set(POS_MAQUINA.x, 18, POS_MAQUINA.z);
 controls.update();
 
-// Inicializa o Widget de Configurações
-setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
+// Inicializa o Widget de Configurações (e o Stats)
+const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
 
 // Inicializa o Sistema de Interação (Cliques nas cápsulas)
 const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener);
@@ -71,6 +71,7 @@ interactionSystem.init();
 
 // Loop principal
 function animate(time) {
+    stats.update();
     requestAnimationFrame(animate);
 
     const novaAnimacao = atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento);
