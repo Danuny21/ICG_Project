@@ -95,13 +95,13 @@ export function atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas
         clawMachine.mecanismoGarra.rotation.z = THREE.MathUtils.lerp(clawMachine.mecanismoGarra.rotation.z, targetRotZ, 0.1);
     }
 
-    // Animação joystick / botão
+    // Animação joystick / botão (mais snappy: 0.2 em vez de 0.02)
     clawMachine.controles.joystick.rotation.x = THREE.MathUtils.lerp(
         clawMachine.controles.joystick.rotation.x,
-        teclas.up ? -Math.PI / 8 : teclas.down ? Math.PI / 8 : 0, 0.02);
+        teclas.up ? -Math.PI / 8 : teclas.down ? Math.PI / 8 : 0, 0.2);
     clawMachine.controles.joystick.rotation.z = THREE.MathUtils.lerp(
         clawMachine.controles.joystick.rotation.z,
-        teclas.left ? Math.PI / 8 : teclas.right ? -Math.PI / 8 : 0, 0.02);
+        teclas.left ? Math.PI / 8 : teclas.right ? -Math.PI / 8 : 0, 0.2);
     clawMachine.controles.botao.position.y = THREE.MathUtils.lerp(
         clawMachine.controles.botao.position.y, teclas.action ? 0.45 : 0.65, 0.3);
 
