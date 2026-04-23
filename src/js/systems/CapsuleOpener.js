@@ -198,7 +198,7 @@ export class CapsuleOpener {
                 if (this.nomeExibicao) {
                     this._mostrarNomePremio(this.nomeExibicao);
                 }
-                if (this.confetis) this.confetis.disparar();
+                if (this.confetis) this.confetis.disparar(this.capsula.grupo.position);
             }
 
             // Mantém a câmara focada

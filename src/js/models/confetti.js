@@ -24,9 +24,9 @@ export function criarConfetis(scene) {
 
     // Funções para controlar os confetis
     return {
-        disparar: function () {
+        disparar: function (posicao = new THREE.Vector3(0, 0, 0)) {
             confettis.forEach(c => {
-                c.mesh.position.set(0, 0.5, 0);
+                c.mesh.position.copy(posicao);
                 c.mesh.visible = true;
                 c.velocidade.set(
                     (Math.random() - 0.5) * 0.5,
