@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { criarCapsula } from "../models/capsuleModel.js";
+import { criarCapsula } from "../models/capsule.js";
 import { RAIO_CAPSULA } from "./PhysicsSystem.js";
 
 /**
