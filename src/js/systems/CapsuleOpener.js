@@ -220,9 +220,6 @@ export class CapsuleOpener {
                     this._mostrarNomePremio(this.nomeExibicao);
                 }
                 if (this.confetis) this.confetis.disparar(this.capsula.grupo.position);
-                
-                // Ativa pedestal e luz
-                this._pedestal.visible = true;
             }
 
             // Mantém a câmara focada

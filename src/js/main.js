@@ -64,8 +64,12 @@ const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA);
 
 // Ajusta câmara inicial para focar na máquina (tamanho original)
+// Ajusta câmara inicial para focar na máquina (tamanho original)
+const isPortrait = window.innerHeight > window.innerWidth;
+const distBase = isPortrait ? 130 : 85; // Mais longe em ambos os casos para melhor visualização
+
 const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ROT_MAQUINA);
-const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
+const camOffset = new THREE.Vector3(0, 30, distBase).applyQuaternion(quat);
 camera.position.set(POS_MAQUINA.x + camOffset.x, 30, POS_MAQUINA.z + camOffset.z);
 controls.target.set(POS_MAQUINA.x, 18, POS_MAQUINA.z);
 controls.update();

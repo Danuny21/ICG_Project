@@ -3,6 +3,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 export function setupOrbitControls(camera, renderer) {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.minDistance = 20;
+    controls.maxDistance = 200;
+    controls.maxPolarAngle = Math.PI / 2.1; // Evita ver por baixo do chão
     controls.target.set(0, 18, 0);
     controls.update();
     return controls;

@@ -19,6 +19,27 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
     };
 
     const gui = new GUI({ title: "Configurações" });
+    
+    // Tornar o GUI responsivo
+    const atualizarEscalaUI = () => {
+        const largura = window.innerWidth;
+        let escala = 1;
+        
+        if (largura < 600) escala = 0.8; // Smartphones pequenos
+        if (largura < 400) escala = 0.7; // Smartphones muito pequenos
+
+        // Aplicar escala ao lil-gui
+        gui.domElement.style.transform = `scale(${escala})`;
+        gui.domElement.style.transformOrigin = "top right";
+        
+        // Aplicar escala ao Stats
+        if (stats) {
+            stats.domElement.style.transform = `scale(${escala})`;
+            stats.domElement.style.transformOrigin = "bottom right";
+        }
+    };
+
+    window.addEventListener('resize', atualizarEscalaUI);
 
     // Inicializa o Stats (Painel de FPS/Performance)
     const stats = new Stats();
@@ -30,6 +51,9 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
     stats.domElement.style.top = 'auto';
     stats.domElement.style.zIndex = '10000';
     document.body.appendChild(stats.domElement);
+
+    // Aplicar escala inicial
+    setTimeout(atualizarEscalaUI, 100);
 
     gui.add(configUI, 'dificuldade', ['fácil', 'realista']).name("Dificuldade").onChange((val) => {
         window.CONFIG_JOGO = val === 'realista' ? MODO_REALISTA : MODO_FACIL;

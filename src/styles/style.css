@@ -8,6 +8,7 @@ body {
 
 canvas { 
     display: block; 
+    touch-action: none; /* Previne scroll/zoom do browser, deixando o Three.js controlar */
 }
 
 #ui {
@@ -23,6 +24,7 @@ canvas {
     box-shadow: 4px 4px 0px #cc0000;
     z-index: 100;
     backdrop-filter: blur(4px);
+    transform-origin: top left;
 }
 
 #ui h3 {
@@ -118,6 +120,14 @@ canvas {
     }
     .mobile-only {
         display: block;
+    }
+    #ui {
+        transform: scale(0.8);
+    }
+    #mobile-controls {
+        transform: scale(0.8);
+        transform-origin: bottom center;
+        bottom: 20px;
     }
 }
 
