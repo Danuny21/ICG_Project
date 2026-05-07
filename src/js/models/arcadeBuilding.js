@@ -15,7 +15,8 @@ export function criarArcadeBuilding(scene) {
   const ESPESSURA = 2;
 
   // ── MATERIAIS ────────────────────────────────────────────────────────────────
-  const matParede = new THREE.MeshPhongMaterial({
+  // (Serão atualizados com texturas abaixo)
+  let matParede = new THREE.MeshPhongMaterial({
     color: 0x1a1a3e,
     shininess: 30,
   });
@@ -88,15 +89,27 @@ export function criarArcadeBuilding(scene) {
   const matChao = new THREE.MeshPhongMaterial({
     map: t.color,
     normalMap: t.normal,
-    displacementMap: t.displacement,
-    displacementScale: 0.1,
     specularMap: t.roughness,
     shininess: 60,
     specular: 0x444444
   });
 
+  // --- Carregamento da Parede ---
+  const repeteParede = { x: 4, y: 2 };
+  const tw = carregarConjuntoTexturas(
+    "./src/js/textures/wall/PaintedPlaster017_1K-JPG",
+    ["Color", "NormalGL", "Roughness", "Displacement"],
+    repeteParede
+  );
+
+  // Atualiza o material da parede com as texturas
+  matParede.map = tw.color;
+  matParede.normalMap = tw.normal;
+  matParede.specularMap = tw.roughness;
+  matParede.color.set(0x666688); // Tint para manter o aspeto retro/escuro
+
   // Aumentar segmentos da geometria para o displacementMap funcionar
-  const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE, 64, 64), matChao);
+  const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE), matChao);
   chao.rotation.x = -Math.PI / 2;
   chao.receiveShadow = true;
   buildingGroup.add(chao);
