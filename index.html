@@ -20,7 +20,16 @@
 
 <body>
   <div id="ui">
-    <p><b>⬅ ⬆ ⬇ ➡ </b> Mover <br> <b>ESPAÇO:</b> Apanhar</p>
+    <p class="desktop-only"><b>⬅ ⬆ ⬇ ➡ </b> Mover <br> <b>ESPAÇO:</b> Apanhar</p>
+    <p class="mobile-only"><b>Joystick</b> Mover <br> <b>GO:</b> Apanhar</p>
+  </div>
+
+  <div id="mobile-controls">
+    <div id="joystick-container">
+      <div id="joystick-base"></div>
+      <div id="joystick-stick"></div>
+    </div>
+    <div id="action-button">GO</div>
   </div>
 
   <script type="module" src="./src/js/main.js"></script>

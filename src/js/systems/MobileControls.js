@@ -1,0 +1,78 @@
+export class MobileControls {
+    constructor(teclas, onAction) {
+        this.teclas = teclas;
+        this.onAction = onAction;
+
+        this.joystick = document.getElementById('joystick-container');
+        this.stick = document.getElementById('joystick-stick');
+        this.actionButton = document.getElementById('action-button');
+
+        this.maxDistance = 50; // Max move distance for the stick
+        this.active = false;
+        this.startX = 0;
+        this.startY = 0;
+
+        this.init();
+    }
+
+    init() {
+        // Joystick Events
+        this.joystick.addEventListener('touchstart', (e) => this.onStart(e), { passive: false });
+        window.addEventListener('touchmove', (e) => this.onMove(e), { passive: false });
+        window.addEventListener('touchend', () => this.onEnd(), { passive: false });
+
+        // Action Button
+        this.actionButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.teclas.action = true;
+            if (this.onAction) this.onAction();
+            setTimeout(() => (this.teclas.action = false), 300);
+        });
+    }
+
+    onStart(e) {
+        e.preventDefault();
+        this.active = true;
+        const touch = e.touches[0];
+        const rect = this.joystick.getBoundingClientRect();
+        this.startX = rect.left + rect.width / 2;
+        this.startY = rect.top + rect.height / 2;
+    }
+
+    onMove(e) {
+        if (!this.active) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - this.startX;
+        const deltaY = touch.clientY - this.startY;
+
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX);
+
+        const limitedDistance = Math.min(distance, this.maxDistance);
+        const moveX = Math.cos(angle) * limitedDistance;
+        const moveY = Math.sin(angle) * limitedDistance;
+
+        this.stick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+
+        // Update teclas
+        const threshold = 15;
+        this.teclas.left = deltaX < -threshold;
+        this.teclas.right = deltaX > threshold;
+        this.teclas.up = deltaY < -threshold;
+        this.teclas.down = deltaY > threshold;
+    }
+
+    onEnd() {
+        if (!this.active) return;
+        this.active = false;
+        this.stick.style.transform = `translate(-50%, -50%)`;
+
+        // Reset teclas
+        this.teclas.left = false;
+        this.teclas.right = false;
+        this.teclas.up = false;
+        this.teclas.down = false;
+    }
+}

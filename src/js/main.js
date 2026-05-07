@@ -12,6 +12,7 @@ import { atualizarAnimacaoGarra } from "./systems/ClawAnimation.js";
 import { MODO_REALISTA } from "./config/dificulty.js";
 import { setupWidget } from "./config/widget.js";
 import { InteractionSystem } from "./systems/InteractionSystem.js";
+import { MobileControls } from "./systems/MobileControls.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
@@ -47,6 +48,13 @@ const teclas = setupKeyboard(
     () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA",
     () => { estadoJogo = "DESCER"; }
 );
+
+// Controlos Mobile
+new MobileControls(teclas, () => {
+    if (estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA") {
+        estadoJogo = "DESCER";
+    }
+});
 
 const velMovimento = 0.15;
 const limites = { x: 11.4, z: 11.4 };

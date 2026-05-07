@@ -54,8 +54,9 @@ export class CapsuleOpener {
         this.nomeExibicao = "";
         this.temaAtual = "classico";
 
-        // Ouvinte do teclado
+        // Ouvintes
         this._onKeyDown = this._onKeyDown.bind(this);
+        this._onSceneTouch = this._onSceneTouch.bind(this);
     }
 
     /**
@@ -176,8 +177,14 @@ export class CapsuleOpener {
 
             if (t >= 1) {
                 this.estado = "AGUARDAR";
-                this._mostrarHint("Prima ESPAÇO para abrir a cápsula");
-                window.addEventListener("keydown", this._onKeyDown);
+                const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                this._mostrarHint(isTouch ? "Toque para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
+                
+                if (isTouch) {
+                    window.addEventListener("touchstart", this._onSceneTouch, { once: true });
+                } else {
+                    window.addEventListener("keydown", this._onKeyDown);
+                }
             }
         }
 
@@ -272,8 +279,14 @@ export class CapsuleOpener {
                 // Reativa o orbit
                 if (this.controls) this.controls.enabled = true;
                 this.estado = "CONTROLO_LIVRE";
-                this._mostrarHint("Prima ESPAÇO para voltar a jogar");
-                window.addEventListener("keydown", this._onKeyDown);
+                const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                this._mostrarHint(isTouch ? "Toque para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
+                
+                if (isTouch) {
+                    window.addEventListener("touchstart", this._onSceneTouch, { once: true });
+                } else {
+                    window.addEventListener("keydown", this._onKeyDown);
+                }
             }
         }
 
@@ -338,18 +351,28 @@ export class CapsuleOpener {
 
     // ── Privado ──────────────────────────────────────────────────────────────────
     _onKeyDown(e) {
-        if (e.code === "Space" && this.estado === "AGUARDAR") {
-            e.preventDefault();
-            this._esconderHint();
-            window.removeEventListener("keydown", this._onKeyDown);
-            this.estado = "ABRIR";
+        if (e.code === "Space") {
+            this._triggerAction();
         }
+    }
 
-        if (e.code === "Space" && this.estado === "CONTROLO_LIVRE") {
-            e.preventDefault();
+    _onSceneTouch(e) {
+        // Evita disparar se tocar em botões da UI (como o widget)
+        if (e.target.closest('#gui-container') || e.target.closest('.dg')) return;
+        
+        this._triggerAction();
+    }
+
+    _triggerAction() {
+        if (this.estado === "AGUARDAR") {
             this._esconderHint();
             window.removeEventListener("keydown", this._onKeyDown);
-            // Inicia o encolhimento progressivo
+            window.removeEventListener("touchstart", this._onSceneTouch);
+            this.estado = "ABRIR";
+        } else if (this.estado === "CONTROLO_LIVRE") {
+            this._esconderHint();
+            window.removeEventListener("keydown", this._onKeyDown);
+            window.removeEventListener("touchstart", this._onSceneTouch);
             this.estado = "ENCERRAR";
         }
     }
