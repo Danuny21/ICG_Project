@@ -68,7 +68,7 @@ const isPortrait = window.innerHeight > window.innerWidth;
 camera.fov = isPortrait ? 85 : 60; // Aumenta FOV em mobile para ver mais da máquina sem afastar a câmara
 camera.updateProjectionMatrix();
 
-const distBase = 55; // Distância fixa segura que não atravessa paredes
+const distBase = 75; // Distância inicial aumentada
 
 const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ROT_MAQUINA);
 const camOffset = new THREE.Vector3(0, 30, distBase).applyQuaternion(quat);
