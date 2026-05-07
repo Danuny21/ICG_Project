@@ -1,5 +1,13 @@
 import * as THREE from "three";
 import { THEME } from "../config/theme.js";
+import { carregarConjuntoTexturas } from "../systems/TextureLoader.js";
+
+// Carrega as texturas do plástico uma única vez para todas as cápsulas
+const tp = carregarConjuntoTexturas(
+    "./src/js/textures/plastic/Plastic017B_1K-JPG",
+    ["NormalGL", "Roughness"],
+    { x: 2, y: 1 } // Repetição leve para envolver a cápsula
+);
 
 export function criarCapsula() {
     const grupoCapsula = new THREE.Group();
@@ -7,8 +15,24 @@ export function criarCapsula() {
     const coresCapsulas = THEME.PALETA_CORES;
     const corAleatoria = coresCapsulas[Math.floor(Math.random() * coresCapsulas.length)];
 
-    const matBase = new THREE.MeshPhongMaterial({ color: corAleatoria, flatShading: true, shininess: 100, side: THREE.DoubleSide });
-    const matTopo = new THREE.MeshPhongMaterial({ color: THEME.CAPSULA_TOPO, flatShading: true, shininess: 100, transparent: false, opacity: 1.0, side: THREE.DoubleSide });
+    const matBase = new THREE.MeshPhongMaterial({ 
+        color: corAleatoria, 
+        normalMap: tp.normal,
+        specularMap: tp.roughness,
+        flatShading: true, 
+        shininess: 100, 
+        side: THREE.DoubleSide 
+    });
+    const matTopo = new THREE.MeshPhongMaterial({ 
+        color: THEME.CAPSULA_TOPO, 
+        normalMap: tp.normal,
+        specularMap: tp.roughness,
+        flatShading: true, 
+        shininess: 100, 
+        transparent: false, 
+        opacity: 1.0, 
+        side: THREE.DoubleSide 
+    });
     matTopo.userData.originalOpacity = 0.4;
 
     const geoBase = new THREE.SphereGeometry(1.5, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);

@@ -9,24 +9,24 @@ export function criarClawMachine(scene) {
     // --- Carregamento de Texturas da Máquina ---
     const repeteEstrutura = { x: 2, y: 2 };
     const tm = carregarConjuntoTexturas(
-        "./src/js/textures/machine/PaintedMetal004_1K-JPG",
-        ["Color", "NormalGL", "Roughness", "Displacement", "Metalness"],
+        "./src/js/textures/metal/PaintedMetal004_1k-JPG",
+        ["Color", "NormalGL", "Roughness", "Metalness"],
         repeteEstrutura
     );
 
     // Materiais
     const materiais = {
-        estrutura: new THREE.MeshPhongMaterial({ 
-            color: THEME.ESTRUTURA, 
+        estrutura: new THREE.MeshPhongMaterial({
+            color: THEME.ESTRUTURA,
             map: tm.color,
             normalMap: tm.normal,
             specularMap: tm.roughness,
-            shininess: 100 
+            shininess: 100
         }),
         vidro: new THREE.MeshPhongMaterial({ color: THEME.VIDRO, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide }),
-        chao: new THREE.MeshPhongMaterial({ 
-            color: THEME.CHAO, 
-            flatShading: true 
+        chao: new THREE.MeshPhongMaterial({
+            color: THEME.CHAO,
+            flatShading: true
         }),
         metal: new THREE.MeshPhongMaterial({ color: THEME.METAL }),             // Haste do joystick e cabo
         mecanismo: new THREE.MeshPhongMaterial({ color: THEME.MECANISMO }),     // Base dos dedos da garra
