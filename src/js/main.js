@@ -64,9 +64,11 @@ const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA);
 
 // Ajusta câmara inicial para focar na máquina (tamanho original)
-// Ajusta câmara inicial para focar na máquina (tamanho original)
 const isPortrait = window.innerHeight > window.innerWidth;
-const distBase = isPortrait ? 130 : 85; // Mais longe em ambos os casos para melhor visualização
+camera.fov = isPortrait ? 85 : 60; // Aumenta FOV em mobile para ver mais da máquina sem afastar a câmara
+camera.updateProjectionMatrix();
+
+const distBase = 55; // Distância fixa segura que não atravessa paredes
 
 const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ROT_MAQUINA);
 const camOffset = new THREE.Vector3(0, 30, distBase).applyQuaternion(quat);

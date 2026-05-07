@@ -4,8 +4,10 @@ export function setupOrbitControls(camera, renderer) {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.minDistance = 20;
-    controls.maxDistance = 200;
+    controls.maxDistance = 65;
     controls.maxPolarAngle = Math.PI / 2.1; // Evita ver por baixo do chão
+    controls.minAzimuthAngle = 0; // Impede ir para a esquerda da máquina (atravessar a parede)
+    controls.maxAzimuthAngle = Math.PI * 0.85; // Impede ir para a esquerda/trás da máquina
     controls.target.set(0, 18, 0);
     controls.update();
     return controls;
