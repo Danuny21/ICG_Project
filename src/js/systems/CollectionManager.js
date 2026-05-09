@@ -178,10 +178,9 @@ export class CollectionManager {
             // Rodar para encostar à parede esquerda do ArcadeBuilding
             estante.rotation.y = Math.PI / 2;
 
-            // LARGURA do building = 80 -> Parede esquerda = -40.
-            // Para não ficar dentro da parede, X = -38.5
-            // Z base = 28 (mais para a esquerda/perto da porta)
-            estante.position.set(-38.5, yBase + index * espacamentoY, zBase);
+            // LARGURA do building = 100 -> Parede esquerda = -50.
+            // Para ficar encostada à parede, X = -48.5
+            estante.position.set(-48.5, yBase + index * espacamentoY, zBase);
 
             arcadeBuilding.grupo.add(estante);
 

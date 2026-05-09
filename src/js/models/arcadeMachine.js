@@ -16,21 +16,24 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     const depth = 2.5;
 
     // --- Corpo Principal (Estrutura lateral) ---
-    // Usamos um Shape e Extrude para fazer o perfil lateral clássico
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
     shape.lineTo(depth, 0);
-    shape.lineTo(depth, height * 0.6); // Altura do painel de controlo
-    shape.lineTo(depth * 0.7, height * 0.7); // Inclinação para o ecrã
-    shape.lineTo(depth * 0.7, height * 0.9); // Topo do ecrã
+    shape.lineTo(depth, height * 0.6); // Fim da frente vertical
+    shape.lineTo(depth * 0.7, height * 0.7); // Inclinação do painel
+    shape.lineTo(depth * 0.7, height * 0.9); // Recuo do ecrã
     shape.lineTo(depth, height); // Topo do letreiro
     shape.lineTo(0, height);
     shape.lineTo(0, 0);
 
     const extrudeSettings = { depth: width, bevelEnabled: false };
     const bodyGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+    // CORREÇÃO 1: Centrar a geometria no eixo antes de rodar a mesh
+    // Isto garante que o corpo principal fica no X=0 como o resto das peças
+    bodyGeom.translate(0, 0, -width / 2);
+
     const body = new THREE.Mesh(bodyGeom, bodyMat);
-    // Ajustar posição pois o extrude cresce em Z
     body.rotation.y = -Math.PI / 2;
     arcadeGroup.add(body);
 
@@ -52,7 +55,7 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     );
     controlPanel.add(cpBase);
 
-    // Joystick (Simples: Esfera + Cilindro)
+    // Joystick 
     const stick = new THREE.Mesh(
         new THREE.CylinderGeometry(0.02, 0.02, 0.3),
         blackMat
@@ -62,12 +65,12 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
 
     const ball = new THREE.Mesh(
         new THREE.SphereGeometry(0.08),
-        new THREE.MeshStandardMaterial({ color: 0xff0000 }) // Bola vermelha
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
     );
     ball.position.set(-0.6, 0.35, 0);
     controlPanel.add(ball);
 
-    // Botões (Cilindros pequenos)
+    // Botões
     const buttonGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.05);
     const redBtnMat = new THREE.MeshStandardMaterial({ color: 0xee2222 });
     const blueBtnMat = new THREE.MeshStandardMaterial({ color: 0x2222ee });
@@ -84,35 +87,38 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     btn3.position.set(0.35, 0.1, 0.1);
     controlPanel.add(btn3);
 
-    // Posicionar e rodar o painel de controlo
-    controlPanel.position.set(0, height * 0.62, depth * 0.82);
-    controlPanel.rotation.x = Math.PI * 0.1; // Ligeira inclinação
+    // CORREÇÃO 2: Posição e rotação exatas para seguir a linha do extrude
+    controlPanel.position.set(0, height * 0.62, depth * 0.88);
+    controlPanel.rotation.x = Math.PI * 0.15;
     arcadeGroup.add(controlPanel);
 
     // --- Ecrã (Recuado) ---
     const screen = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.4, height * 0.25, 0.1),
+        new THREE.BoxGeometry(width - 0.3, height * 0.25, 0.1),
         screenMat
     );
-    screen.position.set(0, height * 0.78, depth * 0.65);
-    screen.rotation.x = -Math.PI * 0.05; // Inclinação para baixo
+    // CORREÇÃO 3: Assentar o ecrã precisamente no buraco do shape
+    screen.position.set(0, height * 0.8, depth * 0.68);
+    screen.rotation.x = -Math.PI * 0.05;
     arcadeGroup.add(screen);
 
     // --- Letreiro (Marquee) no Topo ---
     const marqueeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        emissive: 0xffffcc, // Faz o letreiro brilhar ligeiramente
+        emissive: 0xffffcc,
         emissiveIntensity: 0.5
     });
     const marquee = new THREE.Mesh(
         new THREE.BoxGeometry(width - 0.1, 0.6, 0.1),
         marqueeMat
     );
-    marquee.position.set(0, height - 0.35, depth - 0.05);
+    // CORREÇÃO 4: Seguir a inclinação do painel superior
+    marquee.position.set(0, height * 0.95, depth * 0.85);
+    marquee.rotation.x = -Math.PI * 0.12;
     arcadeGroup.add(marquee);
 
-    // Ajustar pivot para a base central
-    arcadeGroup.position.set(width / 2, 0, depth / 2);
+    // O pivot está agora centrado na base (X = 0, Y = 0, Z a partir das costas da máquina).
+    // Removi o ajuste forçado do pivot no final para ser mais fácil de posicionares na cena!
 
     return arcadeGroup;
 }

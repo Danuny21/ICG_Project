@@ -13,7 +13,7 @@ export function criarArcadeBuilding(scene) {
   scene.add(buildingGroup);
 
   // ── CONFIGURAÇÕES DE DIMENSÃO ──────────────────────────────────────────────
-  const LARGURA = 80;
+  const LARGURA = 100;
   const ALTURA = 50;
   const PROFUNDIDADE = 140;
   const ESPESSURA = 2;
@@ -319,12 +319,12 @@ export function criarArcadeBuilding(scene) {
   // 1. Máquinas de Arcade: "do lado" (ao longo da parede direita, parte traseira)
   const coresArcade = [0xff3333, 0x33ff33, 0x3333ff, 0xffff33];
   for (let i = 0; i < 4; i++) {
-      const maquina = createArcadeMachine(coresArcade[i]);
-      maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-      // Parede direita é X=40. Recuadas (Z negativo).
-      maquina.position.set(32, 0, -55 + i * 12);
-      maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
-      buildingGroup.add(maquina);
+    const maquina = createArcadeMachine(coresArcade[i]);
+    maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    // Parede direita é X=50 (LARGURA/2). Completamente encostadas.
+    maquina.position.set(46.5, 0, -55 + i * 12);
+    maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
+    buildingGroup.add(maquina);
   }
 
   // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
@@ -337,27 +337,45 @@ export function criarArcadeBuilding(scene) {
 
   // 3. Mesas redondas: "parede oposta ao balcão" (parede direita, parte frontal)
   const posMesas = [
-      { x: 25, z: 15 }, 
-      { x: 25, z: 45 }
+    { x: 32, z: 15 },
+    { x: 32, z: 45 }
   ];
 
   posMesas.forEach(pos => {
-      const mesa = createRoundTable();
-      mesa.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-      mesa.position.set(pos.x, 0, pos.z);
-      buildingGroup.add(mesa);
+    const mesa = createRoundTable();
+    mesa.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    mesa.position.set(pos.x, 0, pos.z);
+    buildingGroup.add(mesa);
 
-      const cadeira1 = createChair();
-      cadeira1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-      cadeira1.position.set(pos.x, 0, pos.z - 4.5);
-      cadeira1.rotation.y = 0; // Virada para +Z
-      buildingGroup.add(cadeira1);
+    const offsetCadeira = 9;
 
-      const cadeira2 = createChair();
-      cadeira2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-      cadeira2.position.set(pos.x, 0, pos.z + 4.5);
-      cadeira2.rotation.y = Math.PI; // Virada para -Z
-      buildingGroup.add(cadeira2);
+    // Cadeira 1 (Frente)
+    const cadeira1 = createChair();
+    cadeira1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    cadeira1.position.set(pos.x, 0, pos.z - offsetCadeira);
+    cadeira1.rotation.y = 0;
+    buildingGroup.add(cadeira1);
+
+    // Cadeira 2 (Trás)
+    const cadeira2 = createChair();
+    cadeira2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    cadeira2.position.set(pos.x, 0, pos.z + offsetCadeira);
+    cadeira2.rotation.y = Math.PI;
+    buildingGroup.add(cadeira2);
+
+    // Cadeira 3 (Esquerda)
+    const cadeira3 = createChair();
+    cadeira3.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    cadeira3.position.set(pos.x - offsetCadeira, 0, pos.z);
+    cadeira3.rotation.y = Math.PI / 2;
+    buildingGroup.add(cadeira3);
+
+    // Cadeira 4 (Direita)
+    const cadeira4 = createChair();
+    cadeira4.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    cadeira4.position.set(pos.x + offsetCadeira, 0, pos.z);
+    cadeira4.rotation.y = -Math.PI / 2;
+    buildingGroup.add(cadeira4);
   });
 
   return {
