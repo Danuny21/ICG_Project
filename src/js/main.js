@@ -13,6 +13,7 @@ import { MODO_REALISTA } from "./config/dificulty.js";
 import { setupWidget } from "./config/widget.js";
 import { InteractionSystem } from "./systems/InteractionSystem.js";
 import { MobileControls } from "./systems/MobileControls.js";
+import { CollectionManager } from "./systems/CollectionManager.js";
 
 // Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
@@ -31,6 +32,10 @@ setupLighting(scene);
 const arcadeBuilding = criarArcadeBuilding(scene);
 arcadeBuilding.grupo.position.set(0, 0, 55);
 arcadeBuilding.grupo.scale.set(2, 2, 2);
+
+// Gestão de Coleção (Estantes e Prémios na sala)
+const collectionManager = new CollectionManager(scene);
+collectionManager.setupRoom(arcadeBuilding);
 
 // Modelo da máquina
 const clawMachine = criarClawMachine(scene);
@@ -80,13 +85,20 @@ controls.update();
 const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
 
 // Inicializa o Sistema de Interação (Cliques nas cápsulas)
-const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener);
+const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager);
 interactionSystem.init();
+
+let ultimaFrameTempo = performance.now();
 
 // Loop principal
 function animate(time) {
     stats.update();
     requestAnimationFrame(animate);
+
+    const delta = (time - ultimaFrameTempo) / 1000;
+    ultimaFrameTempo = time;
+
+    collectionManager.update(delta);
 
     const novaAnimacao = atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento);
     estadoJogo = novaAnimacao.novoEstado;

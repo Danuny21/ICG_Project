@@ -6,10 +6,11 @@ import { carregarPremio } from "./PrizeLoader.js";
  * Gere a interação do rato (cliques) com as cápsulas na área do depósito.
  */
 export class InteractionSystem {
-    constructor(camera, capsulas, capsuleOpener) {
+    constructor(camera, capsulas, capsuleOpener, collectionManager) {
         this.camera = camera;
         this.capsulas = capsulas;
         this.capsuleOpener = capsuleOpener;
+        this.collectionManager = collectionManager;
 
         this.raycaster = new THREE.Raycaster();
         this.pontoClique = new THREE.Vector2();
@@ -80,6 +81,11 @@ export class InteractionSystem {
                 premioSorteado.idle,
                 premioSorteado.nome
             );
+
+            // Desbloqueia na Collection Room!
+            if (this.collectionManager) {
+                this.collectionManager.unlockPrize(premioSorteado.nome);
+            }
         });
     }
 }
