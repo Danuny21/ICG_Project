@@ -1,5 +1,9 @@
 import * as THREE from "three";
 import { carregarConjuntoTexturas } from "../systems/TextureLoader.js";
+import { createRoundTable } from './table.js';
+import { createChair } from './chair.js';
+import { createBilliardTable } from './poolTable.js';
+import { createArcadeMachine } from './arcadeMachine.js';
 
 /**
  * Cria um edifício arcade retro com janela, porta, balcão, perciana e decorações extras.
@@ -24,15 +28,10 @@ export function criarArcadeBuilding(scene) {
     color: 0x111111,
     shininess: 10,
   });
-  const matNeonRoxa = new THREE.MeshPhongMaterial({
-    color: 0xff00ff,
-    emissive: 0xff00ff,
-    emissiveIntensity: 1,
-  });
-  const matNeonCiana = new THREE.MeshPhongMaterial({
+  const matNeonAzul = new THREE.MeshPhongMaterial({
     color: 0x00ffff,
     emissive: 0x00ffff,
-    emissiveIntensity: 1,
+    emissiveIntensity: 2,
   });
   const matVidro = new THREE.MeshPhongMaterial({
     color: 0x88ddff,
@@ -79,7 +78,7 @@ export function criarArcadeBuilding(scene) {
   // --- Carregamento do Chão via Sistema ---
   const tamanhoAzulejo = 20;
   const repete = { x: LARGURA / tamanhoAzulejo, y: PROFUNDIDADE / tamanhoAzulejo };
-  
+
   const t = carregarConjuntoTexturas(
     "./src/js/textures/floor/Tiles074_1K-JPG",
     ["Color", "NormalGL", "Roughness", "Displacement"],
@@ -251,13 +250,12 @@ export function criarArcadeBuilding(scene) {
 
   // ── O BALCÃO DE ATENDIMENTO ──────────────────────────────────────────────
   const balcaoGroup = new THREE.Group();
-  // Encostado à parede frontal (porta), na parede esquerda
-  // Ajustado para evitar clipping com o novo comprimento
-  balcaoGroup.position.set(-(LARGURA / 2) + 8, 0, PROFUNDIDADE / 2 - 15);
+  // Encostar à parede da porta (frente, Z) e manter na esquerda, mas afastada da parede lateral (X)
+  balcaoGroup.position.set(-(LARGURA / 2) + 15, 0, PROFUNDIDADE / 2 - 28);
 
   const balcaoAltura = 8;
   const balcaoBase = new THREE.Mesh(
-    new THREE.BoxGeometry(8, balcaoAltura, 31.25), // 25 * 1.25
+    new THREE.BoxGeometry(8, balcaoAltura, 70), // Bem mais esticado
     matBalcao,
   );
   balcaoBase.position.set(0, balcaoAltura / 2, 0);
@@ -265,18 +263,20 @@ export function criarArcadeBuilding(scene) {
 
   const tampoAltura = 1;
   const balcaoTampo = new THREE.Mesh(
-    new THREE.BoxGeometry(9, tampoAltura, 32.5), // 26 * 1.25
+    new THREE.BoxGeometry(9, tampoAltura, 71.5), // Acompanha o aumento
     matMetal,
   );
   balcaoTampo.position.set(0, balcaoAltura + tampoAltura / 2, 0);
   balcaoGroup.add(balcaoTampo);
 
   const neonBalcao = new THREE.Mesh(
-    new THREE.BoxGeometry(8.2, 0.4, 31.5), // 25.2 * 1.25
-    matNeonCiana,
+    new THREE.BoxGeometry(8.2, 0.4, 70.5), // Acompanha o aumento
+    matNeonAzul,
   );
   neonBalcao.position.set(0, 5, 0);
   balcaoGroup.add(neonBalcao);
+
+
 
   balcaoGroup.scale.set(0.8, 0.8, 0.8);
   buildingGroup.add(balcaoGroup);
@@ -300,18 +300,65 @@ export function criarArcadeBuilding(scene) {
     buildingGroup.add(n);
   };
 
-  criarNeon(LARGURA, 0.5, 0.5, 0, 0.25, -(PROFUNDIDADE / 2), matNeonCiana);
-  criarNeon(0.5, 0.5, PROFUNDIDADE, -(LARGURA / 2), 0.25, 0, matNeonRoxa);
-  criarNeon(0.5, 0.5, PROFUNDIDADE, LARGURA / 2, 0.25, 0, matNeonRoxa);
+  criarNeon(LARGURA, 0.5, 0.5, 0, 0.25, -(PROFUNDIDADE / 2), matNeonAzul);
+  criarNeon(0.5, 0.5, PROFUNDIDADE, -(LARGURA / 2), 0.25, 0, matNeonAzul);
+  criarNeon(0.5, 0.5, PROFUNDIDADE, LARGURA / 2, 0.25, 0, matNeonAzul);
 
   // ── LUZES ────────────────────────────────────────────────────────────────
-  const light1 = new THREE.PointLight(0xff00ff, 500, 100);
+  const light1 = new THREE.PointLight(0x00ffff, 400, 100);
   light1.position.set(-20, 40, -10);
   buildingGroup.add(light1);
 
-  const light2 = new THREE.PointLight(0x00ffff, 500, 100);
+  const light2 = new THREE.PointLight(0x00ffff, 400, 100);
   light2.position.set(20, 40, -10);
   buildingGroup.add(light2);
+
+  // ── DECORAÇÃO EXTRA (Mesas, Bilhar, Arcades) ──────────────────────────────
+  const SCALE_FACTOR = 3;
+
+  // 1. Máquinas de Arcade: "do lado" (ao longo da parede direita, parte traseira)
+  const coresArcade = [0xff3333, 0x33ff33, 0x3333ff, 0xffff33];
+  for (let i = 0; i < 4; i++) {
+      const maquina = createArcadeMachine(coresArcade[i]);
+      maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+      // Parede direita é X=40. Recuadas (Z negativo).
+      maquina.position.set(32, 0, -55 + i * 12);
+      maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
+      buildingGroup.add(maquina);
+  }
+
+  // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
+  const bilhar = createBilliardTable();
+  bilhar.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+  // Janela está em Z=-70. Posicionada perto do centro-traseiro.
+  bilhar.position.set(0, 0, -50);
+  bilhar.rotation.y = Math.PI / 2; // Rodada para ficar paralela à janela
+  buildingGroup.add(bilhar);
+
+  // 3. Mesas redondas: "parede oposta ao balcão" (parede direita, parte frontal)
+  const posMesas = [
+      { x: 25, z: 15 }, 
+      { x: 25, z: 45 }
+  ];
+
+  posMesas.forEach(pos => {
+      const mesa = createRoundTable();
+      mesa.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+      mesa.position.set(pos.x, 0, pos.z);
+      buildingGroup.add(mesa);
+
+      const cadeira1 = createChair();
+      cadeira1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+      cadeira1.position.set(pos.x, 0, pos.z - 4.5);
+      cadeira1.rotation.y = 0; // Virada para +Z
+      buildingGroup.add(cadeira1);
+
+      const cadeira2 = createChair();
+      cadeira2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+      cadeira2.position.set(pos.x, 0, pos.z + 4.5);
+      cadeira2.rotation.y = Math.PI; // Virada para -Z
+      buildingGroup.add(cadeira2);
+  });
 
   return {
     grupo: buildingGroup,
