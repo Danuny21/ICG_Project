@@ -22,7 +22,9 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     shape.lineTo(depth, height * 0.6); // Fim da frente vertical
     shape.lineTo(depth * 0.7, height * 0.7); // Inclinação do painel
     shape.lineTo(depth * 0.7, height * 0.9); // Recuo do ecrã
-    shape.lineTo(depth, height); // Topo do letreiro
+    // Paralelepípedo no topo para o letreiro
+    shape.lineTo(depth, height * 0.9); // Base do paralelepípedo (avanço para a frente)
+    shape.lineTo(depth, height); // Topo do letreiro (face vertical)
     shape.lineTo(0, height);
     shape.lineTo(0, 0);
 
@@ -37,20 +39,14 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     body.rotation.y = -Math.PI / 2;
     arcadeGroup.add(body);
 
-    // --- Frente Inferior (Painel preto) ---
-    const lowerFront = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.1, height * 0.6, 0.1),
-        blackMat
-    );
-    lowerFront.position.set(0, height * 0.3, depth - 0.05);
-    arcadeGroup.add(lowerFront);
+    // (Sólido preto frontal removido)
 
     // --- Painel de Controlo ---
     const controlPanel = new THREE.Group();
 
-    // Base do painel
+    // Base do painel (Profundidade reduzida para 0.85 para não sair das bordas)
     const cpBase = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.1, 0.2, depth * 0.4),
+        new THREE.BoxGeometry(width - 0.15, 0.2, 0.85),
         controlPanelMat
     );
     controlPanel.add(cpBase);
@@ -87,19 +83,22 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     btn3.position.set(0.35, 0.1, 0.1);
     controlPanel.add(btn3);
 
-    // CORREÇÃO 2: Posição e rotação exatas para seguir a linha do extrude
-    controlPanel.position.set(0, height * 0.62, depth * 0.88);
-    controlPanel.rotation.x = Math.PI * 0.15;
+    // CORREÇÃO 2: Posição e rotação exatas para o segmento do extrude
+    // Afundado ligeiramente para dentro da máquina (Y=3.86, Z=2.09)
+    controlPanel.position.set(0, 3.86, 2.09);
+    controlPanel.rotation.x = 0.674;
     arcadeGroup.add(controlPanel);
 
     // --- Ecrã (Recuado) ---
+    // Altura exata do segmento vertical = 1.2
     const screen = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.3, height * 0.25, 0.1),
+        new THREE.BoxGeometry(width - 0.3, 1.2, 0.1),
         screenMat
     );
     // CORREÇÃO 3: Assentar o ecrã precisamente no buraco do shape
-    screen.position.set(0, height * 0.8, depth * 0.68);
-    screen.rotation.x = -Math.PI * 0.05;
+    // Deslocado 0.05 (metade de 0.1) ao longo da normal (+Z)
+    screen.position.set(0, 4.8, 1.80);
+    screen.rotation.x = 0;
     arcadeGroup.add(screen);
 
     // --- Letreiro (Marquee) no Topo ---
@@ -109,12 +108,13 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
         emissiveIntensity: 0.5
     });
     const marquee = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.1, 0.6, 0.1),
+        new THREE.BoxGeometry(width - 0.1, 0.6, 0.1), // Altura vertical da face = 0.6
         marqueeMat
     );
-    // CORREÇÃO 4: Seguir a inclinação do painel superior
-    marquee.position.set(0, height * 0.95, depth * 0.85);
-    marquee.rotation.x = -Math.PI * 0.12;
+    // CORREÇÃO 4: Seguir a face vertical do novo paralelepípedo superior
+    // Face em Z = 2.5, Y de 5.4 a 6.0. Midpoint: Y = 5.7.
+    marquee.position.set(0, 5.7, 2.55);
+    marquee.rotation.x = 0; // Vertical
     arcadeGroup.add(marquee);
 
     // O pivot está agora centrado na base (X = 0, Y = 0, Z a partir das costas da máquina).

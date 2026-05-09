@@ -4,6 +4,12 @@ import { createRoundTable } from './table.js';
 import { createChair } from './chair.js';
 import { createBilliardTable } from './poolTable.js';
 import { createArcadeMachine } from './arcadeMachine.js';
+import { createPizza } from './pizza.js';
+import { createJuiceGlass } from './juice.js';
+import { createFloorPlant } from './plantFloor.js';
+import { createTablePlant } from './plantTable.js';
+import { createCashRegister } from './cashRegister.js';
+import { createBalloons } from './ballon.js';
 
 /**
  * Cria um edifício arcade retro com janela, porta, balcão, perciana e decorações extras.
@@ -206,6 +212,11 @@ export function criarArcadeBuilding(scene) {
   macaneta.position.set(-portaLargura + 2, 0, espessuraPorta / 2 + 0.4);
   portaGroup.add(macaneta);
 
+  // Maçaneta interior
+  const macanetaInt = macaneta.clone();
+  macanetaInt.position.set(-portaLargura + 2, 0, -espessuraPorta / 2 - 0.4);
+  portaGroup.add(macanetaInt);
+
   portaGroup.rotation.y = -Math.PI / 5;
   buildingGroup.add(portaGroup);
 
@@ -279,6 +290,13 @@ export function criarArcadeBuilding(scene) {
 
 
   balcaoGroup.scale.set(0.8, 0.8, 0.8);
+
+  // Adicionar Caixa Registadora no balcão
+  const cashReg = createCashRegister();
+  cashReg.position.set(0, 9.0, 20); // Em cima do tampo (Y=9.0 local), mais para a frente (Z=20)
+  cashReg.rotation.y = -Math.PI / 2; // Virada para quem atende (-X)
+  balcaoGroup.add(cashReg);
+
   buildingGroup.add(balcaoGroup);
 
   // ── TETO ──────────────────────────────────────────────────────────────────
@@ -321,17 +339,20 @@ export function criarArcadeBuilding(scene) {
   for (let i = 0; i < 4; i++) {
     const maquina = createArcadeMachine(coresArcade[i]);
     maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    // Parede direita é X=50 (LARGURA/2). Completamente encostadas.
-    maquina.position.set(46.5, 0, -55 + i * 12);
+    // Parede direita é X=50 (LARGURA/2). Como o pivot traseiro está em Z=0 local,
+    // colocar X=50 encosta exatamente as costas da máquina à parede.
+    maquina.position.set(50, 0, -55 + i * 12);
     maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
     buildingGroup.add(maquina);
   }
 
   // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
   const bilhar = createBilliardTable();
-  bilhar.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  // Janela está em Z=-70. Posicionada perto do centro-traseiro.
-  bilhar.position.set(0, 0, -50);
+  const bilharScale = SCALE_FACTOR * 1.5; // Aumentar em 50%
+  bilhar.scale.set(bilharScale, bilharScale, bilharScale);
+  // Janela está no centro (X=0) e em Z=-70 (parede traseira).
+  // Mover mais para o fundo para ficar perfeitamente centralizada e enquadrada com a janela.
+  bilhar.position.set(0, 0, -55);
   bilhar.rotation.y = Math.PI / 2; // Rodada para ficar paralela à janela
   buildingGroup.add(bilhar);
 
@@ -341,10 +362,34 @@ export function criarArcadeBuilding(scene) {
     { x: 32, z: 45 }
   ];
 
-  posMesas.forEach(pos => {
+  posMesas.forEach((pos, index) => {
     const mesa = createRoundTable();
     mesa.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
     mesa.position.set(pos.x, 0, pos.z);
+    
+    // Adicionar comida/bebidas/plantas ao tampo da mesa (local Y=3.1)
+    if (index === 0) {
+      const pizza = createPizza();
+      pizza.position.set(0, 3.1, 0);
+      mesa.add(pizza);
+
+      const juice = createJuiceGlass();
+      juice.position.set(1.2, 3.1, 0.5);
+      mesa.add(juice);
+
+      const juice2 = createJuiceGlass();
+      juice2.position.set(-1.0, 3.1, -0.8);
+      mesa.add(juice2);
+    } else {
+      const plant = createTablePlant();
+      plant.position.set(0, 3.1, 0);
+      mesa.add(plant);
+
+      const juice = createJuiceGlass();
+      juice.position.set(1.0, 3.1, -0.5);
+      mesa.add(juice);
+    }
+
     buildingGroup.add(mesa);
 
     const offsetCadeira = 9;
@@ -377,6 +422,23 @@ export function criarArcadeBuilding(scene) {
     cadeira4.rotation.y = -Math.PI / 2;
     buildingGroup.add(cadeira4);
   });
+
+  // 4. Plantas de chão nos cantos
+  const floorPlant1 = createFloorPlant();
+  floorPlant1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+  floorPlant1.position.set(-45, 0, 65); // Canto esquerdo junto à porta
+  buildingGroup.add(floorPlant1);
+
+  const floorPlant2 = createFloorPlant();
+  floorPlant2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+  floorPlant2.position.set(45, 0, -65); // Canto direito ao fundo (perto das arcades)
+  buildingGroup.add(floorPlant2);
+
+  // 5. Balões decorativos
+  const balloons = createBalloons();
+  balloons.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+  balloons.position.set(-25, 0, 45); // Perto do balcão e da porta
+  buildingGroup.add(balloons);
 
   return {
     grupo: buildingGroup,
