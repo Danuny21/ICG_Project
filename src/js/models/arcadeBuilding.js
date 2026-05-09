@@ -264,7 +264,7 @@ export function criarArcadeBuilding(scene) {
   // Encostar à parede da porta (frente, Z) e manter na esquerda, mas afastada da parede lateral (X)
   balcaoGroup.position.set(-(LARGURA / 2) + 15, 0, PROFUNDIDADE / 2 - 28);
 
-  const balcaoAltura = 8;
+  const balcaoAltura = 8 * 1.05; // 5% mais alto (8.4)
   const balcaoBase = new THREE.Mesh(
     new THREE.BoxGeometry(8, balcaoAltura, 70), // Bem mais esticado
     matBalcao,
@@ -293,9 +293,14 @@ export function criarArcadeBuilding(scene) {
 
   // Adicionar Caixa Registadora no balcão
   const cashReg = createCashRegister();
-  cashReg.position.set(0, 9.0, 20); // Em cima do tampo (Y=9.0 local), mais para a frente (Z=20)
+  cashReg.position.set(0, 9.4, 20); // Em cima do tampo (Y=9.4 local), mais para a frente (Z=20)
   cashReg.rotation.y = -Math.PI / 2; // Virada para quem atende (-X)
   balcaoGroup.add(cashReg);
+
+  // Adicionar Cato no balcão
+  const catoBalcao = createTablePlant();
+  catoBalcao.position.set(0, 9.4, -20); // Na outra ponta do balcão
+  balcaoGroup.add(catoBalcao);
 
   buildingGroup.add(balcaoGroup);
 
@@ -348,12 +353,12 @@ export function criarArcadeBuilding(scene) {
 
   // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
   const bilhar = createBilliardTable();
-  const bilharScale = SCALE_FACTOR * 1.5; // Aumentar em 50%
+  const bilharScale = SCALE_FACTOR * 1.5 * 0.90; // Aumentar em 50%, depois reduzir 10%
   bilhar.scale.set(bilharScale, bilharScale, bilharScale);
   // Janela está no centro (X=0) e em Z=-70 (parede traseira).
-  // Mover mais para o fundo para ficar perfeitamente centralizada e enquadrada com a janela.
+  // Posição original mais perto da janela
   bilhar.position.set(0, 0, -55);
-  bilhar.rotation.y = Math.PI / 2; // Rodada para ficar paralela à janela
+  bilhar.rotation.y = Math.PI / 2; // Volta a ficar paralela à janela
   buildingGroup.add(bilhar);
 
   // 3. Mesas redondas: "parede oposta ao balcão" (parede direita, parte frontal)
@@ -362,9 +367,10 @@ export function criarArcadeBuilding(scene) {
     { x: 32, z: 45 }
   ];
 
+  const mesaScale = SCALE_FACTOR * 0.90; // Reduzir 10% no total
   posMesas.forEach((pos, index) => {
     const mesa = createRoundTable();
-    mesa.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    mesa.scale.set(mesaScale, mesaScale, mesaScale);
     mesa.position.set(pos.x, 0, pos.z);
     
     // Adicionar comida/bebidas/plantas ao tampo da mesa (local Y=3.1)
@@ -434,11 +440,19 @@ export function criarArcadeBuilding(scene) {
   floorPlant2.position.set(45, 0, -65); // Canto direito ao fundo (perto das arcades)
   buildingGroup.add(floorPlant2);
 
-  // 5. Balões decorativos
-  const balloons = createBalloons();
-  balloons.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  balloons.position.set(-25, 0, 45); // Perto do balcão e da porta
-  buildingGroup.add(balloons);
+  // 5. Balões decorativos (junto à parede: atrás, no meio e à frente das mesas)
+  const posBaloes = [
+    { x: 48, z: 0 },  // Atrás das mesas
+    { x: 48, z: 30 }, // Entre as mesas
+    { x: 48, z: 60 }  // À frente das mesas
+  ];
+
+  posBaloes.forEach(pos => {
+    const balloons = createBalloons();
+    balloons.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+    balloons.position.set(pos.x, 0, pos.z);
+    buildingGroup.add(balloons);
+  });
 
   return {
     grupo: buildingGroup,
