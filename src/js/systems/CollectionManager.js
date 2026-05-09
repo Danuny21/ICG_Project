@@ -164,10 +164,10 @@ export class CollectionManager {
         
         // Empilhar na vertical
         const espacamentoY = 8;
-        const yBase = 12; // Altura da primeira prateleira (logo acima do balcão)
+        const yBase = 18; // Altura da primeira prateleira (logo acima do balcão)
         
-        // Posição ao longo da parede esquerda (mais perto da porta frontal, Z=50)
-        const zBase = 28; 
+        // Posição ao longo da parede esquerda (mais perto da porta frontal, Z=70)
+        const zBase = 48; 
         
         categorias.forEach((categoriaInfo, index) => {
             const categoria = categoriaInfo.id;

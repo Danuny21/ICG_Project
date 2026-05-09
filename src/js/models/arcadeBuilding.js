@@ -11,7 +11,7 @@ export function criarArcadeBuilding(scene) {
   // ── CONFIGURAÇÕES DE DIMENSÃO ──────────────────────────────────────────────
   const LARGURA = 80;
   const ALTURA = 50;
-  const PROFUNDIDADE = 100;
+  const PROFUNDIDADE = 140;
   const ESPESSURA = 2;
 
   // ── MATERIAIS ────────────────────────────────────────────────────────────────
