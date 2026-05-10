@@ -56,17 +56,10 @@ const bgMusic = new THREE.Audio(listener);
 audioLoader.load('./src/sound/background-music.mp3', (buffer) => {
     bgMusic.setBuffer(buffer);
     bgMusic.setLoop(true);
-    bgMusic.setVolume(0.15);
+    bgMusic.setVolume(0.08);
 });
 
-// 2. Som de Início
-const startSound = new THREE.Audio(listener);
-audioLoader.load('./src/sound/game-start.mp3', (buffer) => {
-    startSound.setBuffer(buffer);
-    startSound.setVolume(0.6);
-});
-
-// 3. Som de Prémio (Capsule Opener)
+// 2. Som de Prémio (Capsule Opener)
 const capsuleSound = new THREE.Audio(listener);
 audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
     capsuleSound.setBuffer(buffer);
@@ -74,9 +67,11 @@ audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
 });
 
 
+
 // Confetis e CapsuleOpener
 const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA, capsuleSound);
+
 
 // Teclado
 let estadoJogo = "LIVRE";
@@ -111,7 +106,9 @@ controls.target.set(POS_MAQUINA.x, 18, POS_MAQUINA.z);
 controls.update();
 
 // Inicializa o Widget de Configurações (e o Stats)
-const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener);
+const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener, { bgMusic, capsuleSound });
+
+
 
 // Inicializa o Sistema de Interação (Cliques nas cápsulas)
 const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager);
@@ -191,12 +188,11 @@ startBtn.addEventListener('click', () => {
     if (bgMusic.context.state === 'suspended') {
         bgMusic.context.resume();
     }
-    
-    // Tocar som de início e começar música de fundo
-    if (startSound.buffer) startSound.play();
-    if (bgMusic.buffer) bgMusic.play();
+    // A música só começa depois do loading
+
 
     // 2. Iniciar física
+
 
 
     const physicsPromise = physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA);
@@ -205,8 +201,15 @@ startBtn.addEventListener('click', () => {
     Promise.all([physicsPromise, assetsPromise]).then(() => {
         setTimeout(() => {
             loadingScreen.classList.add('fade-out');
+            
+            // Começar a música de fundo agora que o jogo vai começar
+            if (bgMusic.buffer && !bgMusic.isPlaying) {
+                bgMusic.play();
+            }
+            
             animate();
         }, 500);
+
     }).catch(err => {
         console.error("Erro crítico na inicialização:", err);
         // Mesmo com erro, tentamos mostrar o jogo

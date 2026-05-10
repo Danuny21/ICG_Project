@@ -10,13 +10,18 @@ import { TEMAS } from "./theme.js";
  * @param {object} confetisObj 
  * @param {Array} capsulas 
  * @param {object} capsuleOpener
+ * @param {object} sounds { bgMusic, capsuleSound }
  */
-export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener) {
+export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener, sounds) {
     const configUI = {
         dificuldade: "realista",
         tema: "classico",
-        mostrarStats: true
+        mostrarStats: true,
+        volMusica: 0.08,
+        volPremio: 0.6
     };
+
+
 
     const gui = new GUI({ title: "Configurações" });
     
@@ -105,5 +110,18 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
         stats.domElement.style.display = val ? 'block' : 'none';
     });
 
+    // --- PAINEL DE ÁUDIO ---
+    const audioFolder = gui.addFolder("Áudio");
+    
+    audioFolder.add(configUI, 'volMusica', 0, 1).name("Música").onChange((val) => {
+        if (sounds?.bgMusic) sounds.bgMusic.setVolume(val);
+    });
+
+    audioFolder.add(configUI, 'volPremio', 0, 1).name("Som de Prémio").onChange((val) => {
+        if (sounds?.capsuleSound) sounds.capsuleSound.setVolume(val);
+    });
+
+
     return { gui, stats };
+
 }
