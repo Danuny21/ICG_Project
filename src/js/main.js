@@ -112,13 +112,65 @@ function animate(time) {
     renderer.render(scene, camera);
 }
 
-// Inicialização assíncrona (Rapier usa WASM)
+// --- Lógica de Fluxo (Menu -> Loading -> Jogo) ---
+const startBtn = document.getElementById('start-button');
+const mainMenu = document.getElementById('main-menu');
+const loadingScreen = document.getElementById('loading-screen');
+
 const physicsWorld = new PhysicsWorld();
 
-physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA).then(() => {
-    animate();
-}).catch(err => {
-    console.error("Erro ao inicializar Rapier:", err);
+// Monitorizar assets desde o início
+const assetsPromise = new Promise((resolve) => {
+    // Se o manager já acabou ou nem tem nada para carregar (raro)
+    const checkReady = () => {
+        if (THREE.DefaultLoadingManager.itemsLoaded === THREE.DefaultLoadingManager.itemsTotal) {
+            resolve();
+            return true;
+        }
+        return false;
+    };
+
+    if (checkReady()) return;
+
+    THREE.DefaultLoadingManager.onLoad = () => {
+        console.log("Todas as texturas e modelos carregados.");
+        resolve();
+    };
+
+    THREE.DefaultLoadingManager.onError = (url) => {
+        console.error("Erro ao carregar asset:", url);
+        resolve(); // Resolvemos na mesma para não travar o jogo
+    };
+
+    // Timeout de segurança (15 segundos)
+    setTimeout(() => {
+        console.warn("Timeout de carregamento atingido. Forçando início.");
+        resolve();
+    }, 15000);
+});
+
+startBtn.addEventListener('click', () => {
+    // 1. Esconder Menu e mostrar Loading
+    mainMenu.classList.add('fade-out');
+    setTimeout(() => mainMenu.classList.add('hidden'), 800);
+    
+    loadingScreen.classList.remove('hidden');
+
+    // 2. Iniciar física
+    const physicsPromise = physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA);
+
+    // 3. Esperar por tudo
+    Promise.all([physicsPromise, assetsPromise]).then(() => {
+        setTimeout(() => {
+            loadingScreen.classList.add('fade-out');
+            animate();
+        }, 500);
+    }).catch(err => {
+        console.error("Erro crítico na inicialização:", err);
+        // Mesmo com erro, tentamos mostrar o jogo
+        loadingScreen.classList.add('fade-out');
+        animate();
+    });
 });
 
 // Resize

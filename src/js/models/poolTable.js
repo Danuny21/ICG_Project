@@ -67,17 +67,18 @@ export function createBilliardTable() {
     tableGroup.add(railB);
 
     // --- Buracos (Pockets) ---
-    const pocketGeom = new THREE.CircleGeometry(0.18, 16);
+    const pocketGeom = new THREE.CircleGeometry(0.3, 16); // Maior para ser visível
     pocketGeom.rotateX(-Math.PI / 2);
 
-    const pocketY = height - 0.24;
-    const pX = width / 2 - railWidth / 2;
-    const pZ = length / 2 - railWidth / 2;
+    const pocketY = height - 0.19; // Um pouco mais acima do feltro
+    // Posicionar no limite interno da madeira (railWidth = 0.4, width/2 = 2.25 => limite feltro = 1.85)
+    const pX = (width / 2) - railWidth;
+    const pZ = (length / 2) - railWidth;
 
     const pocketCoords = [
-        [pX, pZ], [-pX, pZ],
-        [pX, 0], [-pX, 0],
-        [pX, -pZ], [-pX, -pZ]
+        [pX, pZ], [-pX, pZ],          // Cantos
+        [pX + 0.1, 0], [-pX - 0.1, 0], // Meio (ligeiramente mais para a madeira)
+        [pX, -pZ], [-pX, -pZ]         // Cantos
     ];
 
     pocketCoords.forEach(coord => {
@@ -86,72 +87,56 @@ export function createBilliardTable() {
         tableGroup.add(pocket);
     });
 
-    // --- Lógica para as 16 Bolas Espalhadas ---
+    // --- Lógica para as 15 Bolas em Formação de Triângulo (Rack) ---
     const ballRadius = 0.08;
-    const ballY = height - 0.17; // Altura em que assentam na mesa
+    const ballY = height - 0.17;
+    const ballGeom = new THREE.SphereGeometry(ballRadius, 16, 16);
+
+    const startZ = -1.5;
+    const gap = 0.005; // folga minúscula
+    const diam = ballRadius * 2 + gap;
 
     // Cores padrão do bilhar (1 a 15)
     const ballColors = [
         0xffcc00, 0x0033cc, 0xcc0000, 0x660099, 0xff6600, 0x006600, 0x800000, // 1-7 LISAS
         0x111111, // 8 PRETA
-        0xffd700, 0x4169e1, 0xdc143c, 0x9370db, 0xff8c00, 0x228b22, 0xa52a2a  // 9-15 RISCADAS (aqui usamos tons ligeiramente diferentes para distinguir)
+        0xffd700, 0x4169e1, 0xdc143c, 0x9370db, 0xff8c00, 0x228b22, 0xa52a2a  // 9-15 RISCADAS
     ];
 
-    const ballGeom = new THREE.SphereGeometry(ballRadius, 16, 16);
+    let ballIndex = 0;
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col <= row; col++) {
+            const x = (col - row / 2) * diam;
+            const z = startZ - row * (diam * 0.866); // Altura do triângulo equilátero
 
-    // Limites de onde as bolas podem estar para não saírem da mesa
-    const limitX = (width / 2) - railWidth - ballRadius;
-    const limitZ = (length / 2) - railWidth - ballRadius;
-
-    // Array para guardar as posições e verificar colisões
-    const positions = [];
-
-    // Gerar as 15 bolas coloridas
-    for (let i = 0; i < 15; i++) {
-        let x, z;
-        let overlapping = true;
-        let attempts = 0;
-
-        // Loop para encontrar uma posição que não colida com as bolas já colocadas
-        while (overlapping && attempts < 100) {
-            // Random entre os limites negativos e positivos
-            x = (Math.random() * (limitX * 2)) - limitX;
-            z = (Math.random() * (limitZ * 2)) - limitZ;
-            overlapping = false;
-
-            for (let pos of positions) {
-                const distance = Math.sqrt((x - pos.x) ** 2 + (z - pos.z) ** 2);
-                if (distance < ballRadius * 2.1) { // 2.1 garante uma folga minúscula
-                    overlapping = true;
-                    break;
-                }
-            }
-            attempts++;
+            const ballMat = new THREE.MeshStandardMaterial({ color: ballColors[ballIndex], roughness: 0.1 });
+            const ball = new THREE.Mesh(ballGeom, ballMat);
+            ball.position.set(x, ballY, z);
+            ball.castShadow = true;
+            ball.receiveShadow = true;
+            tableGroup.add(ball);
+            ballIndex++;
         }
-
-        positions.push({ x, z });
-
-        const ballMat = new THREE.MeshStandardMaterial({ color: ballColors[i], roughness: 0.1 });
-        const ball = new THREE.Mesh(ballGeom, ballMat);
-        ball.position.set(x, ballY, z);
-        tableGroup.add(ball);
     }
 
-    // Gerar a Bola Branca (Cue ball) num ponto específico com espaço livre garantido
+    // Gerar a Bola Branca (Cue ball) numa posição fixa
     const cueBallMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
     const cueBall = new THREE.Mesh(ballGeom, cueBallMat);
-    // Colocamos a bola branca de um lado para simular uma jogada a decorrer
-    cueBall.position.set(0, ballY, limitZ - 0.5);
+    cueBall.position.set(0, ballY, 1.8);
+    cueBall.castShadow = true;
+    cueBall.receiveShadow = true;
     tableGroup.add(cueBall);
 
-    // --- Taco de bilhar ---
+    // --- Taco de bilhar deitado na mesa ---
     const cueStickMat = new THREE.MeshStandardMaterial({ color: 0xeecc88, roughness: 0.5 });
     const cueStick = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.02, 0.04, 5.0),
+        new THREE.CylinderGeometry(0.015, 0.035, 5.0),
         cueStickMat
     );
-    cueStick.position.set(1.0, height - 0.15, -1.0);
-    cueStick.rotation.set(Math.PI / 2, 0, Math.PI * 0.1);
+    // Deitado paralelamente à tabela lateral
+    cueStick.position.set(width / 2 - 1, ballY, 0.5);
+    cueStick.rotation.set(Math.PI / 2, 0, 0.05);
+    cueStick.castShadow = true;
     tableGroup.add(cueStick);
 
     return tableGroup;
