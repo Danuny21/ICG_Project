@@ -293,14 +293,28 @@ export function criarArcadeBuilding(scene) {
 
   // Adicionar Caixa Registadora no balcão
   const cashReg = createCashRegister();
+  cashReg.scale.set(1.5, 1.5, 1.5); // Aumentar escala para destacar os detalhes
   cashReg.position.set(0, 9.4, 20); // Em cima do tampo (Y=9.4 local), mais para a frente (Z=20)
   cashReg.rotation.y = -Math.PI / 2; // Virada para quem atende (-X)
   balcaoGroup.add(cashReg);
 
   // Adicionar Cato no balcão
   const catoBalcao = createTablePlant();
+  catoBalcao.scale.set(3.375, 3.375, 3.375); // Escala para igualar ao das mesas (2.7 absolute / 0.8 parent)
   catoBalcao.position.set(0, 9.4, -20); // Na outra ponta do balcão
   balcaoGroup.add(catoBalcao);
+
+  // Adicionar Pizza no balcão
+  const pizzaBalcao = createPizza();
+  pizzaBalcao.scale.set(3, 3, 3); // Escala para ser visível (igual à das mesas)
+  pizzaBalcao.position.set(0, 9.4, 0); // No meio do balcão
+  balcaoGroup.add(pizzaBalcao);
+
+  // Adicionar Sumo no balcão
+  const juiceBalcao = createJuiceGlass();
+  juiceBalcao.scale.set(3, 3, 3); // Escala para ser visível
+  juiceBalcao.position.set(1.5, 9.4, 3); // Ao lado da pizza
+  balcaoGroup.add(juiceBalcao);
 
   buildingGroup.add(balcaoGroup);
 
