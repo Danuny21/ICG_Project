@@ -10,6 +10,8 @@ import { createFloorPlant } from './plantFloor.js';
 import { createTablePlant } from './plantTable.js';
 import { createCashRegister } from './cashRegister.js';
 import { createBalloons } from './ballon.js';
+import { createFrame } from './frame.js';
+
 
 /**
  * Cria um edifício arcade retro com janela, porta, balcão, perciana e decorações extras.
@@ -341,15 +343,6 @@ export function criarArcadeBuilding(scene) {
   criarNeon(0.5, 0.5, PROFUNDIDADE, -(LARGURA / 2), 0.25, 0, matNeonAzul);
   criarNeon(0.5, 0.5, PROFUNDIDADE, LARGURA / 2, 0.25, 0, matNeonAzul);
 
-  // ── LUZES ────────────────────────────────────────────────────────────────
-  const light1 = new THREE.PointLight(0x00ffff, 400, 100);
-  light1.position.set(-20, 40, -10);
-  buildingGroup.add(light1);
-
-  const light2 = new THREE.PointLight(0x00ffff, 400, 100);
-  light2.position.set(20, 40, -10);
-  buildingGroup.add(light2);
-
   // ── DECORAÇÃO EXTRA (Mesas, Bilhar, Arcades) ──────────────────────────────
   const SCALE_FACTOR = 3;
 
@@ -358,8 +351,6 @@ export function criarArcadeBuilding(scene) {
   for (let i = 0; i < 4; i++) {
     const maquina = createArcadeMachine(coresArcade[i]);
     maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    // Parede direita é X=50 (LARGURA/2). Como o pivot traseiro está em Z=0 local,
-    // colocar X=50 encosta exatamente as costas da máquina à parede.
     maquina.position.set(50, 0, -55 + i * 12);
     maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
     buildingGroup.add(maquina);
@@ -367,12 +358,10 @@ export function criarArcadeBuilding(scene) {
 
   // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
   const bilhar = createBilliardTable();
-  const bilharScale = SCALE_FACTOR * 1.5 * 0.90; // Aumentar em 50%, depois reduzir 10%
+  const bilharScale = SCALE_FACTOR * 1.5 * 0.90;
   bilhar.scale.set(bilharScale, bilharScale, bilharScale);
-  // Janela está no centro (X=0) e em Z=-70 (parede traseira).
-  // Posição original mais perto da janela
   bilhar.position.set(0, 0, -55);
-  bilhar.rotation.y = Math.PI / 2; // Volta a ficar paralela à janela
+  bilhar.rotation.y = Math.PI / 2;
   buildingGroup.add(bilhar);
 
   // 3. Mesas redondas: "parede oposta ao balcão" (parede direita, parte frontal)
@@ -381,22 +370,19 @@ export function criarArcadeBuilding(scene) {
     { x: 32, z: 45 }
   ];
 
-  const mesaScale = SCALE_FACTOR * 0.90; // Reduzir 10% no total
+  const mesaScale = SCALE_FACTOR * 0.90;
   posMesas.forEach((pos, index) => {
     const mesa = createRoundTable();
     mesa.scale.set(mesaScale, mesaScale, mesaScale);
     mesa.position.set(pos.x, 0, pos.z);
     
-    // Adicionar comida/bebidas/plantas ao tampo da mesa (local Y=3.1)
     if (index === 0) {
       const pizza = createPizza();
       pizza.position.set(0, 3.1, 0);
       mesa.add(pizza);
-
       const juice = createJuiceGlass();
       juice.position.set(1.2, 3.1, 0.5);
       mesa.add(juice);
-
       const juice2 = createJuiceGlass();
       juice2.position.set(-1.0, 3.1, -0.8);
       mesa.add(juice2);
@@ -404,7 +390,6 @@ export function criarArcadeBuilding(scene) {
       const plant = createTablePlant();
       plant.position.set(0, 3.1, 0);
       mesa.add(plant);
-
       const juice = createJuiceGlass();
       juice.position.set(1.0, 3.1, -0.5);
       mesa.add(juice);
@@ -413,52 +398,33 @@ export function criarArcadeBuilding(scene) {
     buildingGroup.add(mesa);
 
     const offsetCadeira = 9;
-
-    // Cadeira 1 (Frente)
-    const cadeira1 = createChair();
-    cadeira1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    cadeira1.position.set(pos.x, 0, pos.z - offsetCadeira);
-    cadeira1.rotation.y = 0;
-    buildingGroup.add(cadeira1);
-
-    // Cadeira 2 (Trás)
-    const cadeira2 = createChair();
-    cadeira2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    cadeira2.position.set(pos.x, 0, pos.z + offsetCadeira);
-    cadeira2.rotation.y = Math.PI;
-    buildingGroup.add(cadeira2);
-
-    // Cadeira 3 (Esquerda)
-    const cadeira3 = createChair();
-    cadeira3.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    cadeira3.position.set(pos.x - offsetCadeira, 0, pos.z);
-    cadeira3.rotation.y = Math.PI / 2;
-    buildingGroup.add(cadeira3);
-
-    // Cadeira 4 (Direita)
-    const cadeira4 = createChair();
-    cadeira4.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    cadeira4.position.set(pos.x + offsetCadeira, 0, pos.z);
-    cadeira4.rotation.y = -Math.PI / 2;
-    buildingGroup.add(cadeira4);
+    [0, Math.PI, Math.PI/2, -Math.PI/2].forEach((rot, i) => {
+        const cadeira = createChair();
+        cadeira.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+        const px = i < 2 ? pos.x : (i === 2 ? pos.x - offsetCadeira : pos.x + offsetCadeira);
+        const pz = i < 2 ? (i === 0 ? pos.z - offsetCadeira : pos.z + offsetCadeira) : pos.z;
+        cadeira.position.set(px, 0, pz);
+        cadeira.rotation.y = rot;
+        buildingGroup.add(cadeira);
+    });
   });
 
   // 4. Plantas de chão nos cantos
   const floorPlant1 = createFloorPlant();
   floorPlant1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  floorPlant1.position.set(-45, 0, 65); // Canto esquerdo junto à porta
+  floorPlant1.position.set(-45, 0, 65);
   buildingGroup.add(floorPlant1);
 
   const floorPlant2 = createFloorPlant();
   floorPlant2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  floorPlant2.position.set(45, 0, -65); // Canto direito ao fundo (perto das arcades)
+  floorPlant2.position.set(45, 0, -65);
   buildingGroup.add(floorPlant2);
 
-  // 5. Balões decorativos (junto à parede: atrás, no meio e à frente das mesas)
+  // 5. Balões decorativos
   const posBaloes = [
-    { x: 48, z: 0 },  // Atrás das mesas
-    { x: 48, z: 30 }, // Entre as mesas
-    { x: 48, z: 60 }  // À frente das mesas
+    { x: 48, z: 0 },
+    { x: 48, z: 30 },
+    { x: 48, z: 60 }
   ];
 
   posBaloes.forEach(pos => {
@@ -467,6 +433,36 @@ export function criarArcadeBuilding(scene) {
     balloons.position.set(pos.x, 0, pos.z);
     buildingGroup.add(balloons);
   });
+
+  // ── QUADROS (DECORAÇÃO DE PAREDE) ─────────────────────────────
+  const criarPequenoQuadro = (x, y, z, rotY) => {
+    const q = createFrame(6, 8); // Tamanho reduzido
+    q.position.set(x, y, z);
+    q.rotation.y = rotY;
+    buildingGroup.add(q);
+  };
+
+  // Posicionados em volta das mesas (Parede Direita, Z=15 e Z=45)
+  // Sem quadros atrás das máquinas (Z < -19)
+  criarPequenoQuadro((LARGURA/2) - 0.6, 28, 10, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA/2) - 0.6, 22, 20, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA/2) - 0.6, 28, 40, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA/2) - 0.6, 22, 55, -Math.PI / 2);
+
+  // Mais um ainda mais pequeno ao pé das mesas
+  const qExtraPequeno = createFrame(4, 5);
+  qExtraPequeno.position.set((LARGURA/2) - 0.6, 25, 30);
+  qExtraPequeno.rotation.y = -Math.PI / 2;
+  buildingGroup.add(qExtraPequeno);
+
+  // Um quadro ao lado da Claw Machine (Parede Esquerda, X=-50)
+  // A claw machine está em Z local aproximado de -27
+  const qClaw = createFrame(8, 10);
+  qClaw.position.set(-(LARGURA/2) + 0.6, 25, -27);
+  qClaw.rotation.y = Math.PI / 2;
+  buildingGroup.add(qClaw);
+
+
 
   return {
     grupo: buildingGroup,

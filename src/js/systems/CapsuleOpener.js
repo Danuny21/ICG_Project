@@ -12,13 +12,15 @@ import * as THREE from "three";
  *  CONTROLO_LIVRE → o modelo flutua, a câmara orbita à volta
  */
 export class CapsuleOpener {
-    constructor(scene, camera, controls, confetis, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0) {
+    constructor(scene, camera, controls, confetis, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0, openSound = null) {
         this.scene = scene;
         this.camera = camera;
         this.controls = controls;
         this.confetis = confetis;
         this.basePos = basePos;
         this.baseRotY = baseRotY;
+        this.openSound = openSound;
+
 
         this.estado = "INATIVA";
         this.modelo = null;
@@ -365,7 +367,15 @@ export class CapsuleOpener {
             this._esconderHint();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
+            
+            // Tocar som de abertura
+            if (this.openSound) {
+                if (this.openSound.isPlaying) this.openSound.stop();
+                this.openSound.play();
+            }
+            
             this.estado = "ABRIR";
+
         } else if (this.estado === "CONTROLO_LIVRE") {
             this._esconderHint();
             window.removeEventListener("keydown", this._onKeyDown);

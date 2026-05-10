@@ -45,6 +45,39 @@ clawMachine.caixa.rotation.y = ROT_MAQUINA;
 // Cápsulas
 const capsulas = CapsuleSpawner.gerarCapsulas(scene, NUM_CAPSULAS, POS_MAQUINA, ROT_MAQUINA);
 
+// --- ÁUDIO ---
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+const audioLoader = new THREE.AudioLoader();
+
+// 1. Música de Fundo
+const bgMusic = new THREE.Audio(listener);
+audioLoader.load('./src/sound/background-music.mp3', (buffer) => {
+    bgMusic.setBuffer(buffer);
+    bgMusic.setLoop(true);
+    bgMusic.setVolume(0.15);
+});
+
+// 2. Som de Início
+const startSound = new THREE.Audio(listener);
+audioLoader.load('./src/sound/game-start.mp3', (buffer) => {
+    startSound.setBuffer(buffer);
+    startSound.setVolume(0.6);
+});
+
+// 3. Som de Prémio (Capsule Opener)
+const capsuleSound = new THREE.Audio(listener);
+audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
+    capsuleSound.setBuffer(buffer);
+    capsuleSound.setVolume(0.6);
+});
+
+
+// Confetis e CapsuleOpener
+const confetisObj = criarConfetis(scene);
+const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA, capsuleSound);
+
 // Teclado
 let estadoJogo = "LIVRE";
 let timeAnim = 0;
@@ -63,10 +96,6 @@ new MobileControls(teclas, () => {
 
 const velMovimento = 0.15;
 const limites = { x: 11.4, z: 11.4 };
-
-// Confetis e CapsuleOpener
-const confetisObj = criarConfetis(scene);
-const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA);
 
 // Ajusta câmara inicial para focar na máquina (tamanho original)
 const isPortrait = window.innerHeight > window.innerWidth;
@@ -119,8 +148,10 @@ const loadingScreen = document.getElementById('loading-screen');
 
 const physicsWorld = new PhysicsWorld();
 
+
 // Monitorizar assets desde o início
 const assetsPromise = new Promise((resolve) => {
+
     // Se o manager já acabou ou nem tem nada para carregar (raro)
     const checkReady = () => {
         if (THREE.DefaultLoadingManager.itemsLoaded === THREE.DefaultLoadingManager.itemsTotal) {
@@ -156,7 +187,18 @@ startBtn.addEventListener('click', () => {
     
     loadingScreen.classList.remove('hidden');
 
+    // Iniciar áudio (necessita de interação do user)
+    if (bgMusic.context.state === 'suspended') {
+        bgMusic.context.resume();
+    }
+    
+    // Tocar som de início e começar música de fundo
+    if (startSound.buffer) startSound.play();
+    if (bgMusic.buffer) bgMusic.play();
+
     // 2. Iniciar física
+
+
     const physicsPromise = physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA);
 
     // 3. Esperar por tudo
