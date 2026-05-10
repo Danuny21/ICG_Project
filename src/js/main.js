@@ -14,10 +14,12 @@ import { setupWidget } from "./config/widget.js";
 import { InteractionSystem } from "./systems/InteractionSystem.js";
 import { MobileControls } from "./systems/MobileControls.js";
 import { CollectionManager } from "./systems/CollectionManager.js";
+import { CameraManager } from "./systems/CameraManager.js";
 
-// Varáveis Globais de Configuração / Dificuldade / Número de Cápsulas
+// Variáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
 const NUM_CAPSULAS = 200;
+
 const POS_MAQUINA = new THREE.Vector3(-86, 0, 1);
 const ROT_MAQUINA = Math.PI / 2;
 
@@ -72,19 +74,22 @@ audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
 const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA, capsuleSound);
 
+// Gest�o de C�mara
+const cameraManager = new CameraManager(camera, controls, capsuleOpener);
+cameraManager.init(POS_MAQUINA, ROT_MAQUINA, 75);
 
 // Teclado
 let estadoJogo = "LIVRE";
 let timeAnim = 0;
 
 const teclas = setupKeyboard(
-    () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA",
-    () => { estadoJogo = "DESCER"; }
+    () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA" && cameraManager.viewState === "machine",
+    () => { if (cameraManager.viewState === "machine") estadoJogo = "DESCER"; }
 );
 
 // Controlos Mobile
 new MobileControls(teclas, () => {
-    if (estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA") {
+    if (estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA" && cameraManager.viewState === "machine") {
         estadoJogo = "DESCER";
     }
 });
@@ -92,23 +97,13 @@ new MobileControls(teclas, () => {
 const velMovimento = 0.15;
 const limites = { x: 11.4, z: 11.4 };
 
-// Ajusta câmara inicial para focar na máquina (tamanho original)
+// Ajusta c�mara inicial para focar na m�quina (tamanho original)
 const isPortrait = window.innerHeight > window.innerWidth;
-camera.fov = isPortrait ? 85 : 60; // Aumenta FOV em mobile para ver mais da máquina sem afastar a câmara
+camera.fov = isPortrait ? 85 : 60; // Aumenta FOV em mobile para ver mais da m�quina sem afastar a c�mara
 camera.updateProjectionMatrix();
 
-const distBase = 75; // Distância inicial aumentada
-
-const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ROT_MAQUINA);
-const camOffset = new THREE.Vector3(0, 30, distBase).applyQuaternion(quat);
-camera.position.set(POS_MAQUINA.x + camOffset.x, 30, POS_MAQUINA.z + camOffset.z);
-controls.target.set(POS_MAQUINA.x, 18, POS_MAQUINA.z);
-controls.update();
-
-// Inicializa o Widget de Configurações (e o Stats)
+// Inicializa o Widget de Configura��es (e o Stats)
 const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener, { bgMusic, capsuleSound });
-
-
 
 // Inicializa o Sistema de Interação (Cliques nas cápsulas)
 const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager);
@@ -120,6 +115,8 @@ let ultimaFrameTempo = performance.now();
 function animate(time) {
     stats.update();
     requestAnimationFrame(animate);
+
+    cameraManager.update();
 
     const delta = (time - ultimaFrameTempo) / 1000;
     ultimaFrameTempo = time;

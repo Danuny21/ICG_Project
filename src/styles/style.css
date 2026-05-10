@@ -293,3 +293,40 @@ canvas {
                     -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
 }
+
+/* Camera Views UI */
+.camera-views {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.cam-btn {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #0ff;
+    color: #fff;
+    padding: 10px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-radius: 5px;
+    box-shadow: 0 0 5px #0ff;
+}
+
+.cam-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px #0ff;
+}
+
+.cam-btn.active {
+    background: rgba(0, 255, 255, 0.5);
+    color: #fff;
+    box-shadow: 0 0 20px #0ff;
+}

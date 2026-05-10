@@ -1,0 +1,97 @@
+import * as THREE from "three";
+
+export class CameraManager {
+    constructor(camera, controls, capsuleOpener) {
+        this.camera = camera;
+        this.controls = controls;
+        this.capsuleOpener = capsuleOpener;
+
+        this.viewState = "machine";
+        this.isTransitioning = false;
+
+        // Definidas externamente durante a inicialização
+        this.views = {};
+        this.viewBtns = {};
+    }
+
+    init(posMaquina, rotMaquina, distBase = 75) {
+        const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotMaquina);
+        const camOffset = new THREE.Vector3(0, 30, distBase).applyQuaternion(quat);
+
+        this.views = {
+            machine: {
+                pos: new THREE.Vector3(posMaquina.x + camOffset.x, 30, posMaquina.z + camOffset.z),
+                target: new THREE.Vector3(posMaquina.x, 18, posMaquina.z)
+            },
+            collection: {
+                pos: new THREE.Vector3(10, 40, 140),
+                target: new THREE.Vector3(-97, 20, 141)
+            },
+            table: {
+                pos: new THREE.Vector3(97, 20, 75), // Perto da mesa
+                target: new THREE.Vector3(100, 15, 0)
+            }
+        };
+
+        this.viewBtns = {
+            machine: document.getElementById('btn-view-machine'),
+            collection: document.getElementById('btn-view-collection'),
+            table: document.getElementById('btn-view-table')
+        };
+
+        // Posição inicial (máquina)
+        this.camera.position.copy(this.views.machine.pos);
+        this.controls.target.copy(this.views.machine.target);
+        this.controls.update();
+
+        this._setupEvents();
+    }
+
+    _setActiveButton(state) {
+        if (this.viewBtns.machine && this.viewBtns.collection && this.viewBtns.table) {
+            Object.values(this.viewBtns).forEach(btn => btn.classList.remove('active'));
+            this.viewBtns[state].classList.add('active');
+        }
+    }
+
+    _setupEvents() {
+        if (this.viewBtns.machine && this.viewBtns.collection && this.viewBtns.table) {
+            Object.keys(this.viewBtns).forEach(state => {
+                this.viewBtns[state].addEventListener('click', () => {
+                    if (this.capsuleOpener && this.capsuleOpener.estado === "CONTROLO_LIVRE") {
+                        this.capsuleOpener.estado = "ENCERRAR";
+                    }
+                    this.viewState = state;
+                    this._setActiveButton(state);
+                    this.isTransitioning = true;
+                });
+            });
+        }
+    }
+
+    update() {
+        if (this.isTransitioning) {
+            const targetView = this.views[this.viewState];
+            this.camera.position.lerp(targetView.pos, 0.05);
+            this.controls.target.lerp(targetView.target, 0.05);
+
+            // Verifica se está próximo o suficiente para terminar a transição
+            if (this.camera.position.distanceTo(targetView.pos) < 0.1 && 
+                this.controls.target.distanceTo(targetView.target) < 0.1) {
+                this.isTransitioning = false;
+            }
+        }
+
+        // Aplicar restrições
+        if (this.viewState === "machine") {
+            this.controls.minAzimuthAngle = -Math.PI / 4;
+            this.controls.maxAzimuthAngle = Math.PI * 0.75;
+            this.controls.maxPolarAngle = Math.PI / 2.1; // Chão
+        } else {
+            // Desbloquear nas outras vistas para exploração livre
+            this.controls.minAzimuthAngle = -Infinity;
+            this.controls.maxAzimuthAngle = Infinity;
+            this.controls.maxPolarAngle = Math.PI / 2.1;
+        }
+    }
+}
