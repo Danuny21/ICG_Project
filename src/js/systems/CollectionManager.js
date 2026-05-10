@@ -164,7 +164,7 @@ export class CollectionManager {
 
         // Empilhar na vertical
         const espacamentoY = 8;
-        const yBase = 18; // Altura da primeira prateleira (logo acima do balcão)
+        const yBase = 10; // Altura da primeira prateleira (logo acima do balcão)
 
         // Posição ao longo da parede esquerda (movida mais para a "direita", na direção da porta frontal)
         const zBase = 43;

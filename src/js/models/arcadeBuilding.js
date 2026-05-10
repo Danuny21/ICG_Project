@@ -358,7 +358,7 @@ export function criarArcadeBuilding(scene) {
 
   // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
   const bilhar = createBilliardTable();
-  const bilharScale = SCALE_FACTOR * 1.5 * 0.90;
+  const bilharScale = SCALE_FACTOR * 1.5 * 0.80;
   bilhar.scale.set(bilharScale, bilharScale, bilharScale);
   bilhar.position.set(0, 0, -55);
   bilhar.rotation.y = Math.PI / 2;
@@ -375,7 +375,7 @@ export function criarArcadeBuilding(scene) {
     const mesa = createRoundTable();
     mesa.scale.set(mesaScale, mesaScale, mesaScale);
     mesa.position.set(pos.x, 0, pos.z);
-    
+
     if (index === 0) {
       const pizza = createPizza();
       pizza.position.set(0, 3.1, 0);
@@ -398,14 +398,14 @@ export function criarArcadeBuilding(scene) {
     buildingGroup.add(mesa);
 
     const offsetCadeira = 9;
-    [0, Math.PI, Math.PI/2, -Math.PI/2].forEach((rot, i) => {
-        const cadeira = createChair();
-        cadeira.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-        const px = i < 2 ? pos.x : (i === 2 ? pos.x - offsetCadeira : pos.x + offsetCadeira);
-        const pz = i < 2 ? (i === 0 ? pos.z - offsetCadeira : pos.z + offsetCadeira) : pos.z;
-        cadeira.position.set(px, 0, pz);
-        cadeira.rotation.y = rot;
-        buildingGroup.add(cadeira);
+    [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((rot, i) => {
+      const cadeira = createChair();
+      cadeira.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+      const px = i < 2 ? pos.x : (i === 2 ? pos.x - offsetCadeira : pos.x + offsetCadeira);
+      const pz = i < 2 ? (i === 0 ? pos.z - offsetCadeira : pos.z + offsetCadeira) : pos.z;
+      cadeira.position.set(px, 0, pz);
+      cadeira.rotation.y = rot;
+      buildingGroup.add(cadeira);
     });
   });
 
@@ -444,21 +444,21 @@ export function criarArcadeBuilding(scene) {
 
   // Posicionados em volta das mesas (Parede Direita, Z=15 e Z=45)
   // Sem quadros atrás das máquinas (Z < -19)
-  criarPequenoQuadro((LARGURA/2) - 0.6, 28, 10, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA/2) - 0.6, 22, 20, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA/2) - 0.6, 28, 40, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA/2) - 0.6, 22, 55, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA / 2) - 0.6, 28, 10, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA / 2) - 0.6, 22, 20, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA / 2) - 0.6, 28, 40, -Math.PI / 2);
+  criarPequenoQuadro((LARGURA / 2) - 0.6, 22, 55, -Math.PI / 2);
 
   // Mais um ainda mais pequeno ao pé das mesas
   const qExtraPequeno = createFrame(4, 5);
-  qExtraPequeno.position.set((LARGURA/2) - 0.6, 25, 30);
+  qExtraPequeno.position.set((LARGURA / 2) - 0.6, 25, 30);
   qExtraPequeno.rotation.y = -Math.PI / 2;
   buildingGroup.add(qExtraPequeno);
 
   // Um quadro ao lado da Claw Machine (Parede Esquerda, X=-50)
   // A claw machine está em Z local aproximado de -27
   const qClaw = createFrame(8, 10);
-  qClaw.position.set(-(LARGURA/2) + 0.6, 25, -27);
+  qClaw.position.set(-(LARGURA / 2) + 0.6, 25, -27);
   qClaw.rotation.y = Math.PI / 2;
   buildingGroup.add(qClaw);
 

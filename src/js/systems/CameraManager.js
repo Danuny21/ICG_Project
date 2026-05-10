@@ -28,8 +28,8 @@ export class CameraManager {
                 target: new THREE.Vector3(-97, 20, 141)
             },
             table: {
-                pos: new THREE.Vector3(97, 20, 75), // Perto da mesa
-                target: new THREE.Vector3(100, 15, 0)
+                pos: new THREE.Vector3(75, 30, 165), // Sentado na mesa (Lado Direito, muito perto da porta)
+                target: new THREE.Vector3(-30, 10, 20) // Foco ligeiramente mais baixo
             }
         };
 
@@ -40,9 +40,11 @@ export class CameraManager {
         };
 
         // Posição inicial (máquina)
+        this.controls.maxDistance = 250; // Aumentar para permitir ver o salão todo
         this.camera.position.copy(this.views.machine.pos);
         this.controls.target.copy(this.views.machine.target);
         this.controls.update();
+
 
         this._setupEvents();
     }
@@ -76,22 +78,35 @@ export class CameraManager {
             this.controls.target.lerp(targetView.target, 0.05);
 
             // Verifica se está próximo o suficiente para terminar a transição
-            if (this.camera.position.distanceTo(targetView.pos) < 0.1 && 
+            if (this.camera.position.distanceTo(targetView.pos) < 0.1 &&
                 this.controls.target.distanceTo(targetView.target) < 0.1) {
                 this.isTransitioning = false;
             }
         }
 
-        // Aplicar restrições
+        // Aplicar restrições dinâmicas
         if (this.viewState === "machine") {
             this.controls.minAzimuthAngle = -Math.PI / 4;
             this.controls.maxAzimuthAngle = Math.PI * 0.75;
-            this.controls.maxPolarAngle = Math.PI / 2.1; // Chão
+            this.controls.maxPolarAngle = Math.PI / 2.1;
+            this.controls.minDistance = 20;
+        } else if (this.viewState === "table") {
+            // Limitar para não atravessar a parede de trás, mas permitir ver as máquinas e balcão
+            this.controls.minAzimuthAngle = -Math.PI / 1.2;
+            this.controls.maxAzimuthAngle = Math.PI / 4;
+            // Limitar para não atravessar o teto (min) ou chão (max)
+            this.controls.minPolarAngle = 1.1;
+            this.controls.maxPolarAngle = 1.8;
+            this.controls.minDistance = 1;
         } else {
-            // Desbloquear nas outras vistas para exploração livre
+
+
+            // Desbloquear na coleção para exploração livre
             this.controls.minAzimuthAngle = -Infinity;
             this.controls.maxAzimuthAngle = Infinity;
             this.controls.maxPolarAngle = Math.PI / 2.1;
+            this.controls.minDistance = 20;
         }
     }
 }
+

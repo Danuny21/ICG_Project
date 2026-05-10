@@ -27,18 +27,24 @@ export function createFloatingShelf(width = 30) {
     board.position.set(0, thickness / 2, 0);
     shelfGroup.add(board);
 
-    // Suportes metálicos por baixo da prateleira
-    const supportGeom = new THREE.BoxGeometry(0.2, 2, depth - 0.5);
-    
+    // Suportes metálicos robustos e inclinados
+    const supportGeom = new THREE.BoxGeometry(0.8, 2.5, 0.8);
+
     // Distribuir suportes dependendo da largura
     const numSupports = Math.max(2, Math.floor(width / 10) + 1);
     const spacing = (width - 2) / (numSupports - 1);
-    
+
     for (let i = 0; i < numSupports; i++) {
         const support = new THREE.Mesh(supportGeom, metalMaterial);
         const posX = -width / 2 + 1 + i * spacing;
-        // Posicionar abaixo da tábua, alinhado com a parte de trás
-        support.position.set(posX, -1 + thickness / 2, -0.25);
+
+        // Inclinação estilo braço de suporte (diagonal para a parede)
+        support.rotation.x = Math.PI / 8; // 45 graus
+
+        // Posicionar para ligar a prateleira à parede
+        // Como o pivot da estante está em 0, e a parede está atrás (Z negativo no grupo local)
+        support.position.set(posX, -1, 0);
+
         shelfGroup.add(support);
     }
 
