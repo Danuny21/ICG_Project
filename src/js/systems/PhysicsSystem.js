@@ -32,7 +32,7 @@ export class PhysicsWorld {
 
     // Inicialização assíncrona (WASM)
     async init(capsulas, clawMachine, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0) {
-        await RAPIER.init();
+        await RAPIER.init({});
         this.basePos.copy(basePos);
         this.baseRotY = baseRotY;
 

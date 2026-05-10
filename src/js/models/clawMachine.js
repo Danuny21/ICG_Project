@@ -9,7 +9,7 @@ export function criarClawMachine(scene) {
     // --- Carregamento de Texturas da Máquina ---
     const repeteEstrutura = { x: 2, y: 2 };
     const tm = carregarConjuntoTexturas(
-        "./src/js/textures/metal/PaintedMetal004_1k-JPG",
+        "./src/js/textures/metal/PaintedMetal004_1K-JPG",
         ["Color", "NormalGL", "Roughness", "Metalness"],
         repeteEstrutura
     );
