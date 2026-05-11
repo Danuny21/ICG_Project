@@ -92,7 +92,7 @@ export class PrizeInspector {
 
         this._titleEl.innerText = name;
         this._uiContainer.style.display = 'flex';
-        this._hintEl.style.display = 'block';
+        this._hintEl.classList.remove('hidden');
         setTimeout(() => this._titleEl.classList.add('visible'), 100);
 
         this.state = "TRANSPORT";
@@ -181,7 +181,7 @@ export class PrizeInspector {
         this._modelStartQuat.copy(this.originalModel.quaternion);
         this._uiContainer.style.display = 'none';
         this._titleEl.classList.remove('visible');
-        this._hintEl.style.display = 'none';
+        this._hintEl.classList.add('hidden');
         this._lightTop.intensity = 0;
         this._lightBottom.intensity = 0;
     }
@@ -213,7 +213,7 @@ export class PrizeInspector {
         this.state = "IDLE";
         this._uiContainer.style.display = 'none';
         this._titleEl.classList.remove('visible');
-        this._hintEl.style.display = 'none';
+        this._hintEl.classList.add('hidden');
         this._lightTop.intensity = 0;
         this._lightBottom.intensity = 0;
 

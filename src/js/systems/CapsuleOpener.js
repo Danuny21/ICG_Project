@@ -33,7 +33,9 @@ export class CapsuleOpener {
         this._transportFrame = 0;
         this._TRANSPORT_FRAMES = 100;
 
-        this._hintEl = document.getElementById("capsule-hint");
+        // Referências aos elementos de UI estáticos no index.html
+        this._hintOpen = document.getElementById("capsule-hint-open");
+        this._hintReturn = document.getElementById("capsule-hint-return");
         this._prizeNameEl = document.getElementById("capsule-prize-name");
 
         this._closingTime = 0;
@@ -118,11 +120,9 @@ export class CapsuleOpener {
 
             if (t >= 1) {
                 this.state = "WAIT";
+                this._hintOpen.classList.remove("hidden");
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._showHint(isTouch ? "Clica em IR para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
-                isTouch
-                    ? null 
-                    : window.addEventListener("keydown", this._onKeyDown);
+                if (!isTouch) window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
@@ -131,8 +131,6 @@ export class CapsuleOpener {
             this.capsule.group.position.x = this._targetWorld.x;
             this.capsule.group.position.z = this._targetWorld.z;
             this.capsule.group.rotation.y += 0.01;
-            this.capsule.group.rotation.x = 0;
-            this.capsule.group.rotation.z = 0;
             if (this.controls) {
                 this.controls.target.lerp(this._targetWorld, 0.08);
                 this.controls.update();
@@ -192,11 +190,9 @@ export class CapsuleOpener {
                 this.scene.remove(this.capsule.group);
                 if (this.controls) this.controls.enabled = true;
                 this.state = "FREE_VIEW";
+                this._hintReturn.classList.remove("hidden");
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._showHint(isTouch ? "Clica em IR para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
-                isTouch
-                    ? null 
-                    : window.addEventListener("keydown", this._onKeyDown);
+                if (!isTouch) window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
@@ -268,7 +264,7 @@ export class CapsuleOpener {
 
     triggerAction() {
         if (this.state === "WAIT") {
-            this._hideHint();
+            this._hintOpen.classList.add("hidden");
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
             if (this.openSound) {
@@ -278,7 +274,7 @@ export class CapsuleOpener {
             this.state = "OPEN";
 
         } else if (this.state === "FREE_VIEW") {
-            this._hideHint();
+            this._hintReturn.classList.add("hidden");
             this._hidePrizeName();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
@@ -293,9 +289,6 @@ export class CapsuleOpener {
             this._camToPos.copy(this.basePos).add(offset);
         }
     }
-
-    _showHint(text) { this._hintEl.textContent = text; this._hintEl.style.display = "block"; }
-    _hideHint() { this._hintEl.style.display = "none"; }
 
     _showPrizeName(name) {
         this._prizeNameEl.textContent = name;

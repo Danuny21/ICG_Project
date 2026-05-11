@@ -38,39 +38,33 @@
       <h2>Como Jogar</h2>
       <div class="help-grid">
         <div class="help-item">
-          <span class="help-icon">🕹️</span>
-          <h3>Mover a Garra</h3>
+          <div class="help-title">Mover a Garra</div>
           <p class="desktop-only">Usa as <b>setas do teclado ou WASD</b> para posicionar a garra sobre as cápsulas.</p>
           <p class="mobile-only">Usa o <b>joystick</b> para posicionar a garra sobre as cápsulas.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">👾</span>
-          <h3>Apanhar</h3>
+          <div class="help-title">Apanhar</div>
           <p class="desktop-only">Prime <b>ESPAÇO</b> para descer a garra e tentar apanhar uma cápsula.</p>
           <p class="mobile-only">Carrega no botão <b>IR</b> para descer a garra e tentar apanhar uma cápsula.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">🎁</span>
-          <h3>Abrir Cápsula</h3>
+          <div class="help-title">Abrir Cápsula</div>
           <p class="desktop-only"><b>Clica</b> na cápsula que saiu para a abrir e descobrir o prémio lá dentro!</p>
           <p class="mobile-only"><b>Toca</b> na cápsula que saiu para a abrir e descobrir o prémio lá dentro!</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">🏆</span>
-          <h3>Coleção</h3>
+          <div class="help-title">Coleção</div>
           <p class="desktop-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Clica</b>
             neles para os inspecionar!</p>
           <p class="mobile-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Toca</b> neles
             para os inspecionar!</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">☕</span>
-          <h3>Mesa</h3>
+          <div class="help-title">Mesa</div>
           <p>Vai até à vista <b>MESA</b> para uma pausa relaxante no ambiente do arcade.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">⚙️</span>
-          <h3>Configurações</h3>
+          <div class="help-title">Configurações</div>
           <p>Usa o painel <b>Configurações</b> (canto superior direito) para mudar a dificuldade, tema e volume.</p>
         </div>
       </div>
@@ -85,15 +79,16 @@
   </div>
 
   <div id="ui" class="game-ui">
-    <p class="desktop-only"><b>Setas / WASD:</b> Mover <br> <b>Espaço:</b> Apanhar</p>
-    <p class="mobile-only"><b>Joystick:</b> Mover <br> <b>IR:</b> Apanhar</p>
+    <p class="desktop-only"><b>Setas / WASD</b> para mover <br> <b>Espaço</b> para apanhar</p>
+    <p class="mobile-only"><b>Joystick</b> para mover <br> <b>IR</b> para apanhar</p>
   </div>
+
   <div id="ui-collection" class="game-ui hidden">
-    <p><b>CLIQUE</b> num prémio para o ver de perto</p>
+    <p><b>Clica</b> num prémio para o ver de perto</p>
   </div>
+
   <div id="ui-table" class="game-ui hidden">
-    <p><b>RELAXE</b></p>
-    <p style="font-size: 11px; margin-top: 4px; opacity: 0.8;">Aproveita a atmosfera do arcade</p>
+    <p><b>Relaxa</b> e aproveita a atmosfera</p>
   </div>
   <div id="camera-views" class="camera-views">
     <button id="btn-view-machine" class="cam-btn active">MÁQUINA</button>
@@ -109,15 +104,22 @@
   </div>
 
   <!-- UI de Abertura de Cápsulas -->
-  <div id="capsule-hint" class="game-ui-hint"></div>
+  <div id="capsule-hint-open" class="game-ui-hint hidden">
+    <span class="desktop-only">Prima <b>ESPAÇO</b> para abrir a cápsula</span>
+    <span class="mobile-only">Toca em <b>IR</b> para abrir a cápsula</span>
+  </div>
+  <div id="capsule-hint-return" class="game-ui-hint hidden">
+    <span class="desktop-only">Prima <b>ESPAÇO</b> para voltar a jogar</span>
+    <span class="mobile-only">Toca em <b>IR</b> para voltar a jogar</span>
+  </div>
   <div id="capsule-prize-name" class="capsule-prize-name"></div>
 
   <!-- UI do Inspetor de Prémios -->
   <div id="prize-inspector-ui" class="inspector-ui-container">
     <h1 id="inspector-title" class="inspector-title"></h1>
-    <p id="inspector-hint" class="game-ui-hint">
-      <span class="desktop-only"><b>Prima ESPAÇO para continuar</b></span>
-      <span class="mobile-only"><b>Clica em IR para continuar</b></span>
+    <p id="inspector-hint" class="game-ui-hint hidden">
+      <span class="desktop-only">Prima <b>ESPAÇO</b> para continuar</span>
+      <span class="mobile-only">Toca em <b>IR</b> para continuar</span>
     </p>
   </div>
 

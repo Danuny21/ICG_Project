@@ -39,7 +39,6 @@ canvas {
     left: 50%;
     transform: translateX(-50%);
     min-width: 200px;
-    display: none;
 }
 
 .game-ui p, .game-ui-hint p {
@@ -51,6 +50,14 @@ canvas {
 .game-ui b, .game-ui-hint b {
     color: #cc0000;
     text-transform: uppercase;
+    font-weight: 900;
+}
+
+.game-ui-sub {
+    font-size: 11px !important;
+    margin-top: 4px !important;
+    opacity: 0.7;
+    font-weight: normal;
 }
 
 /* --- MOBILE CONTROLS --- */
@@ -322,24 +329,17 @@ canvas {
     text-align: center;
 }
 
-.help-icon {
-    font-size: 0.8rem;
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 900;
-    color: #cc0000;
-    background: #333;
+.help-title {
+    background: #444;
     color: #fff;
-    padding: 4px;
+    padding: 6px 10px;
     border-radius: 4px;
-}
-
-.help-item h3 {
-    color: #cc0000;
-    font-size: 1rem;
-    text-transform: uppercase;
-    margin: 0 0 8px 0;
+    font-size: 0.9rem;
     font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: inline-block;
+    letter-spacing: 1px;
 }
 
 .help-item p {
