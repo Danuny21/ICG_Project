@@ -28,8 +28,9 @@ export class CollectionManager {
      * @param {string} prizeId O identificador único do prémio (ex: 't-rex', 'cat')
      * @param {THREE.Object3D} model O modelo 3D carregado e adicionado à cena
      * @param {Array<THREE.AnimationClip>} animations Array de animações (opcional)
+     * @param {string} idleAnimName Nome da animação que deve ser tocada como idle (opcional)
      */
-    registerPrize(prizeId, model, animations = []) {
+    registerPrize(prizeId, model, animations = [], idleAnimName = null) {
         // Inicializa a contagem a zero no inventário (se ainda não existir)
         if (!this.inventory.has(prizeId)) {
             this.inventory.set(prizeId, 0);
@@ -38,17 +39,16 @@ export class CollectionManager {
         // Garante que o modelo tem um nome padronizado para ser facilmente encontrado mais tarde
         model.name = `collection_${prizeId}`;
         
-        // Guardar animações para uso no inspector
+        // Guardar animações e o nome da animação idle para uso no inspector
         model.userData.prizeId = prizeId;
         model.userData.animations = animations;
+        model.userData.idleAnimName = idleAnimName;
 
         // Processa os materiais e aplica a silhueta
         const materialsCache = new Map();
 
         model.traverse((child) => {
             if (child.isMesh) {
-                // Guarda o material original (clonado ou apenas a referência, dependendo da necessidade)
-                // Se o material for partilhado por vários meshes, guardar a referência é suficiente.
                 materialsCache.set(child.uuid, child.material);
 
                 // Se o prémio ainda não foi apanhado, aplica o material totalmente preto
@@ -64,8 +64,23 @@ export class CollectionManager {
         if (animations && animations.length > 0) {
             const mixer = new THREE.AnimationMixer(model);
 
-            // Assume-se que queremos tocar a primeira animação do modelo em loop (idle)
-            const action = mixer.clipAction(animations[0]);
+            // Tenta encontrar a animação idle correta (lógica igual ao CapsuleOpener)
+            let idleClip = null;
+            if (idleAnimName) {
+                idleClip = animations.find(c => c.name === idleAnimName);
+                if (!idleClip) {
+                    idleClip = animations.find(c => {
+                        const clipName = c.name.toLowerCase();
+                        const targetName = idleAnimName.toLowerCase();
+                        return clipName === targetName || clipName.includes(targetName) || targetName.includes(clipName);
+                    });
+                }
+            }
+            if (!idleClip) {
+                idleClip = animations.find(c => c.name.toLowerCase().includes("idle")) || animations[0];
+            }
+
+            const action = mixer.clipAction(idleClip);
             action.play();
 
             // Pausa a animação se o prémio ainda não foi desbloqueado
@@ -215,7 +230,7 @@ export class CollectionManager {
                     estante.add(modelo);
 
                     // Registar o modelo na sala de coleção
-                    this.registerPrize(premioConfig.nome, modelo, animations);
+                    this.registerPrize(premioConfig.nome, modelo, animations, premioConfig.idle);
                 });
             });
         });

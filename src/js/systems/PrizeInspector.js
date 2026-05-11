@@ -50,6 +50,12 @@ export class PrizeInspector {
         };
 
         this._onKeyDown = this._onKeyDown.bind(this);
+        this._onPointerDown = this._onPointerDown.bind(this);
+        this._onPointerMove = this._onPointerMove.bind(this);
+        this._onPointerUp = this._onPointerUp.bind(this);
+
+        this._isDragging = false;
+        this._prevPointerPos = new THREE.Vector2();
     }
 
     _criarUI() {
@@ -64,31 +70,48 @@ export class PrizeInspector {
         this.modeloOriginal = modeloOriginal;
         this.nomeExibicao = nome;
 
-        // Clonar o modelo para inspeção
-        this.modeloInspector = modeloOriginal.clone();
+        // Guardar estado original para restaurar depois
+        this._originalParent = modeloOriginal.parent;
+        this._originalLocalPos = modeloOriginal.position.clone();
+        this._originalLocalRot = modeloOriginal.quaternion.clone();
+        this._originalLocalScale = modeloOriginal.scale.clone();
+
+        // Calcular posição de mundo para iniciar o transporte
+        this._origemMundo.setFromMatrixPosition(modeloOriginal.matrixWorld);
         
-        // Garantir que as animações também funcionam no clone
-        if (modeloOriginal.userData.animations) {
-            this.mixer = new THREE.AnimationMixer(this.modeloInspector);
-            modeloOriginal.userData.animations.forEach(clip => {
-                this.mixer.clipAction(clip).play();
-            });
+        // Mover para a cena (topo) para não sofrer transformações dos pais
+        this.scene.attach(modeloOriginal);
+
+        // Criar Pedestal para a base do prémio
+        this._criarPedestal();
+
+        // Setup Mixer se existirem animações
+        if (modeloOriginal.userData.animations && modeloOriginal.userData.animations.length > 0) {
+            const animations = modeloOriginal.userData.animations;
+            const idleAnimName = modeloOriginal.userData.idleAnimName;
+            this.mixer = new THREE.AnimationMixer(modeloOriginal);
+
+            let idleClip = null;
+            if (idleAnimName) {
+                idleClip = animations.find(c => c.name === idleAnimName);
+                if (!idleClip) {
+                    idleClip = animations.find(c => {
+                        const clipName = c.name.toLowerCase();
+                        const targetName = idleAnimName.toLowerCase();
+                        return clipName === targetName || clipName.includes(targetName) || targetName.includes(clipName);
+                    });
+                }
+            }
+            if (!idleClip) {
+                idleClip = animations.find(c => c.name.toLowerCase().includes("idle")) || animations[0];
+            }
+
+            const action = this.mixer.clipAction(idleClip);
+            action.play();
         }
 
-        // --- CORREÇÃO: Aplicar escala de mundo ---
-        const worldScale = new THREE.Vector3();
-        modeloOriginal.getWorldScale(worldScale);
-        this.modeloInspector.scale.copy(worldScale);
-
-        // Posicionar inicialmente onde o original está (mundo)
-        this._origemMundo.setFromMatrixPosition(modeloOriginal.matrixWorld);
-        this.modeloInspector.position.copy(this._origemMundo);
-        this.modeloInspector.quaternion.setFromRotationMatrix(modeloOriginal.matrixWorld);
-        
-        this.scene.add(this.modeloInspector);
-
         // Guardar estado atual da câmara ANTES de alterar qualquer coisa
-        this.controls.update(); // Forçar sincronização
+        this.controls.update(); 
         this._backupState.target.copy(this.controls.target);
         this._backupState.pos.copy(this.camera.position);
         this._backupState.minAzimuth = this.controls.minAzimuthAngle;
@@ -115,6 +138,30 @@ export class PrizeInspector {
         this._frameTransporte = 0;
 
         window.addEventListener("keydown", this._onKeyDown);
+        window.addEventListener("pointerdown", this._onPointerDown);
+        window.addEventListener("pointermove", this._onPointerMove);
+        window.addEventListener("pointerup", this._onPointerUp);
+    }
+
+    _onPointerDown(e) {
+        if (this.estado !== "INSPECAO") return;
+        this._isDragging = true;
+        this._prevPointerPos.set(e.clientX, e.clientY);
+    }
+
+    _onPointerMove(e) {
+        if (!this._isDragging || this.estado !== "INSPECAO") return;
+
+        const deltaX = e.clientX - this._prevPointerPos.x;
+        this._prevPointerPos.set(e.clientX, e.clientY);
+
+        // Rodar o modelo apenas na horizontal (Esquerda/Direita)
+        const sensitivity = 0.005;
+        this.modeloOriginal.rotation.y += deltaX * sensitivity;
+    }
+
+    _onPointerUp() {
+        this._isDragging = false;
     }
 
     _onKeyDown(e) {
@@ -136,10 +183,12 @@ export class PrizeInspector {
                 const t = this._frameTransporte / this._FRAMES_TRANSPORTE;
                 const easeT = t * (2 - t); // Quad out
 
-                this.modeloInspector.position.lerpVectors(this._origemMundo, this._alvoMundo, easeT);
+                this.modeloOriginal.position.lerpVectors(this._origemMundo, this._alvoMundo, easeT);
                 
-                // Suavemente rodar para a frente da câmara (opcional)
-                // this.modeloInspector.quaternion.slerp(this.camera.quaternion, easeT * 0.1);
+                // Pedestal segue o modelo
+                if (this.pedestal) {
+                    this.pedestal.position.copy(this.modeloOriginal.position).y -= 5;
+                }
 
                 if (t >= 1) {
                     this.estado = "INSPECAO";
@@ -149,10 +198,16 @@ export class PrizeInspector {
 
             case "INSPECAO":
                 // Luzes seguem o modelo
-                this._luzCima.position.copy(this.modeloInspector.position).add(new THREE.Vector3(0, 15, 5));
-                this._luzBaixo.position.copy(this.modeloInspector.position).add(new THREE.Vector3(0, -15, -5));
+                this._luzCima.position.copy(this.modeloOriginal.position).add(new THREE.Vector3(0, 15, 5));
+                this._luzBaixo.position.copy(this.modeloOriginal.position).add(new THREE.Vector3(0, -15, -5));
                 this._luzCima.intensity = 1.5;
                 this._luzBaixo.intensity = 1.0;
+
+                // Pedestal segue a posição (mas não a rotação x/z se quisermos que fique direito)
+                if (this.pedestal) {
+                    this.pedestal.position.copy(this.modeloOriginal.position).y -= 5;
+                    this.pedestal.rotation.y = this.modeloOriginal.rotation.y;
+                }
                 break;
 
             case "ENCERRAR":
@@ -161,19 +216,44 @@ export class PrizeInspector {
         }
     }
 
+    _criarPedestal() {
+        const group = new THREE.Group();
+
+        // Corpo Principal (Cinzento Metálico)
+        const bodyGeom = new THREE.CylinderGeometry(5, 5.5, 2, 32);
+        const bodyMat = new THREE.MeshStandardMaterial({ 
+            color: 0x888888,
+            metalness: 0.9,
+            roughness: 0.2
+        });
+        const body = new THREE.Mesh(bodyGeom, bodyMat);
+        group.add(body);
+
+        // Tubo Neon (Aro brilhante)
+        const neonGeom = new THREE.TorusGeometry(5.2, 0.3, 16, 100);
+        const neonMat = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffff,
+            emissive: 0x00ffff,
+            emissiveIntensity: 5
+        });
+        const neon = new THREE.Mesh(neonGeom, neonMat);
+        neon.rotation.x = Math.PI / 2;
+        neon.position.y = 0.5; // No topo do pedestal
+        group.add(neon);
+
+        // Luz Neon que ilumina o modelo
+        this.pedestalLight = new THREE.PointLight(0x00ffff, 10, 30);
+        this.pedestalLight.position.y = 2;
+        group.add(this.pedestalLight);
+
+        this.pedestal = group;
+        this.pedestal.position.copy(this.modeloOriginal.position).y -= 5;
+        this.scene.add(this.pedestal);
+    }
+
     _ativarControloLivre() {
-        this.controls.enabled = true;
-        this.controls.target.copy(this._alvoMundo);
-        
-        // Libertar rotação 360
-        this.controls.minAzimuthAngle = -Infinity;
-        this.controls.maxAzimuthAngle = Infinity;
-        this.controls.minPolarAngle = 0;
-        this.controls.maxPolarAngle = Math.PI;
-        
-        // Restringir zoom para não fugir do prémio
-        this.controls.minDistance = 15;
-        this.controls.maxDistance = 60;
+        // Bloquear OrbitControls da câmara para rodar apenas o modelo
+        this.controls.enabled = false;
     }
 
     _finalizar() {
@@ -184,12 +264,22 @@ export class PrizeInspector {
         this._luzCima.intensity = 0;
         this._luzBaixo.intensity = 0;
 
-        if (this.modeloInspector) {
-            this.scene.remove(this.modeloInspector);
-            this.modeloInspector = null;
+        // Remover pedestal e luz
+        if (this.pedestal) {
+            this.scene.remove(this.pedestal);
+            this.pedestal = null;
+            this.pedestalLight = null;
         }
 
-        // Restaurar câmara e controlos (se estivermos na coleção, desativamos novamente)
+        // Restaurar modelo para a posição original
+        if (this.modeloOriginal && this._originalParent) {
+            this._originalParent.add(this.modeloOriginal);
+            this.modeloOriginal.position.copy(this._originalLocalPos);
+            this.modeloOriginal.quaternion.copy(this._originalLocalRot);
+            this.modeloOriginal.scale.copy(this._originalLocalScale); // CORREÇÃO: Resetar o size
+        }
+
+        // Restaurar câmara e controlos
         this.controls.target.copy(this._backupState.target);
         this.camera.position.copy(this._backupState.pos);
         this.controls.minAzimuthAngle = this._backupState.minAzimuth;
@@ -199,5 +289,11 @@ export class PrizeInspector {
         this.controls.enabled = this._backupState.enabled;
 
         window.removeEventListener("keydown", this._onKeyDown);
+        window.removeEventListener("pointerdown", this._onPointerDown);
+        window.removeEventListener("pointermove", this._onPointerMove);
+        window.removeEventListener("pointerup", this._onPointerUp);
+        
+        this.modeloOriginal = null;
+        this.mixer = null;
     }
 }
