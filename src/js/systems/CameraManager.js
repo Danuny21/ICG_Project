@@ -37,9 +37,9 @@ export class CameraManager {
 
         // Obtém as referências dos botões do HTML
         this.viewBtns = {
-            machine:    document.getElementById('btn-view-machine'),
+            machine: document.getElementById('btn-view-machine'),
             collection: document.getElementById('btn-view-collection'),
-            table:      document.getElementById('btn-view-table')
+            table: document.getElementById('btn-view-table')
         };
 
         this.controls.maxDistance = 250;
@@ -70,13 +70,24 @@ export class CameraManager {
         Object.keys(this.viewBtns).forEach(state => {
             this.viewBtns[state].addEventListener('click', () => {
                 if (this.viewState === state && !this.isTransitioning) return;
-                // Se o inspetor de cápsula estiver ativo, inicia o fecho suave
-                if (this.capsuleOpener?.state === "FREE_VIEW") this.capsuleOpener.state = "CLOSING";
+                
+                const targetView = this.views[state];
+
+                // Se o inspetor de cápsula estiver ativo, sincroniza o fecho com o destino da câmara
+                if (this.capsuleOpener?.state === "FREE_VIEW") {
+                    this.capsuleOpener.state = "CLOSING";
+                    this.capsuleOpener._closingTime = 0;
+                    this.capsuleOpener._camFromPos.copy(this.camera.position);
+                    this.capsuleOpener._camFromTarget.copy(this.controls.target);
+                    this.capsuleOpener._camToPos.copy(targetView.pos);
+                    this.capsuleOpener._camToTarget.copy(targetView.target);
+                }
+
                 this.viewState = state;
                 this._setActiveButton(state);
                 this.isTransitioning = true;
-                
-                // IMPORTANTE: Resetar os limites durante a transição para evitar conflitos com o lerp
+
+                // Resetar os limites durante a transição para evitar conflitos com o lerp
                 this.controls.minAzimuthAngle = -Infinity;
                 this.controls.maxAzimuthAngle = Infinity;
                 this.controls.minPolarAngle = 0;
@@ -89,22 +100,25 @@ export class CameraManager {
 
     // Atualiza a câmara a cada frame: suaviza a transição e aplica os limites da vista ativa
     update() {
+        if (this.capsuleOpener?.state === "CLOSING") {
+            this.isTransitioning = false;
+            return;
+        }
+
         if (this.isTransitioning) {
             const target = this.views[this.viewState];
-            // Interpola suavemente a posição e o alvo da câmara
             this.camera.position.lerp(target.pos, 0.08);
             this.controls.target.lerp(target.target, 0.08);
             
-            // Termina a transição quando a câmara está suficientemente próxima do destino
             if (this.camera.position.distanceTo(target.pos) < 0.2 &&
                 this.controls.target.distanceTo(target.target) < 0.2) {
                 this.isTransitioning = false;
-                // Forçar posição final
                 this.camera.position.copy(target.pos);
                 this.controls.target.copy(target.target);
             }
             this.controls.update();
-            return; // Sai cedo para não aplicar os limites enquanto transita
+            this._clampCamera();
+            return;
         }
 
         // Aplica os limites de rotação/zoom consoante a vista ativa
@@ -117,23 +131,22 @@ export class CameraManager {
             this.controls.minDistance = 20;
             this.controls.maxDistance = 250;
         } else if (this.viewState === "table") {
-            // Vista da mesa: ângulo fixo, como se o jogador estivesse sentado
-            this.controls.enabled = true;
-            this.controls.minAzimuthAngle = -Math.PI / 1.2;
-            this.controls.maxAzimuthAngle = Math.PI / 4;
-            this.controls.minPolarAngle = 1.1;
-            this.controls.maxPolarAngle = 1.6;
-            this.controls.minDistance = 1;
-            this.controls.maxDistance = 300;
+            // Vista da mesa: Câmara fixa, como na coleção
+            this.controls.enabled = false;
         } else if (this.viewState === "collection") {
             // Vista da coleção: câmara fixa, sem controlos do utilizador
             this.controls.enabled = false;
-            this.controls.minAzimuthAngle = -Infinity;
-            this.controls.maxAzimuthAngle = Infinity;
-            this.controls.minPolarAngle = 0;
-            this.controls.maxPolarAngle = Math.PI;
         }
         
         this.controls.update();
+        this._clampCamera();
+    }
+
+    // Impede a câmara de sair dos limites físicos do arcade
+    _clampCamera() {
+        const pad = 4;
+        this.camera.position.x = Math.max(-100 + pad, Math.min(100 - pad, this.camera.position.x));
+        this.camera.position.y = Math.max(2, Math.min(98, this.camera.position.y));
+        this.camera.position.z = Math.max(-85 + pad, Math.min(195 - pad, this.camera.position.z));
     }
 }
