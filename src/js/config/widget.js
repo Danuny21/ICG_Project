@@ -16,7 +16,7 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
     const configUI = {
         dificuldade: "realista",
         tema: "classico",
-        mostrarStats: true,
+        mostrarStats: false,
         volMusica: 0.08,
         volPremio: 0.6
     };
@@ -57,6 +57,9 @@ export function setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOp
     stats.domElement.style.zIndex = '10000';
     document.body.appendChild(stats.domElement);
 
+    // Aplicar visibilidade inicial conforme configUI
+    stats.domElement.style.display = configUI.mostrarStats ? 'block' : 'none';
+    
     // Aplicar escala inicial
     setTimeout(atualizarEscalaUI, 100);
 

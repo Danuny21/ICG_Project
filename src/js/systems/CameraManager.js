@@ -54,12 +54,19 @@ export class CameraManager {
             Object.values(this.viewBtns).forEach(btn => btn.classList.remove('active'));
             this.viewBtns[state].classList.add('active');
         }
+
+        const uiElement = document.getElementById('ui');
+        if (uiElement) {
+            uiElement.style.display = (state === 'machine') ? 'block' : 'none';
+        }
     }
 
     _setupEvents() {
         if (this.viewBtns.machine && this.viewBtns.collection && this.viewBtns.table) {
             Object.keys(this.viewBtns).forEach(state => {
                 this.viewBtns[state].addEventListener('click', () => {
+                    if (this.viewState === state && !this.isTransitioning) return; // Não resetar se já estiver na vista
+
                     if (this.capsuleOpener && this.capsuleOpener.estado === "CONTROLO_LIVRE") {
                         this.capsuleOpener.estado = "ENCERRAR";
                     }
@@ -82,31 +89,44 @@ export class CameraManager {
                 this.controls.target.distanceTo(targetView.target) < 0.1) {
                 this.isTransitioning = false;
             }
+            
+            this.controls.update(); // Importante para sincronizar o OrbitControls durante a transição
         }
 
         // Aplicar restrições dinâmicas
         if (this.viewState === "machine") {
-            this.controls.minAzimuthAngle = -Math.PI / 4;
-            this.controls.maxAzimuthAngle = Math.PI * 0.75;
+            this.controls.enabled = true;
+            this.controls.minAzimuthAngle = 0.1; 
+            this.controls.maxAzimuthAngle = Math.PI * 0.85;
+            this.controls.minPolarAngle = 0; // Resetar
             this.controls.maxPolarAngle = Math.PI / 2.1;
             this.controls.minDistance = 20;
+            this.controls.maxDistance = 250;
         } else if (this.viewState === "table") {
-            // Limitar para não atravessar a parede de trás, mas permitir ver as máquinas e balcão
-            this.controls.minAzimuthAngle = -Math.PI / 1.2;
+            this.controls.enabled = true;
+            this.controls.minAzimuthAngle = -Math.PI / 1.2; 
             this.controls.maxAzimuthAngle = Math.PI / 4;
-            // Limitar para não atravessar o teto (min) ou chão (max)
-            this.controls.minPolarAngle = 1.1;
-            this.controls.maxPolarAngle = 1.8;
+            this.controls.minPolarAngle = 1.1; 
+            this.controls.maxPolarAngle = 1.6;
             this.controls.minDistance = 1;
-        } else {
-
-
-            // Desbloquear na coleção para exploração livre
+            this.controls.maxDistance = 300;
+        } else if (this.viewState === "collection") {
+            this.controls.enabled = false; 
+            // Resetar tudo para não interferir com o posicionamento fixo
             this.controls.minAzimuthAngle = -Infinity;
             this.controls.maxAzimuthAngle = Infinity;
+            this.controls.minPolarAngle = 0;
+            this.controls.maxPolarAngle = Math.PI;
+        } else {
+            this.controls.enabled = true;
+            this.controls.minAzimuthAngle = -Infinity;
+            this.controls.maxAzimuthAngle = Infinity;
+            this.controls.minPolarAngle = 0;
             this.controls.maxPolarAngle = Math.PI / 2.1;
             this.controls.minDistance = 20;
+            this.controls.maxDistance = 250;
         }
     }
 }
+
 

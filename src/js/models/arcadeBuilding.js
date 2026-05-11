@@ -219,7 +219,7 @@ export function criarArcadeBuilding(scene) {
   macanetaInt.position.set(-portaLargura + 2, 0, -espessuraPorta / 2 - 0.4);
   portaGroup.add(macanetaInt);
 
-  portaGroup.rotation.y = -Math.PI / 5;
+  portaGroup.rotation.y = 0; // Porta fechada
   buildingGroup.add(portaGroup);
 
   // 4. Parede Direita (SÓLIDA)
@@ -444,21 +444,22 @@ export function criarArcadeBuilding(scene) {
 
   // Posicionados em volta das mesas (Parede Direita, Z=15 e Z=45)
   // Sem quadros atrás das máquinas (Z < -19)
-  criarPequenoQuadro((LARGURA / 2) - 0.6, 28, 10, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA / 2) - 0.6, 22, 20, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA / 2) - 0.6, 28, 40, -Math.PI / 2);
-  criarPequenoQuadro((LARGURA / 2) - 0.6, 22, 55, -Math.PI / 2);
+  // Movidos para o lado da janela (Parede Traseira, Z = -PROFUNDIDADE/2)
+  criarPequenoQuadro(-42, 28, -(PROFUNDIDADE / 2), 0);
+  criarPequenoQuadro(-35, 22, -(PROFUNDIDADE / 2), 0);
+  criarPequenoQuadro(30, 28, -(PROFUNDIDADE / 2), 0);
+  criarPequenoQuadro(37, 22, -(PROFUNDIDADE / 2), 0);
 
-  // Mais um ainda mais pequeno ao pé das mesas
+  // Mais um ainda mais pequeno ao pé da janela
   const qExtraPequeno = createFrame(4, 5);
-  qExtraPequeno.position.set((LARGURA / 2) - 0.6, 25, 30);
-  qExtraPequeno.rotation.y = -Math.PI / 2;
+  qExtraPequeno.position.set(27, 20, -(PROFUNDIDADE / 2) + 0.6);
+  qExtraPequeno.rotation.y = 0;
   buildingGroup.add(qExtraPequeno);
 
   // Um quadro ao lado da Claw Machine (Parede Esquerda, X=-50)
-  // A claw machine está em Z local aproximado de -27
+  // Ajustado para ficar visível ao lado e não atrás
   const qClaw = createFrame(8, 10);
-  qClaw.position.set(-(LARGURA / 2) + 0.6, 25, -27);
+  qClaw.position.set(-(LARGURA / 2) + 0.6, 25, 0);
   qClaw.rotation.y = Math.PI / 2;
   buildingGroup.add(qClaw);
 
