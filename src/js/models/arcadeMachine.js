@@ -1,11 +1,28 @@
 import * as THREE from 'three';
+import { loadTextureSet } from "../systems/TextureLoader.js";
 
 export function createArcadeMachine(mainColor = 0x3366ff) {
     const arcadeGroup = new THREE.Group();
     arcadeGroup.name = "ArcadeMachine";
 
+    // --- Carregamento de Texturas de Metal ---
+    const tm = loadTextureSet(
+        "./src/js/textures/metal/PaintedMetal004_1K-JPG",
+        ["Color", "NormalGL", "Roughness", "Metalness"],
+        { x: 1, y: 1 }
+    );
+
     // Materiais
-    const bodyMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.5 });
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+        color: mainColor, 
+        map: tm.color,
+        normalMap: tm.normal,
+        roughnessMap: tm.roughness,
+        metalnessMap: tm.metalness,
+        roughness: 0.5,
+        metalness: 0.8
+    });
+
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
     const screenMat = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Ecrã desligado
     const controlPanelMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.4 });
@@ -22,7 +39,6 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     shape.lineTo(depth, height * 0.6); // Fim da frente vertical
     shape.lineTo(depth * 0.7, height * 0.7); // Inclinação do painel
     shape.lineTo(depth * 0.7, height * 0.9); // Recuo do ecrã
-    // Paralelepípedo no topo para o letreiro
     shape.lineTo(depth, height * 0.9); // Base do paralelepípedo (avanço para a frente)
     shape.lineTo(depth, height); // Topo do letreiro (face vertical)
     shape.lineTo(0, height);
@@ -31,20 +47,15 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     const extrudeSettings = { depth: width, bevelEnabled: false };
     const bodyGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
-    // CORREÇÃO 1: Centrar a geometria no eixo antes de rodar a mesh
-    // Isto garante que o corpo principal fica no X=0 como o resto das peças
     bodyGeom.translate(0, 0, -width / 2);
 
     const body = new THREE.Mesh(bodyGeom, bodyMat);
     body.rotation.y = -Math.PI / 2;
     arcadeGroup.add(body);
 
-    // (Sólido preto frontal removido)
-
     // --- Painel de Controlo ---
     const controlPanel = new THREE.Group();
 
-    // Base do painel (Profundidade reduzida para 0.85 para não sair das bordas)
     const cpBase = new THREE.Mesh(
         new THREE.BoxGeometry(width - 0.15, 0.2, 0.85),
         controlPanelMat
@@ -83,20 +94,15 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     btn3.position.set(0.35, 0.1, 0.1);
     controlPanel.add(btn3);
 
-    // CORREÇÃO 2: Posição e rotação exatas para o segmento do extrude
-    // Afundado ligeiramente para dentro da máquina (Y=3.86, Z=2.09)
     controlPanel.position.set(0, 3.86, 2.09);
     controlPanel.rotation.x = 0.674;
     arcadeGroup.add(controlPanel);
 
-    // --- Ecrã (Recuado) ---
-    // Altura exata do segmento vertical = 1.2
+    // --- Ecrã ---
     const screen = new THREE.Mesh(
         new THREE.BoxGeometry(width - 0.3, 1.2, 0.1),
         screenMat
     );
-    // CORREÇÃO 3: Assentar o ecrã precisamente no buraco do shape
-    // Deslocado 0.05 (metade de 0.1) ao longo da normal (+Z)
     screen.position.set(0, 4.8, 1.80);
     screen.rotation.x = 0;
     arcadeGroup.add(screen);
@@ -108,17 +114,12 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
         emissiveIntensity: 0.5
     });
     const marquee = new THREE.Mesh(
-        new THREE.BoxGeometry(width - 0.1, 0.6, 0.1), // Altura vertical da face = 0.6
+        new THREE.BoxGeometry(width - 0.1, 0.6, 0.1),
         marqueeMat
     );
-    // CORREÇÃO 4: Seguir a face vertical do novo paralelepípedo superior
-    // Face em Z = 2.5, Y de 5.4 a 6.0. Midpoint: Y = 5.7.
     marquee.position.set(0, 5.7, 2.55);
-    marquee.rotation.x = 0; // Vertical
+    marquee.rotation.x = 0;
     arcadeGroup.add(marquee);
-
-    // O pivot está agora centrado na base (X = 0, Y = 0, Z a partir das costas da máquina).
-    // Removi o ajuste forçado do pivot no final para ser mais fácil de posicionares na cena!
 
     return arcadeGroup;
 }
