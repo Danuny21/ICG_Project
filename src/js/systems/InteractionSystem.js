@@ -6,11 +6,12 @@ import { carregarPremio } from "./PrizeLoader.js";
  * Gere a interação do rato (cliques) com as cápsulas na área do depósito.
  */
 export class InteractionSystem {
-    constructor(camera, capsulas, capsuleOpener, collectionManager) {
+    constructor(camera, capsulas, capsuleOpener, collectionManager, prizeInspector) {
         this.camera = camera;
         this.capsulas = capsulas;
         this.capsuleOpener = capsuleOpener;
         this.collectionManager = collectionManager;
+        this.prizeInspector = prizeInspector;
 
         this.raycaster = new THREE.Raycaster();
         this.pontoClique = new THREE.Vector2();
@@ -29,49 +30,67 @@ export class InteractionSystem {
     }
 
     _onMouseClick(e) {
-        // Só permite clicar se nenhuma cápsula estiver a ser aberta no momento
+        // Só permite clicar se nada estiver a ser aberto/inspecionado
         if (this.capsuleOpener.estado !== "INATIVA") return;
+        if (this.prizeInspector && this.prizeInspector.estado !== "INATIVA") return;
 
-        // Converte a posição do rato para coordenadas normalizadas (-1 a +1)
         this.pontoClique.x = (e.clientX / window.innerWidth) * 2 - 1;
         this.pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-        // Atualiza o raycaster com a câmara e a posição do rato
         this.raycaster.setFromCamera(this.pontoClique, this.camera);
 
-        // Filtra as cápsulas que estão no depósito (saiu) e que ainda não foram abertas ou apanhadas
+        // --- 1. VERIFICAR CÁPSULAS ---
         const disponiveis = this.capsulas.filter(c => c.saiu && !c.aberta && !c.apanhada);
+        const hitsCapsulas = this.raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
+        
+        if (hitsCapsulas.length > 0) {
+            const hit = hitsCapsulas[0].object;
+            const capsulaLogic = disponiveis.find(c => {
+                let found = false;
+                c.mesh.traverse(child => { if (child === hit) found = true; });
+                return found;
+            });
 
-        // Verifica interseções
-        const hits = this.raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
-        if (!hits.length) return;
+            if (capsulaLogic) {
+                this._abrirCapsula(capsulaLogic);
+                return;
+            }
+        }
 
-        // Obtém o primeiro objeto atingido
-        const hit = hits[0].object;
+        // --- 2. VERIFICAR PRÉMIOS NA COLEÇÃO ---
+        if (this.collectionManager && this.prizeInspector) {
+            const modelosColecao = this.collectionManager.getClickableModels();
+            const hitsColecao = this.raycaster.intersectObjects(modelosColecao, true);
 
-        // Encontra o objeto lógico da cápsula associado à mesh atingida
-        const capsulaLogic = disponiveis.find(c => {
-            let found = false;
-            c.mesh.traverse(child => { if (child === hit) found = true; });
-            return found;
-        });
+            if (hitsColecao.length > 0) {
+                // Encontrar o root do modelo (que tem o nome collection_...)
+                let modelRoot = hitsColecao[0].object;
+                while (modelRoot.parent && !modelRoot.name.startsWith('collection_')) {
+                    modelRoot = modelRoot.parent;
+                }
 
-        if (!capsulaLogic) return;
+                if (modelRoot.name.startsWith('collection_')) {
+                    const prizeId = modelRoot.userData.prizeId;
+                    const count = this.collectionManager.getPrizeCount(prizeId);
 
-        // Marca a cápsula como aberta para que não possa ser clicada novamente
+                    if (count > 0) {
+                        this.prizeInspector.inspect(modelRoot, prizeId);
+                    }
+                }
+            }
+        }
+    }
+
+    _abrirCapsula(capsulaLogic) {
         capsulaLogic.aberta = true;
-
-        // Sorteia um prémio da configuração
         const premioSorteado = sortearPremio();
 
-        // Carrega o modelo 3D do prémio
         carregarPremio(premioSorteado.ficheiro, capsulaLogic.mesh, (modelo, animações) => {
             const s = premioSorteado.escala;
             modelo.scale.set(s, s, s);
             modelo.position.set(0, premioSorteado.offsetY, 0);
             capsulaLogic.modeloInterno = modelo;
 
-            // Ativa a sequência de abertura da cápsula
             this.capsuleOpener.abrirCapsula(
                 { grupo: capsulaLogic.mesh, dobradica: capsulaLogic.dobradica },
                 capsulaLogic,
@@ -82,7 +101,6 @@ export class InteractionSystem {
                 premioSorteado.nome
             );
 
-            // Desbloqueia na Collection Room!
             if (this.collectionManager) {
                 this.collectionManager.unlockPrize(premioSorteado.nome);
             }

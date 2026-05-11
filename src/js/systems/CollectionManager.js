@@ -37,6 +37,10 @@ export class CollectionManager {
 
         // Garante que o modelo tem um nome padronizado para ser facilmente encontrado mais tarde
         model.name = `collection_${prizeId}`;
+        
+        // Guardar animações para uso no inspector
+        model.userData.prizeId = prizeId;
+        model.userData.animations = animations;
 
         // Processa os materiais e aplica a silhueta
         const materialsCache = new Map();
@@ -215,5 +219,18 @@ export class CollectionManager {
                 });
             });
         });
+    }
+
+    /**
+     * Retorna todos os modelos de prémios na sala para raycasting.
+     */
+    getClickableModels() {
+        const models = [];
+        this.scene.traverse(obj => {
+            if (obj.name && obj.name.startsWith('collection_')) {
+                models.push(obj);
+            }
+        });
+        return models;
     }
 }

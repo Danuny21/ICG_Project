@@ -15,6 +15,7 @@ import { InteractionSystem } from "./systems/InteractionSystem.js";
 import { MobileControls } from "./systems/MobileControls.js";
 import { CollectionManager } from "./systems/CollectionManager.js";
 import { CameraManager } from "./systems/CameraManager.js";
+import { PrizeInspector } from "./systems/PrizeInspector.js";
 
 // Variáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
@@ -68,15 +69,16 @@ audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
     capsuleSound.setVolume(0.6);
 });
 
-
-
 // Confetis e CapsuleOpener
 const confetisObj = criarConfetis(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA, capsuleSound);
 
-// Gest�o de C�mara
+// Gestão de Câmara
 const cameraManager = new CameraManager(camera, controls, capsuleOpener);
 cameraManager.init(POS_MAQUINA, ROT_MAQUINA, 75);
+
+// Inspetor de Prémios
+const prizeInspector = new PrizeInspector(scene, camera, controls);
 
 // Teclado
 let estadoJogo = "LIVRE";
@@ -97,36 +99,43 @@ new MobileControls(teclas, () => {
 const velMovimento = 0.15;
 const limites = { x: 11.4, z: 11.4 };
 
-// Ajusta c�mara inicial para focar na m�quina (tamanho original)
+// Ajusta câmara inicial para focar na máquina
 const isPortrait = window.innerHeight > window.innerWidth;
-camera.fov = isPortrait ? 85 : 60; // Aumenta FOV em mobile para ver mais da m�quina sem afastar a c�mara
+camera.fov = isPortrait ? 85 : 60;
 camera.updateProjectionMatrix();
 
-// Inicializa o Widget de Configura��es (e o Stats)
+// Inicializa o Widget de Configurações (e o Stats)
 const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener, { bgMusic, capsuleSound });
 
-// Inicializa o Sistema de Interação (Cliques nas cápsulas)
-const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager);
+// Inicializa o Sistema de Interação (Cliques nas cápsulas e prémios)
+const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager, prizeInspector);
 interactionSystem.init();
 
+const physicsWorld = new PhysicsWorld();
 let ultimaFrameTempo = performance.now();
 
 // Loop principal
 function animate(time) {
-    stats.update();
+    if (stats) stats.update();
     requestAnimationFrame(animate);
-
-    cameraManager.update();
 
     const delta = (time - ultimaFrameTempo) / 1000;
     ultimaFrameTempo = time;
 
+    // Atualizar sistemas
+    if (prizeInspector && prizeInspector.estado === "INATIVA") {
+        cameraManager.update();
+    }
+    
     collectionManager.update(delta);
-
+    if (prizeInspector) prizeInspector.update(delta);
+    
+    // Animação da Garra
     const novaAnimacao = atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento);
     estadoJogo = novaAnimacao.novoEstado;
     timeAnim = novaAnimacao.novoTime;
 
+    // Física e Cápsula
     physicsWorld.update(capsulas, clawMachine);
     capsuleOpener.atualizarCapsula(time);
     confetisObj.atualizarMovimento();
@@ -140,13 +149,7 @@ const startBtn = document.getElementById('start-button');
 const mainMenu = document.getElementById('main-menu');
 const loadingScreen = document.getElementById('loading-screen');
 
-const physicsWorld = new PhysicsWorld();
-
-
-// Monitorizar assets desde o início
 const assetsPromise = new Promise((resolve) => {
-
-    // Se o manager já acabou ou nem tem nada para carregar (raro)
     const checkReady = () => {
         if (THREE.DefaultLoadingManager.itemsLoaded === THREE.DefaultLoadingManager.itemsTotal) {
             resolve();
@@ -154,72 +157,28 @@ const assetsPromise = new Promise((resolve) => {
         }
         return false;
     };
-
     if (checkReady()) return;
-
-    THREE.DefaultLoadingManager.onLoad = () => {
-        console.log("Todas as texturas e modelos carregados.");
-        resolve();
-    };
-
-    THREE.DefaultLoadingManager.onError = (url) => {
-        console.error("Erro ao carregar asset:", url);
-        resolve(); // Resolvemos na mesma para não travar o jogo
-    };
-
-    // Timeout de segurança (15 segundos)
-    setTimeout(() => {
-        console.warn("Timeout de carregamento atingido. Forçando início.");
-        resolve();
-    }, 15000);
+    THREE.DefaultLoadingManager.onLoad = () => resolve();
+    THREE.DefaultLoadingManager.onError = () => resolve();
+    setTimeout(resolve, 15000);
 });
 
 startBtn.addEventListener('click', () => {
-    // 1. Esconder Menu e mostrar Loading
     mainMenu.classList.add('fade-out');
     setTimeout(() => mainMenu.classList.add('hidden'), 800);
-    
     loadingScreen.classList.remove('hidden');
 
-    // Iniciar áudio (necessita de interação do user)
     if (bgMusic.context.state === 'suspended') {
         bgMusic.context.resume();
     }
-    // A música só começa depois do loading
-
-
-    // 2. Iniciar física
-
-
 
     const physicsPromise = physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA);
 
-    // 3. Esperar por tudo
     Promise.all([physicsPromise, assetsPromise]).then(() => {
         setTimeout(() => {
             loadingScreen.classList.add('fade-out');
-            
-            // Começar a música de fundo agora que o jogo vai começar
-            if (bgMusic.buffer && !bgMusic.isPlaying) {
-                bgMusic.play();
-            }
-            
-            animate();
+            if (bgMusic.buffer && !bgMusic.isPlaying) bgMusic.play();
+            animate(performance.now());
         }, 500);
-
-    }).catch(err => {
-        console.error("Erro crítico na inicialização:", err);
-        // Mesmo com erro, tentamos mostrar o jogo
-        loadingScreen.classList.add('fade-out');
-        animate();
-    });
+    }).catch(err => console.error(err));
 });
-
-// Resize
-window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-window.dispatchEvent(new Event('resize'));

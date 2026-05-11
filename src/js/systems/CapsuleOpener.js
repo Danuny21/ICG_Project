@@ -385,26 +385,7 @@ export class CapsuleOpener {
     }
 
     _criarHint() {
-        this._hintEl = document.createElement("div");
-        Object.assign(this._hintEl.style, {
-            position: "fixed",
-            bottom: "10%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.65)",
-            color: "#fff",
-            padding: "10px 24px",
-            borderRadius: "24px",
-            fontFamily: "sans-serif",
-            fontSize: "1.1rem",
-            letterSpacing: "0.04em",
-            pointerEvents: "none",
-            display: "none",
-            zIndex: "999",
-            backdropFilter: "blur(4px)",
-            border: "1px solid rgba(255,255,255,0.2)"
-        });
-        document.body.appendChild(this._hintEl);
+        this._hintEl = document.getElementById("capsule-hint");
     }
 
     _mostrarHint(texto) {
@@ -417,53 +398,26 @@ export class CapsuleOpener {
     }
 
     _criarNomePremioUI() {
-        this._nomePremioEl = document.createElement("div");
-        Object.assign(this._nomePremioEl.style, {
-            position: "fixed",
-            top: "15%",
-            left: "50%",
-            transform: "translateX(-50%) scale(0.5)",
-            color: "#fff",
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "3.5rem",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            pointerEvents: "none",
-            display: "none",
-            zIndex: "1000",
-            textShadow: "0 0 20px rgba(255,255,255,0.5), 4px 4px 0px #cc0000",
-            transition: "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-            opacity: "0"
-        });
-        document.body.appendChild(this._nomePremioEl);
+        this._nomePremioEl = document.getElementById("capsule-prize-name");
     }
 
     _mostrarNomePremio(nome) {
         this._nomePremioEl.textContent = nome;
-        this._nomePremioEl.style.display = "block";
+        this._nomePremioEl.classList.add("visible");
 
         // Aplicar cores do tema (condizente com o card de comandos)
         let shadowColor = "#cc0000"; // Clássico
-        if (this.temaAtual === "cyberpunk") shadowColor = "#ff00ff";
-        else if (this.temaAtual === "floresta") shadowColor = "#1b4d3e";
 
-        this._nomePremioEl.style.textShadow = `0 0 20px rgba(255,255,255,0.5), 4px 4px 0px ${shadowColor}`;
+        // Atualizar classe de tema se necessário
+        this._nomePremioEl.setAttribute('data-theme', this.temaAtual || 'default');
 
-        // Force reflow
-        this._nomePremioEl.offsetHeight;
-        this._nomePremioEl.style.transform = "translateX(-50%) scale(1)";
-        this._nomePremioEl.style.opacity = "1";
+        setTimeout(() => {
+            this._nomePremioEl.classList.add("visible");
+        }, 100);
     }
 
     _esconderNomePremio() {
-        this._nomePremioEl.style.transform = "translateX(-50%) scale(1.5)";
-        this._nomePremioEl.style.opacity = "0";
-        setTimeout(() => {
-            if (this.estado !== "DESAPARECER" && this.estado !== "CONTROLO_LIVRE") {
-                this._nomePremioEl.style.display = "none";
-            }
-        }, 500);
+        this._nomePremioEl.classList.remove("visible");
     }
 
     /**

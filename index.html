@@ -22,22 +22,24 @@
   <div id="main-menu">
     <div class="menu-content">
       <h1 class="glitch" data-text="CLAW MACHINE 3D">CLAW MACHINE 3D</h1>
-      <p>A retro claw machine experience</p>
-      <button id="start-button">INSERT COIN</button>
+      <p>Uma experiência retro de máquina de garras</p>
+      <button id="start-button">INSERIR MOEDA</button>
     </div>
   </div>
 
   <div id="loading-screen" class="hidden">
     <div class="loader-content">
       <div class="spinner"></div>
-      <h1>LOADING ARCADE</h1>
-      <p>Initializing neon lights and arcade machines...</p>
+      <h1>LOADING ...</h1>
     </div>
   </div>
 
   <div id="ui">
     <p class="desktop-only"><b>⬅ ⬆ ⬇ ➡ </b> Mover <br> <b>ESPAÇO:</b> Apanhar</p>
     <p class="mobile-only"><b>Joystick</b> Mover <br> <b>GO:</b> Apanhar</p>
+  </div>
+  <div id="ui-collection" class="desktop-only hidden">
+    <p><b>CLIQUE</b> num prémio para o ver de perto</p>
   </div>
   <div id="camera-views" class="camera-views">
     <button id="btn-view-machine" class="cam-btn active">MÁQUINA</button>
@@ -50,6 +52,16 @@
       <div id="joystick-stick"></div>
     </div>
     <div id="action-button">GO</div>
+  </div>
+
+  <!-- UI de Abertura de Cápsulas -->
+  <div id="capsule-hint" class="capsule-hint"></div>
+  <div id="capsule-prize-name" class="capsule-prize-name"></div>
+
+  <!-- UI do Inspetor de Prémios -->
+  <div id="prize-inspector-ui" class="inspector-ui-container">
+    <h1 id="inspector-title" class="inspector-title"></h1>
+    <p id="inspector-hint" class="inspector-hint"><b>Clique <br> Espaço <br> para continuar</b></p>
   </div>
 
   <script type="module" src="./src/js/main.js"></script>

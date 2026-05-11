@@ -59,6 +59,11 @@ export class CameraManager {
         if (uiElement) {
             uiElement.style.display = (state === 'machine') ? 'block' : 'none';
         }
+
+        const uiCollection = document.getElementById('ui-collection');
+        if (uiCollection) {
+            uiCollection.style.display = (state === 'collection') ? 'block' : 'none';
+        }
     }
 
     _setupEvents() {
