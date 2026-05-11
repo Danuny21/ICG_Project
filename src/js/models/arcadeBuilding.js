@@ -115,6 +115,14 @@ export function criarArcadeBuilding(scene) {
   matParede.specularMap = tw.roughness;
   matParede.color.set(0x666688); // Tint para manter o aspeto retro/escuro
 
+  // --- Carregamento de Posters ---
+  const textureLoader = new THREE.TextureLoader();
+  const poster1 = textureLoader.load("./src/js/textures/frames/poster1.png");
+  const poster2 = textureLoader.load("./src/js/textures/frames/poster2.png");
+  const poster3 = textureLoader.load("./src/js/textures/frames/poster3.png");
+  const poster4 = textureLoader.load("./src/js/textures/frames/poster4.png");
+  const posters = [poster1, poster2, poster3, poster4];
+
   // Aumentar segmentos da geometria para o displacementMap funcionar
   const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE), matChao);
   chao.rotation.x = -Math.PI / 2;
@@ -435,30 +443,28 @@ export function criarArcadeBuilding(scene) {
   });
 
   // ── QUADROS (DECORAÇÃO DE PAREDE) ─────────────────────────────
-  const criarPequenoQuadro = (x, y, z, rotY) => {
-    const q = createFrame(6, 8); // Tamanho reduzido
+  const criarPequenoQuadro = (x, y, z, rotY, texIndex) => {
+    const tex = posters[texIndex % posters.length];
+    const q = createFrame(6, 8, tex); // Tamanho reduzido
     q.position.set(x, y, z);
     q.rotation.y = rotY;
     buildingGroup.add(q);
   };
 
-  // Posicionados em volta das mesas (Parede Direita, Z=15 e Z=45)
-  // Sem quadros atrás das máquinas (Z < -19)
-  // Movidos para o lado da janela (Parede Traseira, Z = -PROFUNDIDADE/2)
-  criarPequenoQuadro(-42, 28, -(PROFUNDIDADE / 2), 0);
-  criarPequenoQuadro(-35, 22, -(PROFUNDIDADE / 2), 0);
-  criarPequenoQuadro(30, 28, -(PROFUNDIDADE / 2), 0);
-  criarPequenoQuadro(37, 22, -(PROFUNDIDADE / 2), 0);
+  // Posicionados em volta das mesas (Parede Traseira, Z = -PROFUNDIDADE/2)
+  criarPequenoQuadro(-42, 28, -(PROFUNDIDADE / 2), 0, 0);
+  criarPequenoQuadro(-35, 22, -(PROFUNDIDADE / 2), 0, 1);
+  criarPequenoQuadro(30, 28, -(PROFUNDIDADE / 2), 0, 2);
+  criarPequenoQuadro(37, 22, -(PROFUNDIDADE / 2), 0, 3);
 
   // Mais um ainda mais pequeno ao pé da janela
-  const qExtraPequeno = createFrame(4, 5);
+  const qExtraPequeno = createFrame(4, 5, posters[0]);
   qExtraPequeno.position.set(27, 20, -(PROFUNDIDADE / 2) + 0.6);
   qExtraPequeno.rotation.y = 0;
   buildingGroup.add(qExtraPequeno);
 
   // Um quadro ao lado da Claw Machine (Parede Esquerda, X=-50)
-  // Ajustado para ficar visível ao lado e não atrás
-  const qClaw = createFrame(8, 10);
+  const qClaw = createFrame(8, 10, posters[2]);
   qClaw.position.set(-(LARGURA / 2) + 0.6, 25, 0);
   qClaw.rotation.y = Math.PI / 2;
   buildingGroup.add(qClaw);

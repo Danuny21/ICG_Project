@@ -49,9 +49,12 @@ export class CollectionManager {
 
         model.traverse((child) => {
             if (child.isMesh) {
+                // Prevenir que partes do modelo desapareçam durante animações (comum em SkinnedMesh)
+                child.frustumCulled = false;
+                
                 materialsCache.set(child.uuid, child.material);
 
-                // Se o prémio ainda não foi apanhado, aplica o material totalmente preto
+                // Se o prémio ainda não foi apanhado, aplica o material totalmente preto (silhueta)
                 if (this.inventory.get(prizeId) === 0) {
                     child.material = this.silhouetteMaterial;
                 }
@@ -113,9 +116,12 @@ export class CollectionManager {
                 const materialsCache = this.originalMaterials.get(prizeId);
                 if (materialsCache) {
                     model.traverse((child) => {
-                        if (child.isMesh && materialsCache.has(child.uuid)) {
-                            // Devolve a cor e textura original ao Mesh
-                            child.material = materialsCache.get(child.uuid);
+                        if (child.isMesh) {
+                            child.frustumCulled = false; // Garantir visibilidade total
+                            if (materialsCache.has(child.uuid)) {
+                                // Devolve a cor e textura original ao Mesh
+                                child.material = materialsCache.get(child.uuid);
+                            }
                         }
                     });
                 }

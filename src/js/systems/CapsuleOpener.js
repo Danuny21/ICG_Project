@@ -59,6 +59,14 @@ export class CapsuleOpener {
         // Ouvintes
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onSceneTouch = this._onSceneTouch.bind(this);
+
+        // Variáveis para encerramento suave
+        this._timeEncerramento = 0;
+        this._DURACAO_ENCERRAMENTO = 0.8; // segundos
+        this._camOrigemPos = new THREE.Vector3();
+        this._camOrigemTarget = new THREE.Vector3();
+        this._camAlvoPos = new THREE.Vector3();
+        this._camAlvoTarget = new THREE.Vector3();
     }
 
     /**
@@ -300,28 +308,41 @@ export class CapsuleOpener {
             }
         }
 
-        // ── ENCERRAR (encolhe antes de sair) ──────────────────────────────────────
+        // ── ENCERRAR (encolhe e volta para a máquina com animação suave) ──────────
         if (this.estado === "ENCERRAR") {
             this._esconderNomePremio();
-            if (this.modelo) {
-                this.modelo.scale.multiplyScalar(0.9);
-                this.modelo.rotation.y += 0.1;
+            
+            this._timeEncerramento += delta;
+            const t = Math.min(this._timeEncerramento / this._DURACAO_ENCERRAMENTO, 1);
+            // Ease-in-out para suavidade máxima
+            const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-                // Quando estiver quase invisível, desaparece de vez e reseta
-                if (this.modelo.scale.x < 0.001) {
+            // Animar câmara
+            this.camera.position.lerpVectors(this._camOrigemPos, this._camAlvoPos, ease);
+            this.controls.target.lerpVectors(this._camOrigemTarget, this._camAlvoTarget, ease);
+            // OrbitControls update já é chamado no loop principal ou via cameraManager
+
+            // Encolher modelo (em paralelo)
+            if (this.modelo) {
+                // Diminuição exponencial baseada no tempo
+                const scalePasso = Math.pow(0.01, delta); // Reduz drasticamente em 1 segundo
+                this.modelo.scale.multiplyScalar(scalePasso);
+                this.modelo.rotation.y += 5 * delta;
+                
+                if (this.modelo.scale.x < 0.01) {
                     this.scene.remove(this.modelo);
                     this.modelo = null;
-                    this._finalizarEncerramento();
                 }
-            } else {
+            }
+
+            // Luzes também desaparecem
+            this._luzCima.intensity *= Math.pow(0.1, delta);
+            this._luzBaixo.intensity *= Math.pow(0.1, delta);
+
+            // Finaliza quando a animação da câmara termina
+            if (t >= 1) {
                 this._finalizarEncerramento();
             }
-        }
-
-        // Encolher luzes ao encerrar
-        if (this.estado === "ENCERRAR") {
-            this._luzCima.intensity *= 0.8;
-            this._luzBaixo.intensity *= 0.8;
         }
     }
 
@@ -338,12 +359,9 @@ export class CapsuleOpener {
 
         if (this.controls) {
             this.controls.enabled = true;
-            this.controls.target.set(this.basePos.x, this.basePos.y + 18, this.basePos.z);
-            
-            const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
-            const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
-            this.camera.position.set(this.basePos.x + camOffset.x, this.basePos.y + camOffset.y, this.basePos.z + camOffset.z);
-            
+            // Garante que fica exatamente na posição final
+            this.controls.target.copy(this._camAlvoTarget);
+            this.camera.position.copy(this._camAlvoPos);
             this.controls.update();
         }
     }
@@ -380,7 +398,20 @@ export class CapsuleOpener {
             this._esconderHint();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
+            
+            // Iniciar animação suave de retorno
             this.estado = "ENCERRAR";
+            this._timeEncerramento = 0;
+
+            // Guardar estado atual para interpolar
+            this._camOrigemPos.copy(this.camera.position);
+            this._camOrigemTarget.copy(this.controls.target);
+
+            // Calcular alvos (mesmo cálculo que estava no reset brusco)
+            this._camAlvoTarget.set(this.basePos.x, this.basePos.y + 18, this.basePos.z);
+            const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
+            const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
+            this._camAlvoPos.set(this.basePos.x + camOffset.x, this.basePos.y + camOffset.y, this.basePos.z + camOffset.z);
         }
     }
 

@@ -29,9 +29,15 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
             if (node.isMesh) {
                 node.castShadow = true;
                 node.receiveShadow = true;
-
+ 
                 if (node.material) {
-                    node.material.side = THREE.DoubleSide;
+                    if (Array.isArray(node.material)) {
+                        node.material.forEach(m => {
+                            m.side = THREE.DoubleSide;
+                        });
+                    } else {
+                        node.material.side = THREE.DoubleSide;
+                    }
                 }
             }
         });

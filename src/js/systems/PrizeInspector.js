@@ -56,6 +56,18 @@ export class PrizeInspector {
 
         this._isDragging = false;
         this._prevPointerPos = new THREE.Vector2();
+
+        // Variáveis para encerramento suave (tempo em segundos)
+        this._timeEncerramento = 0;
+        this._DURACAO_ENCERRAMENTO = 0.8; // Segundos
+        this._camOrigemPos = new THREE.Vector3();
+        this._camOrigemTarget = new THREE.Vector3();
+ 
+        // Variáveis para o retorno suave do modelo
+        this._homeWorldPos = new THREE.Vector3();
+        this._homeWorldQuat = new THREE.Quaternion();
+        this._modelStartPos = new THREE.Vector3();
+        this._modelStartQuat = new THREE.Quaternion();
     }
 
     _criarUI() {
@@ -76,8 +88,10 @@ export class PrizeInspector {
         this._originalLocalRot = modeloOriginal.quaternion.clone();
         this._originalLocalScale = modeloOriginal.scale.clone();
 
-        // Calcular posição de mundo para iniciar o transporte
-        this._origemMundo.setFromMatrixPosition(modeloOriginal.matrixWorld);
+        // Calcular posição e rotação de mundo para o retorno suave
+        modeloOriginal.updateMatrixWorld(true);
+        this._homeWorldPos.setFromMatrixPosition(modeloOriginal.matrixWorld);
+        modeloOriginal.getWorldQuaternion(this._homeWorldQuat);
         
         // Mover para a cena (topo) para não sofrer transformações dos pais
         this.scene.attach(modeloOriginal);
@@ -167,9 +181,31 @@ export class PrizeInspector {
     _onKeyDown(e) {
         if (e.code === "Space" || e.code === "Escape") {
             if (this.estado === "INSPECAO") {
-                this.estado = "ENCERRAR";
+                this._prepararRetorno();
             }
         }
+    }
+
+    _prepararRetorno() {
+        this.estado = "RETORNAR";
+        this._timeEncerramento = 0;
+        
+        // Guardar estado atual da câmara para interpolar
+        this._camOrigemPos.copy(this.camera.position);
+        this._camOrigemTarget.copy(this.controls.target);
+
+        // Guardar estado atual do modelo para interpolar (em world space, pois está na cena)
+        this._modelStartPos.copy(this.modeloOriginal.position);
+        this._modelStartQuat.copy(this.modeloOriginal.quaternion);
+
+        // UI desaparece logo
+        this._containerUI.style.display = 'none';
+        this._nomeEl.classList.remove('visible');
+        this._hintEl.style.display = 'none';
+        
+        // Luzes apagam
+        this._luzCima.intensity = 0;
+        this._luzBaixo.intensity = 0;
     }
 
     update(deltaTime) {
@@ -207,6 +243,33 @@ export class PrizeInspector {
                 if (this.pedestal) {
                     this.pedestal.position.copy(this.modeloOriginal.position).y -= 5;
                     this.pedestal.rotation.y = this.modeloOriginal.rotation.y;
+                }
+                break;
+
+            case "RETORNAR":
+                this._timeEncerramento += deltaTime;
+                const tRet = Math.min(this._timeEncerramento / this._DURACAO_ENCERRAMENTO, 1);
+                // Ease-in-out para suavidade máxima
+                const easeRet = tRet < 0.5 ? 4 * tRet * tRet * tRet : 1 - Math.pow(-2 * tRet + 2, 3) / 2;
+
+                // Animar câmara de volta para o backup
+                this.camera.position.lerpVectors(this._camOrigemPos, this._backupState.pos, easeRet);
+                this.controls.target.lerpVectors(this._camOrigemTarget, this._backupState.target, easeRet);
+                // Não chamamos this.controls.update() aqui para evitar jitter com o loop principal
+
+                // Animar modelo de volta para a sua "casa" na estante
+                if (this.modeloOriginal) {
+                    this.modeloOriginal.position.lerpVectors(this._modelStartPos, this._homeWorldPos, easeRet);
+                    this.modeloOriginal.quaternion.slerpQuaternions(this._modelStartQuat, this._homeWorldQuat, easeRet);
+                    
+                    // Pedestal e luzes seguem o modelo durante o voo de volta
+                    if (this.pedestal) {
+                        this.pedestal.position.copy(this.modeloOriginal.position).y -= 5;
+                    }
+                }
+
+                if (tRet >= 1) {
+                    this.estado = "ENCERRAR";
                 }
                 break;
 
@@ -279,7 +342,7 @@ export class PrizeInspector {
             this.modeloOriginal.scale.copy(this._originalLocalScale); // CORREÇÃO: Resetar o size
         }
 
-        // Restaurar câmara e controlos
+        // Restaurar câmara e controlos (garantir valores exatos)
         this.controls.target.copy(this._backupState.target);
         this.camera.position.copy(this._backupState.pos);
         this.controls.minAzimuthAngle = this._backupState.minAzimuth;
@@ -287,6 +350,7 @@ export class PrizeInspector {
         this.controls.minPolarAngle = this._backupState.minPolar;
         this.controls.maxPolarAngle = this._backupState.maxPolar;
         this.controls.enabled = this._backupState.enabled;
+        this.controls.update();
 
         window.removeEventListener("keydown", this._onKeyDown);
         window.removeEventListener("pointerdown", this._onPointerDown);

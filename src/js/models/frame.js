@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 
-export function createFrame(width = 10, height = 14) {
+export function createFrame(width = 10, height = 14, texture = null) {
     const frameGroup = new THREE.Group();
     frameGroup.name = "Frame";
-
+ 
     // Moldura
     const frameMaterial = new THREE.MeshPhongMaterial({ 
         color: 0x111111, 
@@ -15,10 +15,11 @@ export function createFrame(width = 10, height = 14) {
     );
     frameMesh.castShadow = true;
     frameGroup.add(frameMesh);
-
-    // Fundo (onde ficaria a arte)
+ 
+    // Fundo (onde fica a arte)
     const backMaterial = new THREE.MeshPhongMaterial({ 
-        color: 0x050505, 
+        color: texture ? 0xffffff : 0x050505, 
+        map: texture,
         shininess: 10 
     });
     const backMesh = new THREE.Mesh(
@@ -27,6 +28,6 @@ export function createFrame(width = 10, height = 14) {
     );
     backMesh.position.z = 0.25;
     frameGroup.add(backMesh);
-
+ 
     return frameGroup;
 }
