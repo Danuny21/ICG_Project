@@ -1,109 +1,84 @@
 import * as THREE from "three";
-import { sortearPremio } from "../config/prizes.js";
+import { drawPrize } from "../config/prizes.js";
 import { carregarPremio } from "./PrizeLoader.js";
 
-/**
- * Gere a interação do rato (cliques) com as cápsulas na área do depósito.
- */
 export class InteractionSystem {
-    constructor(camera, capsulas, capsuleOpener, collectionManager, prizeInspector) {
+    constructor(camera, capsules, capsuleOpener, collectionManager, prizeInspector) {
         this.camera = camera;
-        this.capsulas = capsulas;
+        this.capsules = capsules;
         this.capsuleOpener = capsuleOpener;
         this.collectionManager = collectionManager;
         this.prizeInspector = prizeInspector;
 
         this.raycaster = new THREE.Raycaster();
-        this.pontoClique = new THREE.Vector2();
+        this.clickPoint = new THREE.Vector2();
 
         this._onMouseClick = this._onMouseClick.bind(this);
     }
 
-    // Começa a ouvir eventos de clique.    
-    init() {
-        window.addEventListener("click", this._onMouseClick);
-    }
-
-    // Para de ouvir eventos de clique (limpeza).
-    dispose() {
-        window.removeEventListener("click", this._onMouseClick);
-    }
+    init() { window.addEventListener("click", this._onMouseClick); }
+    dispose() { window.removeEventListener("click", this._onMouseClick); }
 
     _onMouseClick(e) {
-        // Só permite clicar se nada estiver a ser aberto/inspecionado
-        if (this.capsuleOpener.estado !== "INATIVA") return;
-        if (this.prizeInspector && this.prizeInspector.estado !== "INATIVA") return;
+        if (this.capsuleOpener.state !== "IDLE") return;
+        if (this.prizeInspector?.state !== "IDLE") return;
 
-        this.pontoClique.x = (e.clientX / window.innerWidth) * 2 - 1;
-        this.pontoClique.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        this.clickPoint.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.clickPoint.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        this.raycaster.setFromCamera(this.clickPoint, this.camera);
 
-        this.raycaster.setFromCamera(this.pontoClique, this.camera);
+        // Check capsules
+        const available = this.capsules.filter(c => c.saiu && !c.aberta && !c.apanhada);
+        const capsuleHits = this.raycaster.intersectObjects(available.map(c => c.mesh), true);
 
-        // --- 1. VERIFICAR CÁPSULAS ---
-        const disponiveis = this.capsulas.filter(c => c.saiu && !c.aberta && !c.apanhada);
-        const hitsCapsulas = this.raycaster.intersectObjects(disponiveis.map(c => c.mesh), true);
-        
-        if (hitsCapsulas.length > 0) {
-            const hit = hitsCapsulas[0].object;
-            const capsulaLogic = disponiveis.find(c => {
+        if (capsuleHits.length > 0) {
+            const hit = capsuleHits[0].object;
+            const capsule = available.find(c => {
                 let found = false;
                 c.mesh.traverse(child => { if (child === hit) found = true; });
                 return found;
             });
-
-            if (capsulaLogic) {
-                this._abrirCapsula(capsulaLogic);
-                return;
-            }
+            if (capsule) { this._openCapsule(capsule); return; }
         }
 
-        // --- 2. VERIFICAR PRÉMIOS NA COLEÇÃO ---
+        // Check collection prizes
         if (this.collectionManager && this.prizeInspector) {
-            const modelosColecao = this.collectionManager.getClickableModels();
-            const hitsColecao = this.raycaster.intersectObjects(modelosColecao, true);
+            const collectionModels = this.collectionManager.getClickableModels();
+            const collectionHits = this.raycaster.intersectObjects(collectionModels, true);
 
-            if (hitsColecao.length > 0) {
-                // Encontrar o root do modelo (que tem o nome collection_...)
-                let modelRoot = hitsColecao[0].object;
-                while (modelRoot.parent && !modelRoot.name.startsWith('collection_')) {
-                    modelRoot = modelRoot.parent;
-                }
+            if (collectionHits.length > 0) {
+                let root = collectionHits[0].object;
+                while (root.parent && !root.name.startsWith('collection_')) root = root.parent;
 
-                if (modelRoot.name.startsWith('collection_')) {
-                    const prizeId = modelRoot.userData.prizeId;
-                    const count = this.collectionManager.getPrizeCount(prizeId);
-
-                    if (count > 0) {
-                        this.prizeInspector.inspect(modelRoot, prizeId);
-                    }
+                if (root.name.startsWith('collection_')) {
+                    const prizeId = root.userData.prizeId;
+                    if (this.collectionManager.getPrizeCount(prizeId) > 0)
+                        this.prizeInspector.inspect(root, prizeId);
                 }
             }
         }
     }
 
-    _abrirCapsula(capsulaLogic) {
-        capsulaLogic.aberta = true;
-        const premioSorteado = sortearPremio();
+    _openCapsule(capsule) {
+        capsule.aberta = true;
+        const prize = drawPrize();
 
-        carregarPremio(premioSorteado.ficheiro, capsulaLogic.mesh, (modelo, animações) => {
-            const s = premioSorteado.escala;
-            modelo.scale.set(s, s, s);
-            modelo.position.set(0, premioSorteado.offsetY, 0);
-            capsulaLogic.modeloInterno = modelo;
+        carregarPremio(prize.file, capsule.mesh, (model, animations) => {
+            model.scale.setScalar(prize.scale);
+            model.position.set(0, prize.offsetY, 0);
+            capsule.modeloInterno = model;
 
-            this.capsuleOpener.abrirCapsula(
-                { grupo: capsulaLogic.mesh, dobradica: capsulaLogic.dobradica },
-                capsulaLogic,
-                modelo,
-                premioSorteado.escalaAlvo,
-                animações,
-                premioSorteado.idle,
-                premioSorteado.nome
+            this.capsuleOpener.openCapsule(
+                { grupo: capsule.mesh, dobradica: capsule.dobradica },
+                capsule,
+                model,
+                prize.targetScale,
+                animations,
+                prize.idle,
+                prize.name
             );
 
-            if (this.collectionManager) {
-                this.collectionManager.unlockPrize(premioSorteado.nome);
-            }
+            this.collectionManager?.unlockPrize(prize.name);
         });
     }
 }

@@ -8,473 +8,279 @@ import { createPizza } from './pizza.js';
 import { createJuiceGlass } from './juice.js';
 import { createFloorPlant } from './plantFloor.js';
 import { createTablePlant } from './plantTable.js';
-import { createCashRegister } from './cashRegister.js';
 import { createBalloons } from './ballon.js';
 import { createFrame } from './frame.js';
+import { createCounter } from './counter.js';
 
+export function createArcadeBuilding(scene) {
+    const buildingGroup = new THREE.Group();
+    scene.add(buildingGroup);
 
-/**
- * Cria um edifício arcade retro com janela, porta, balcão, perciana e decorações extras.
- */
-export function criarArcadeBuilding(scene) {
-  const buildingGroup = new THREE.Group();
-  scene.add(buildingGroup);
+    const LARGURA = 100;
+    const ALTURA = 50;
+    const PROFUNDIDADE = 140;
+    const ESPESSURA = 2;
+    const SCALE_FACTOR = 3;
 
-  // ── CONFIGURAÇÕES DE DIMENSÃO ──────────────────────────────────────────────
-  const LARGURA = 100;
-  const ALTURA = 50;
-  const PROFUNDIDADE = 140;
-  const ESPESSURA = 2;
+    // --- Materiais ---
+    let matParede = new THREE.MeshPhongMaterial({ color: 0x1a1a3e, shininess: 30 });
+    const matNeonAzul = new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2 });
+    const matVidro = new THREE.MeshPhongMaterial({ color: 0x88ddff, transparent: true, opacity: 0.15, shininess: 100, side: THREE.DoubleSide });
+    const matPorta = new THREE.MeshPhongMaterial({ color: 0x222233, shininess: 40 });
+    const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
+    const matPerciana = new THREE.MeshPhongMaterial({ color: 0x33333d, shininess: 80, side: THREE.DoubleSide });
 
-  // ── MATERIAIS ────────────────────────────────────────────────────────────────
-  // (Serão atualizados com texturas abaixo)
-  let matParede = new THREE.MeshPhongMaterial({
-    color: 0x1a1a3e,
-    shininess: 30,
-  });
-  const matPiso = new THREE.MeshPhongMaterial({
-    color: 0x111111,
-    shininess: 10,
-  });
-  const matNeonAzul = new THREE.MeshPhongMaterial({
-    color: 0x00ffff,
-    emissive: 0x00ffff,
-    emissiveIntensity: 2,
-  });
-  const matVidro = new THREE.MeshPhongMaterial({
-    color: 0x88ddff,
-    transparent: true,
-    opacity: 0.15,
-    shininess: 100,
-    side: THREE.DoubleSide,
-  });
-  const matPorta = new THREE.MeshPhongMaterial({
-    color: 0x222233,
-    shininess: 40,
-  });
-  const matMetal = new THREE.MeshPhongMaterial({
-    color: 0xaaaaaa,
-    shininess: 100,
-  });
-  const matMetalDuto = new THREE.MeshPhongMaterial({
-    color: 0x555566,
-    shininess: 80,
-    flatShading: true,
-  }); // Metal mais fosco para dutos
-  const matBalcao = new THREE.MeshPhongMaterial({
-    color: 0x151525,
-    shininess: 40,
-  });
-  // Materiais para decoração
-  const matDeco1 = new THREE.MeshPhongMaterial({
-    color: 0xff0033,
-    emissive: 0xff0033,
-    emissiveIntensity: 0.5,
-  }); // Vermelho neon
-  const matDeco2 = new THREE.MeshPhongMaterial({
-    color: 0x33ff00,
-    emissive: 0x33ff00,
-    emissiveIntensity: 0.5,
-  }); // Verde neon
-  const matLetreiro = new THREE.MeshPhongMaterial({
-    color: 0xffff00,
-    emissive: 0xffff00,
-    emissiveIntensity: 0.8,
-  }); // Amarelo letreiro
-
-  // ── PISO ─────────────────────────────────────────────────────────────────────
-  // --- Carregamento do Chão via Sistema ---
-  const tamanhoAzulejo = 20;
-  const repete = { x: LARGURA / tamanhoAzulejo, y: PROFUNDIDADE / tamanhoAzulejo };
-
-  const t = carregarConjuntoTexturas(
-    "./src/js/textures/floor/Tiles074_1K-JPG",
-    ["Color", "NormalGL", "Roughness", "Displacement"],
-    repete
-  );
-
-  const matChao = new THREE.MeshPhongMaterial({
-    map: t.color,
-    normalMap: t.normal,
-    specularMap: t.roughness,
-    shininess: 60,
-    specular: 0x444444
-  });
-
-  // --- Carregamento da Parede ---
-  const repeteParede = { x: 4, y: 2 };
-  const tw = carregarConjuntoTexturas(
-    "./src/js/textures/wall/PaintedPlaster017_1K-JPG",
-    ["Color", "NormalGL", "Roughness", "Displacement"],
-    repeteParede
-  );
-
-  // Atualiza o material da parede com as texturas
-  matParede.map = tw.color;
-  matParede.normalMap = tw.normal;
-  matParede.specularMap = tw.roughness;
-  matParede.color.set(0x666688); // Tint para manter o aspeto retro/escuro
-
-  // --- Carregamento de Posters ---
-  const textureLoader = new THREE.TextureLoader();
-  const poster1 = textureLoader.load("./src/js/textures/frames/poster1.png");
-  const poster2 = textureLoader.load("./src/js/textures/frames/poster2.png");
-  const poster3 = textureLoader.load("./src/js/textures/frames/poster3.png");
-  const poster4 = textureLoader.load("./src/js/textures/frames/poster4.png");
-  const posters = [poster1, poster2, poster3, poster4];
-
-  // Aumentar segmentos da geometria para o displacementMap funcionar
-  const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE), matChao);
-  chao.rotation.x = -Math.PI / 2;
-  chao.receiveShadow = true;
-  buildingGroup.add(chao);
-
-  // ── PAREDES ──────────────────────────────────────────────────────────────────
-
-  // 1. Parede Traseira (COM JANELA E PERCIANA)
-  const paredeTraseiraZ = -(PROFUNDIDADE / 2) - ESPESSURA / 2;
-  const janelaLargura = 30;
-  const janelaAltura = 18;
-  const janelaPeitoril = 12;
-  const largAsa = (LARGURA - janelaLargura) / 2;
-
-  const trasEsq = new THREE.Mesh(new THREE.BoxGeometry(largAsa, ALTURA, ESPESSURA), matParede);
-  trasEsq.position.set(-(LARGURA / 2) + largAsa / 2, ALTURA / 2, paredeTraseiraZ);
-  buildingGroup.add(trasEsq);
-
-  const trasDir = new THREE.Mesh(new THREE.BoxGeometry(largAsa, ALTURA, ESPESSURA), matParede);
-  trasDir.position.set(LARGURA / 2 - largAsa / 2, ALTURA / 2, paredeTraseiraZ);
-  buildingGroup.add(trasDir);
-
-  const trasBaixo = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, janelaPeitoril, ESPESSURA), matParede);
-  trasBaixo.position.set(0, janelaPeitoril / 2, paredeTraseiraZ);
-  buildingGroup.add(trasBaixo);
-
-  const altCimaTras = ALTURA - janelaPeitoril - janelaAltura;
-  const trasCima = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, altCimaTras, ESPESSURA), matParede);
-  trasCima.position.set(0, ALTURA - altCimaTras / 2, paredeTraseiraZ);
-  buildingGroup.add(trasCima);
-
-  const vidroTras = new THREE.Mesh(
-    new THREE.BoxGeometry(janelaLargura - 0.1, janelaAltura - 0.1, ESPESSURA * 0.1),
-    matVidro,
-  );
-  vidroTras.position.set(0, janelaPeitoril + janelaAltura / 2, paredeTraseiraZ + ESPESSURA * 0.3);
-  buildingGroup.add(vidroTras);
-
-  // 2. Parede Esquerda
-  const compLateral = PROFUNDIDADE + ESPESSURA * 2;
-  const paredeEsq = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, ALTURA, compLateral),
-    matParede,
-  );
-  paredeEsq.position.set(-(LARGURA / 2) - ESPESSURA / 2, ALTURA / 2, 0);
-  buildingGroup.add(paredeEsq);
-
-  // 3. Parede Frontal (COM VÃO PARA A PORTA)
-  const portaLargura = 14;
-  const portaAltura = 22;
-  const paredeFrenteZ = PROFUNDIDADE / 2 + ESPESSURA / 2;
-  const largPilar = (LARGURA - portaLargura) / 2;
-
-  const pilarEsq = new THREE.Mesh(
-    new THREE.BoxGeometry(largPilar, ALTURA, ESPESSURA),
-    matParede,
-  );
-  pilarEsq.position.set(
-    -(LARGURA / 2) + largPilar / 2,
-    ALTURA / 2,
-    paredeFrenteZ,
-  );
-  buildingGroup.add(pilarEsq);
-
-  const pilarDir = new THREE.Mesh(
-    new THREE.BoxGeometry(largPilar, ALTURA, ESPESSURA),
-    matParede,
-  );
-  pilarDir.position.set(LARGURA / 2 - largPilar / 2, ALTURA / 2, paredeFrenteZ);
-  buildingGroup.add(pilarDir);
-
-  const altViga = ALTURA - portaAltura;
-  const vigaFrente = new THREE.Mesh(
-    new THREE.BoxGeometry(portaLargura, altViga, ESPESSURA),
-    matParede,
-  );
-  vigaFrente.position.set(0, ALTURA - altViga / 2, paredeFrenteZ);
-  buildingGroup.add(vigaFrente);
-
-  // ── A PORTA FÍSICA ───────────────────────────────────────────────────────────
-  const portaGroup = new THREE.Group();
-  portaGroup.position.set(portaLargura / 2, portaAltura / 2, paredeFrenteZ);
-
-  const espessuraPorta = ESPESSURA * 0.4;
-  const portaMalha = new THREE.Mesh(
-    new THREE.BoxGeometry(portaLargura, portaAltura, espessuraPorta),
-    matPorta,
-  );
-  portaMalha.position.set(-portaLargura / 2, 0, 0);
-  portaGroup.add(portaMalha);
-
-  const macaneta = new THREE.Mesh(
-    new THREE.SphereGeometry(0.8, 16, 16),
-    matMetal,
-  );
-  macaneta.position.set(-portaLargura + 2, 0, espessuraPorta / 2 + 0.4);
-  portaGroup.add(macaneta);
-
-  // Maçaneta interior
-  const macanetaInt = macaneta.clone();
-  macanetaInt.position.set(-portaLargura + 2, 0, -espessuraPorta / 2 - 0.4);
-  portaGroup.add(macanetaInt);
-
-  portaGroup.rotation.y = 0; // Porta fechada
-  buildingGroup.add(portaGroup);
-
-  // 4. Parede Direita (SÓLIDA)
-  const paredeDirX = LARGURA / 2 + ESPESSURA / 2;
-  const compLateralDir = PROFUNDIDADE + ESPESSURA * 2;
-  const paredeDir = new THREE.Mesh(
-    new THREE.BoxGeometry(ESPESSURA, ALTURA, compLateralDir),
-    matParede,
-  );
-  paredeDir.position.set(paredeDirX, ALTURA / 2, 0);
-  buildingGroup.add(paredeDir);
-
-  // ── PERCIANA NA PAREDE TRASEIRA ───────────────────────────────────────────
-  const percianaGroup = new THREE.Group();
-  percianaGroup.position.set(0, janelaPeitoril + janelaAltura, paredeTraseiraZ + ESPESSURA * 0.3);
-
-  const numLaminas = 22;
-  const alturaLamina = 0.6;
-  const espacamentoLamina = 0.1;
-  const extensaoPerciana = 0.7;
-
-  const matPerciana = new THREE.MeshPhongMaterial({ color: 0x33333d, shininess: 80, side: THREE.DoubleSide });
-
-  for (let i = 0; i < numLaminas * extensaoPerciana; i++) {
-    const lamina = new THREE.Mesh(
-      new THREE.BoxGeometry(janelaLargura - 0.1, alturaLamina, ESPESSURA * 0.2),
-      matPerciana,
+    // --- Texturas ---
+    const floorTex = carregarConjuntoTexturas(
+        "./src/js/textures/floor/Tiles074_1K-JPG",
+        ["Color", "NormalGL", "Roughness", "Displacement"],
+        { x: LARGURA / 20, y: PROFUNDIDADE / 20 }
     );
-    lamina.rotation.x = -Math.PI / 8;
-    lamina.position.y = -(i * (alturaLamina + espacamentoLamina)) - alturaLamina / 2;
-    percianaGroup.add(lamina);
-  }
-
-  const barraInferior = new THREE.Mesh(
-    new THREE.BoxGeometry(janelaLargura - 0.1, 1.2, ESPESSURA * 0.4),
-    matMetal,
-  );
-  barraInferior.position.y = -(numLaminas * extensaoPerciana * (alturaLamina + espacamentoLamina)) - 0.6;
-  percianaGroup.add(barraInferior);
-  buildingGroup.add(percianaGroup);
-
-  // ── O BALCÃO DE ATENDIMENTO ──────────────────────────────────────────────
-  const balcaoGroup = new THREE.Group();
-  // Encostar à parede da porta (frente, Z) e manter na esquerda, mas afastada da parede lateral (X)
-  balcaoGroup.position.set(-(LARGURA / 2) + 15, 0, PROFUNDIDADE / 2 - 28);
-
-  const balcaoAltura = 8 * 1.05; // 5% mais alto (8.4)
-  const balcaoBase = new THREE.Mesh(
-    new THREE.BoxGeometry(8, balcaoAltura, 70), // Bem mais esticado
-    matBalcao,
-  );
-  balcaoBase.position.set(0, balcaoAltura / 2, 0);
-  balcaoGroup.add(balcaoBase);
-
-  const tampoAltura = 1;
-  const balcaoTampo = new THREE.Mesh(
-    new THREE.BoxGeometry(9, tampoAltura, 71.5), // Acompanha o aumento
-    matMetal,
-  );
-  balcaoTampo.position.set(0, balcaoAltura + tampoAltura / 2, 0);
-  balcaoGroup.add(balcaoTampo);
-
-  const neonBalcao = new THREE.Mesh(
-    new THREE.BoxGeometry(8.2, 0.4, 70.5), // Acompanha o aumento
-    matNeonAzul,
-  );
-  neonBalcao.position.set(0, 5, 0);
-  balcaoGroup.add(neonBalcao);
-
-
-
-  balcaoGroup.scale.set(0.8, 0.8, 0.8);
-
-  // Adicionar Caixa Registadora no balcão
-  const cashReg = createCashRegister();
-  cashReg.scale.set(1.5, 1.5, 1.5); // Aumentar escala para destacar os detalhes
-  cashReg.position.set(0, 9.4, 20); // Em cima do tampo (Y=9.4 local), mais para a frente (Z=20)
-  cashReg.rotation.y = -Math.PI / 2; // Virada para quem atende (-X)
-  balcaoGroup.add(cashReg);
-
-  // Adicionar Cato no balcão
-  const catoBalcao = createTablePlant();
-  catoBalcao.scale.set(3.375, 3.375, 3.375); // Escala para igualar ao das mesas (2.7 absolute / 0.8 parent)
-  catoBalcao.position.set(0, 9.4, -20); // Na outra ponta do balcão
-  balcaoGroup.add(catoBalcao);
-
-  // Adicionar Pizza no balcão
-  const pizzaBalcao = createPizza();
-  pizzaBalcao.scale.set(3, 3, 3); // Escala para ser visível (igual à das mesas)
-  pizzaBalcao.position.set(0, 9.4, 0); // No meio do balcão
-  balcaoGroup.add(pizzaBalcao);
-
-  // Adicionar Sumo no balcão
-  const juiceBalcao = createJuiceGlass();
-  juiceBalcao.scale.set(3, 3, 3); // Escala para ser visível
-  juiceBalcao.position.set(1.5, 9.4, 3); // Ao lado da pizza
-  balcaoGroup.add(juiceBalcao);
-
-  buildingGroup.add(balcaoGroup);
-
-  // ── TETO ──────────────────────────────────────────────────────────────────
-  const teto = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      LARGURA + ESPESSURA * 2,
-      ESPESSURA,
-      PROFUNDIDADE + ESPESSURA * 2,
-    ),
-    matParede,
-  );
-  teto.position.y = ALTURA + ESPESSURA / 2;
-  buildingGroup.add(teto);
-
-  // ── NEON RODAPÉ ───────────────────────────────────────────────────────────
-  const criarNeon = (w, h, d, x, y, z, mat) => {
-    const n = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    n.position.set(x, y, z);
-    buildingGroup.add(n);
-  };
-
-  criarNeon(LARGURA, 0.5, 0.5, 0, 0.25, -(PROFUNDIDADE / 2), matNeonAzul);
-  criarNeon(0.5, 0.5, PROFUNDIDADE, -(LARGURA / 2), 0.25, 0, matNeonAzul);
-  criarNeon(0.5, 0.5, PROFUNDIDADE, LARGURA / 2, 0.25, 0, matNeonAzul);
-
-  // ── DECORAÇÃO EXTRA (Mesas, Bilhar, Arcades) ──────────────────────────────
-  const SCALE_FACTOR = 3;
-
-  // 1. Máquinas de Arcade: "do lado" (ao longo da parede direita, parte traseira)
-  const coresArcade = [0xff3333, 0x33ff33, 0x3333ff, 0xffff33];
-  for (let i = 0; i < 4; i++) {
-    const maquina = createArcadeMachine(coresArcade[i]);
-    maquina.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    maquina.position.set(50, 0, -55 + i * 12);
-    maquina.rotation.y = -Math.PI / 2; // Viradas para a esquerda (centro)
-    buildingGroup.add(maquina);
-  }
-
-  // 2. Mesa de Bilhar: "ao lado da janela" (parede traseira)
-  const bilhar = createBilliardTable();
-  const bilharScale = SCALE_FACTOR * 1.5 * 0.80;
-  bilhar.scale.set(bilharScale, bilharScale, bilharScale);
-  bilhar.position.set(0, 0, -55);
-  bilhar.rotation.y = Math.PI / 2;
-  buildingGroup.add(bilhar);
-
-  // 3. Mesas redondas: "parede oposta ao balcão" (parede direita, parte frontal)
-  const posMesas = [
-    { x: 32, z: 15 },
-    { x: 32, z: 45 }
-  ];
-
-  const mesaScale = SCALE_FACTOR * 0.90;
-  posMesas.forEach((pos, index) => {
-    const mesa = createRoundTable();
-    mesa.scale.set(mesaScale, mesaScale, mesaScale);
-    mesa.position.set(pos.x, 0, pos.z);
-
-    if (index === 0) {
-      const pizza = createPizza();
-      pizza.position.set(0, 3.1, 0);
-      mesa.add(pizza);
-      const juice = createJuiceGlass();
-      juice.position.set(1.2, 3.1, 0.5);
-      mesa.add(juice);
-      const juice2 = createJuiceGlass();
-      juice2.position.set(-1.0, 3.1, -0.8);
-      mesa.add(juice2);
-    } else {
-      const plant = createTablePlant();
-      plant.position.set(0, 3.1, 0);
-      mesa.add(plant);
-      const juice = createJuiceGlass();
-      juice.position.set(1.0, 3.1, -0.5);
-      mesa.add(juice);
-    }
-
-    buildingGroup.add(mesa);
-
-    const offsetCadeira = 9;
-    [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((rot, i) => {
-      const cadeira = createChair();
-      cadeira.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-      const px = i < 2 ? pos.x : (i === 2 ? pos.x - offsetCadeira : pos.x + offsetCadeira);
-      const pz = i < 2 ? (i === 0 ? pos.z - offsetCadeira : pos.z + offsetCadeira) : pos.z;
-      cadeira.position.set(px, 0, pz);
-      cadeira.rotation.y = rot;
-      buildingGroup.add(cadeira);
+    const matChao = new THREE.MeshPhongMaterial({
+        map: floorTex.color, normalMap: floorTex.normal,
+        specularMap: floorTex.roughness, shininess: 60, specular: 0x444444
     });
-  });
 
-  // 4. Plantas de chão nos cantos
-  const floorPlant1 = createFloorPlant();
-  floorPlant1.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  floorPlant1.position.set(-45, 0, 65);
-  buildingGroup.add(floorPlant1);
+    const wallTex = carregarConjuntoTexturas(
+        "./src/js/textures/wall/PaintedPlaster017_1K-JPG",
+        ["Color", "NormalGL", "Roughness", "Displacement"],
+        { x: 4, y: 2 }
+    );
+    matParede.map = wallTex.color;
+    matParede.normalMap = wallTex.normal;
+    matParede.specularMap = wallTex.roughness;
+    matParede.color.set(0x666688);
 
-  const floorPlant2 = createFloorPlant();
-  floorPlant2.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-  floorPlant2.position.set(45, 0, -65);
-  buildingGroup.add(floorPlant2);
+    const loader = new THREE.TextureLoader();
+    const posters = [1, 2, 3, 4].map(i => loader.load(`./src/js/textures/frames/poster${i}.png`));
 
-  // 5. Balões decorativos
-  const posBaloes = [
-    { x: 48, z: 0 },
-    { x: 48, z: 30 },
-    { x: 48, z: 60 }
-  ];
+    // --- Piso ---
+    const chao = new THREE.Mesh(new THREE.PlaneGeometry(LARGURA, PROFUNDIDADE), matChao);
+    chao.rotation.x = -Math.PI / 2;
+    chao.receiveShadow = true;
+    buildingGroup.add(chao);
 
-  posBaloes.forEach(pos => {
-    const balloons = createBalloons();
-    balloons.scale.set(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-    balloons.position.set(pos.x, 0, pos.z);
-    buildingGroup.add(balloons);
-  });
+    // --- Parede Traseira com janela ---
+    const paredeTraseiraZ = -(PROFUNDIDADE / 2) - ESPESSURA / 2;
+    const janelaLargura = 30;
+    const janelaAltura = 18;
+    const janelaPeitoril = 12;
+    const largAsa = (LARGURA - janelaLargura) / 2;
 
-  // ── QUADROS (DECORAÇÃO DE PAREDE) ─────────────────────────────
-  const criarPequenoQuadro = (x, y, z, rotY, texIndex) => {
-    const tex = posters[texIndex % posters.length];
-    const q = createFrame(6, 8, tex); // Tamanho reduzido
-    q.position.set(x, y, z);
-    q.rotation.y = rotY;
-    buildingGroup.add(q);
-  };
+    [
+        [largAsa, ALTURA, -(LARGURA / 2) + largAsa / 2, ALTURA / 2],
+        [largAsa, ALTURA, LARGURA / 2 - largAsa / 2, ALTURA / 2],
+    ].forEach(([w, h, x, y]) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, ESPESSURA), matParede);
+        m.position.set(x, y, paredeTraseiraZ);
+        buildingGroup.add(m);
+    });
 
-  // Posicionados em volta das mesas (Parede Traseira, Z = -PROFUNDIDADE/2)
-  criarPequenoQuadro(-42, 28, -(PROFUNDIDADE / 2), 0, 0);
-  criarPequenoQuadro(-35, 22, -(PROFUNDIDADE / 2), 0, 1);
-  criarPequenoQuadro(30, 28, -(PROFUNDIDADE / 2), 0, 2);
-  criarPequenoQuadro(37, 22, -(PROFUNDIDADE / 2), 0, 3);
+    const trasBaixo = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, janelaPeitoril, ESPESSURA), matParede);
+    trasBaixo.position.set(0, janelaPeitoril / 2, paredeTraseiraZ);
+    buildingGroup.add(trasBaixo);
 
-  // Mais um ainda mais pequeno ao pé da janela
-  const qExtraPequeno = createFrame(4, 5, posters[0]);
-  qExtraPequeno.position.set(27, 20, -(PROFUNDIDADE / 2) + 0.6);
-  qExtraPequeno.rotation.y = 0;
-  buildingGroup.add(qExtraPequeno);
+    const altCimaTras = ALTURA - janelaPeitoril - janelaAltura;
+    const trasCima = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura, altCimaTras, ESPESSURA), matParede);
+    trasCima.position.set(0, ALTURA - altCimaTras / 2, paredeTraseiraZ);
+    buildingGroup.add(trasCima);
 
-  // Um quadro ao lado da Claw Machine (Parede Esquerda, X=-50)
-  const qClaw = createFrame(8, 10, posters[2]);
-  qClaw.position.set(-(LARGURA / 2) + 0.6, 25, 0);
-  qClaw.rotation.y = Math.PI / 2;
-  buildingGroup.add(qClaw);
+    const vidroTras = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura - 0.1, janelaAltura - 0.1, ESPESSURA * 0.1), matVidro);
+    vidroTras.position.set(0, janelaPeitoril + janelaAltura / 2, paredeTraseiraZ + ESPESSURA * 0.3);
+    buildingGroup.add(vidroTras);
 
+    // --- Exterior (rua fora da janela) ---
+    const streetTex = loader.load("./src/js/textures/night_street.png");
+    const exterior = new THREE.Mesh(
+        new THREE.PlaneGeometry(janelaLargura * 3, janelaAltura * 3),
+        new THREE.MeshBasicMaterial({ map: streetTex, side: THREE.DoubleSide })
+    );
+    exterior.position.set(0, 25, paredeTraseiraZ - 20);
+    buildingGroup.add(exterior);
 
+    const luzJanela = new THREE.PointLight(0x4444ff, 15, 100);
+    luzJanela.position.set(0, 21, paredeTraseiraZ - 5);
+    buildingGroup.add(luzJanela);
 
-  return {
-    grupo: buildingGroup,
-    porta: portaGroup,
-    balcao: balcaoGroup,
-    perciana: percianaGroup,
-  };
+    const focoJanela = new THREE.SpotLight(0x4444ff, 20, 150, Math.PI / 3, 0.5);
+    focoJanela.position.set(0, 21, paredeTraseiraZ - 2);
+    focoJanela.target.position.set(0, 10, 0);
+    buildingGroup.add(focoJanela);
+    buildingGroup.add(focoJanela.target);
+
+    // --- Parede Esquerda ---
+    const compLateral = PROFUNDIDADE + ESPESSURA * 2;
+    const paredeEsq = new THREE.Mesh(new THREE.BoxGeometry(ESPESSURA, ALTURA, compLateral), matParede);
+    paredeEsq.position.set(-(LARGURA / 2) - ESPESSURA / 2, ALTURA / 2, 0);
+    buildingGroup.add(paredeEsq);
+
+    // --- Parede Frontal com porta ---
+    const portaLargura = 14;
+    const portaAltura = 22;
+    const paredeFrenteZ = PROFUNDIDADE / 2 + ESPESSURA / 2;
+    const largPilar = (LARGURA - portaLargura) / 2;
+
+    [
+        [-(LARGURA / 2) + largPilar / 2, ALTURA / 2],
+        [LARGURA / 2 - largPilar / 2, ALTURA / 2],
+    ].forEach(([x, y]) => {
+        const p = new THREE.Mesh(new THREE.BoxGeometry(largPilar, ALTURA, ESPESSURA), matParede);
+        p.position.set(x, y, paredeFrenteZ);
+        buildingGroup.add(p);
+    });
+
+    const altViga = ALTURA - portaAltura;
+    const vigaFrente = new THREE.Mesh(new THREE.BoxGeometry(portaLargura, altViga, ESPESSURA), matParede);
+    vigaFrente.position.set(0, ALTURA - altViga / 2, paredeFrenteZ);
+    buildingGroup.add(vigaFrente);
+
+    // --- Porta ---
+    const portaGroup = new THREE.Group();
+    portaGroup.position.set(portaLargura / 2, portaAltura / 2, paredeFrenteZ);
+    const espessuraPorta = ESPESSURA * 0.4;
+    const portaMalha = new THREE.Mesh(new THREE.BoxGeometry(portaLargura, portaAltura, espessuraPorta), matPorta);
+    portaMalha.position.set(-portaLargura / 2, 0, 0);
+    portaGroup.add(portaMalha);
+    const macaneta = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), matMetal);
+    macaneta.position.set(-portaLargura + 2, 0, espessuraPorta / 2 + 0.4);
+    portaGroup.add(macaneta);
+    const macanetaInt = macaneta.clone();
+    macanetaInt.position.set(-portaLargura + 2, 0, -espessuraPorta / 2 - 0.4);
+    portaGroup.add(macanetaInt);
+    buildingGroup.add(portaGroup);
+
+    // --- Parede Direita ---
+    const paredeDir = new THREE.Mesh(new THREE.BoxGeometry(ESPESSURA, ALTURA, compLateral), matParede);
+    paredeDir.position.set(LARGURA / 2 + ESPESSURA / 2, ALTURA / 2, 0);
+    buildingGroup.add(paredeDir);
+
+    // --- Perciana ---
+    const percianaGroup = new THREE.Group();
+    percianaGroup.position.set(0, janelaPeitoril + janelaAltura, paredeTraseiraZ + ESPESSURA * 0.3);
+    const numLaminas = 22;
+    const alturaLamina = 0.6;
+    const espacamentoLamina = 0.1;
+    for (let i = 0; i < Math.round(numLaminas * 0.7); i++) {
+        const lamina = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura - 0.1, alturaLamina, ESPESSURA * 0.2), matPerciana);
+        lamina.rotation.x = -Math.PI / 8;
+        lamina.position.y = -(i * (alturaLamina + espacamentoLamina)) - alturaLamina / 2;
+        percianaGroup.add(lamina);
+    }
+    const barraInferior = new THREE.Mesh(new THREE.BoxGeometry(janelaLargura - 0.1, 1.2, ESPESSURA * 0.4), matMetal);
+    barraInferior.position.y = -(Math.round(numLaminas * 0.7) * (alturaLamina + espacamentoLamina)) - 0.6;
+    percianaGroup.add(barraInferior);
+    buildingGroup.add(percianaGroup);
+
+    // --- Balcão ---
+    const balcaoGroup = createCounter();
+    balcaoGroup.position.set(-(LARGURA / 2) + 15, 0, PROFUNDIDADE / 2 - 28);
+    balcaoGroup.scale.setScalar(0.8);
+    buildingGroup.add(balcaoGroup);
+
+    // --- Teto ---
+    const teto = new THREE.Mesh(new THREE.BoxGeometry(LARGURA + ESPESSURA * 2, ESPESSURA, PROFUNDIDADE + ESPESSURA * 2), matParede);
+    teto.position.y = ALTURA + ESPESSURA / 2;
+    buildingGroup.add(teto);
+
+    // --- Neons de rodapé ---
+    const addNeon = (w, h, d, x, y, z) => {
+        const n = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matNeonAzul);
+        n.position.set(x, y, z);
+        buildingGroup.add(n);
+    };
+    addNeon(LARGURA, 0.5, 0.5, 0, 0.25, -(PROFUNDIDADE / 2));
+    addNeon(0.5, 0.5, PROFUNDIDADE, -(LARGURA / 2), 0.25, 0);
+    addNeon(0.5, 0.5, PROFUNDIDADE, LARGURA / 2, 0.25, 0);
+
+    // --- Máquinas de Arcade ---
+    [0xff3333, 0x33ff33, 0x3333ff, 0xffff33].forEach((cor, i) => {
+        const m = createArcadeMachine(cor);
+        m.scale.setScalar(SCALE_FACTOR);
+        m.position.set(50, 0, -55 + i * 12);
+        m.rotation.y = -Math.PI / 2;
+        buildingGroup.add(m);
+    });
+
+    // --- Mesa de Bilhar ---
+    const bilhar = createBilliardTable();
+    const bilharScale = SCALE_FACTOR * 1.5 * 0.80;
+    bilhar.scale.setScalar(bilharScale);
+    bilhar.position.set(0, 0, -55);
+    bilhar.rotation.y = Math.PI / 2;
+    buildingGroup.add(bilhar);
+
+    // --- Mesas Redondas com cadeiras ---
+    const mesaScale = SCALE_FACTOR * 0.90;
+    [{ x: 32, z: 15 }, { x: 32, z: 45 }].forEach((pos, index) => {
+        const mesa = createRoundTable();
+        mesa.scale.setScalar(mesaScale);
+        mesa.position.set(pos.x, 0, pos.z);
+
+        if (index === 0) {
+            const pizza = createPizza();
+            pizza.position.set(0, 3.1, 0);
+            mesa.add(pizza);
+            [{ x: 1.2, z: 0.5 }, { x: -1.0, z: -0.8 }].forEach(p => {
+                const j = createJuiceGlass();
+                j.position.set(p.x, 3.1, p.z);
+                mesa.add(j);
+            });
+        } else {
+            const plant = createTablePlant();
+            plant.position.set(0, 3.1, 0);
+            mesa.add(plant);
+            const juice = createJuiceGlass();
+            juice.position.set(1.0, 3.1, -0.5);
+            mesa.add(juice);
+        }
+        buildingGroup.add(mesa);
+
+        const offsetCadeira = 9;
+        [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((rot, i) => {
+            const cadeira = createChair();
+            cadeira.scale.setScalar(SCALE_FACTOR);
+            const px = i < 2 ? pos.x : (i === 2 ? pos.x - offsetCadeira : pos.x + offsetCadeira);
+            const pz = i < 2 ? (i === 0 ? pos.z - offsetCadeira : pos.z + offsetCadeira) : pos.z;
+            cadeira.position.set(px, 0, pz);
+            cadeira.rotation.y = rot;
+            buildingGroup.add(cadeira);
+        });
+    });
+
+    // --- Plantas de chão ---
+    [{ x: -45, z: 65 }, { x: 45, z: -65 }].forEach(pos => {
+        const p = createFloorPlant();
+        p.scale.setScalar(SCALE_FACTOR);
+        p.position.set(pos.x, 0, pos.z);
+        buildingGroup.add(p);
+    });
+
+    // --- Balões ---
+    [{ x: 48, z: 0 }, { x: 48, z: 30 }, { x: 48, z: 60 }].forEach(pos => {
+        const b = createBalloons();
+        b.scale.setScalar(SCALE_FACTOR);
+        b.position.set(pos.x, 0, pos.z);
+        buildingGroup.add(b);
+    });
+
+    // --- Quadros ---
+    const addFrame = (x, y, z, rotY, texIndex, w = 6, h = 8) => {
+        const q = createFrame(w, h, posters[texIndex % posters.length]);
+        q.position.set(x, y, z);
+        q.rotation.y = rotY;
+        buildingGroup.add(q);
+    };
+    addFrame(-42, 28, -(PROFUNDIDADE / 2), 0, 0);
+    addFrame(-35, 22, -(PROFUNDIDADE / 2), 0, 1);
+    addFrame(30, 28, -(PROFUNDIDADE / 2), 0, 2);
+    addFrame(37, 22, -(PROFUNDIDADE / 2), 0, 3);
+    addFrame(27, 20, -(PROFUNDIDADE / 2) + 0.6, 0, 0, 4, 5);
+    addFrame(-(LARGURA / 2) + 0.6, 25, 0, Math.PI / 2, 2, 8, 10);
+
+    return {
+        grupo: buildingGroup,
+        porta: portaGroup,
+        balcao: balcaoGroup,
+        perciana: percianaGroup,
+    };
 }

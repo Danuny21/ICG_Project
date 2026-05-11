@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { setupScene } from "./config/scene.js";
 import { setupLighting } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
-import { criarArcadeBuilding } from "./models/arcadeBuilding.js";
+import { createArcadeBuilding } from "./models/arcadeBuilding.js";
 import { criarClawMachine } from "./models/clawMachine.js";
 import { PhysicsWorld } from "./systems/PhysicsSystem.js";
 import { CapsuleSpawner } from "./systems/CapsuleSpawner.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
 import { criarConfetis } from "./models/confetti.js";
-import { atualizarAnimacaoGarra } from "./systems/ClawAnimation.js";
+import { updateClawAnimation } from "./systems/ClawAnimation.js";
 import { MODO_REALISTA } from "./config/dificulty.js";
 import { setupWidget } from "./config/widget.js";
 import { InteractionSystem } from "./systems/InteractionSystem.js";
@@ -17,143 +17,118 @@ import { CollectionManager } from "./systems/CollectionManager.js";
 import { CameraManager } from "./systems/CameraManager.js";
 import { PrizeInspector } from "./systems/PrizeInspector.js";
 
-// Variáveis Globais de Configuração / Dificuldade / Número de Cápsulas
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULAS = 200;
+const NUM_CAPSULES = 200;
 
-const POS_MAQUINA = new THREE.Vector3(-86, 0, 1);
-const ROT_MAQUINA = Math.PI / 2;
+const MACHINE_POS = new THREE.Vector3(-86, 0, 1);
+const MACHINE_ROT = Math.PI / 2;
 
-// Cena
 const { scene, camera, renderer } = setupScene();
 const controls = setupOrbitControls(camera, renderer);
 
-// Iluminação
 setupLighting(scene);
 
-// Fundo/cenário: Arcade Building
-const arcadeBuilding = criarArcadeBuilding(scene);
+const arcadeBuilding = createArcadeBuilding(scene);
 arcadeBuilding.grupo.position.set(0, 0, 55);
 arcadeBuilding.grupo.scale.set(2, 2, 2);
 
-// Gestão de Coleção (Estantes e Prémios na sala)
 const collectionManager = new CollectionManager(scene);
 collectionManager.setupRoom(arcadeBuilding);
 
-// Modelo da máquina
 const clawMachine = criarClawMachine(scene);
-clawMachine.caixa.position.copy(POS_MAQUINA);
-clawMachine.caixa.rotation.y = ROT_MAQUINA;
+clawMachine.caixa.position.copy(MACHINE_POS);
+clawMachine.caixa.rotation.y = MACHINE_ROT;
 
-// Cápsulas
-const capsulas = CapsuleSpawner.gerarCapsulas(scene, NUM_CAPSULAS, POS_MAQUINA, ROT_MAQUINA);
+const capsules = CapsuleSpawner.spawnCapsules(scene, NUM_CAPSULES, MACHINE_POS, MACHINE_ROT);
 
-// --- ÁUDIO ---
+// Audio
 const listener = new THREE.AudioListener();
 camera.add(listener);
-
 const audioLoader = new THREE.AudioLoader();
 
-// 1. Música de Fundo
 const bgMusic = new THREE.Audio(listener);
-audioLoader.load('./src/sound/background-music.mp3', (buffer) => {
+audioLoader.load('./src/sound/background-music.mp3', buffer => {
     bgMusic.setBuffer(buffer);
     bgMusic.setLoop(true);
     bgMusic.setVolume(0.08);
 });
 
-// 2. Som de Prémio (Capsule Opener)
 const capsuleSound = new THREE.Audio(listener);
-audioLoader.load('./src/sound/getting-prize.mp3', (buffer) => {
+audioLoader.load('./src/sound/getting-prize.mp3', buffer => {
     capsuleSound.setBuffer(buffer);
     capsuleSound.setVolume(0.6);
 });
 
-// Confetis e CapsuleOpener
-const confetisObj = criarConfetis(scene);
-const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetisObj, POS_MAQUINA, ROT_MAQUINA, capsuleSound);
+const confetti = criarConfetis(scene);
+const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetti, MACHINE_POS, MACHINE_ROT, capsuleSound);
 
-// Gestão de Câmara
 const cameraManager = new CameraManager(camera, controls, capsuleOpener);
-cameraManager.init(POS_MAQUINA, ROT_MAQUINA, 75);
+cameraManager.init(MACHINE_POS, MACHINE_ROT, 75);
 
-// Inspetor de Prémios
 const prizeInspector = new PrizeInspector(scene, camera, controls);
 
-// Teclado
-let estadoJogo = "LIVRE";
-let timeAnim = 0;
+let gameState = "IDLE";
+let animTime = 0;
 
-const teclas = setupKeyboard(
-    () => estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA" && cameraManager.viewState === "machine",
-    () => { if (cameraManager.viewState === "machine") estadoJogo = "DESCER"; }
+const keys = setupKeyboard(
+    () => gameState === "IDLE" && capsuleOpener.state === "IDLE" && cameraManager.viewState === "machine",
+    () => { if (cameraManager.viewState === "machine") gameState = "DESCEND"; }
 );
 
-// Controlos Mobile
-new MobileControls(teclas, () => {
-    if (estadoJogo === "LIVRE" && capsuleOpener.estado === "INATIVA" && cameraManager.viewState === "machine") {
-        estadoJogo = "DESCER";
+new MobileControls(keys, () => {
+    if (gameState === "IDLE" && capsuleOpener.state === "IDLE" && cameraManager.viewState === "machine") {
+        gameState = "DESCEND";
     }
 });
 
-const velMovimento = 0.15;
-const limites = { x: 11.4, z: 11.4 };
+const moveSpeed = 0.15;
+const moveLimits = { x: 11.4, z: 11.4 };
 
-// Ajusta câmara inicial para focar na máquina
 const isPortrait = window.innerHeight > window.innerWidth;
 camera.fov = isPortrait ? 85 : 60;
 camera.updateProjectionMatrix();
 
-// Inicializa o Widget de Configurações (e o Stats)
-const { gui, stats } = setupWidget(scene, clawMachine, confetisObj, capsulas, capsuleOpener, { bgMusic, capsuleSound });
+const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound });
 
-// Inicializa o Sistema de Interação (Cliques nas cápsulas e prémios)
-const interactionSystem = new InteractionSystem(camera, capsulas, capsuleOpener, collectionManager, prizeInspector);
+const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
 interactionSystem.init();
 
 const physicsWorld = new PhysicsWorld();
-let ultimaFrameTempo = performance.now();
+let lastFrameTime = performance.now();
 
-// Loop principal
 function animate(time) {
     if (stats) stats.update();
     requestAnimationFrame(animate);
 
-    const delta = (time - ultimaFrameTempo) / 1000;
-    ultimaFrameTempo = time;
+    const delta = (time - lastFrameTime) / 1000;
+    lastFrameTime = time;
 
-    // Atualizar sistemas
-    if (prizeInspector && prizeInspector.estado === "INATIVA") {
-        cameraManager.update();
-    }
-    
+    if (prizeInspector?.state === "IDLE") cameraManager.update();
+
     collectionManager.update(delta);
     if (prizeInspector) prizeInspector.update(delta);
-    
-    // Animação da Garra
-    const novaAnimacao = atualizarAnimacaoGarra(estadoJogo, timeAnim, clawMachine, teclas, limites, velMovimento);
-    estadoJogo = novaAnimacao.novoEstado;
-    timeAnim = novaAnimacao.novoTime;
 
-    // Física e Cápsula
-    physicsWorld.update(capsulas, clawMachine);
-    capsuleOpener.atualizarCapsula(time);
-    confetisObj.atualizarMovimento();
+    const clawResult = updateClawAnimation(gameState, animTime, clawMachine, keys, moveLimits, moveSpeed);
+    gameState = clawResult.newState;
+    animTime = clawResult.newTime;
+
+    physicsWorld.update(capsules, clawMachine);
+    capsuleOpener.update(time);
+    confetti.atualizarMovimento();
 
     controls.update();
     renderer.render(scene, camera);
 }
 
-// --- Lógica de Fluxo (Menu -> Loading -> Jogo) ---
+// Game flow: Menu → Loading → Game
 const startBtn = document.getElementById('start-button');
 const mainMenu = document.getElementById('main-menu');
 const loadingScreen = document.getElementById('loading-screen');
 
-const assetsPromise = new Promise((resolve) => {
+const assetsPromise = new Promise(resolve => {
     const checkReady = () => {
         if (THREE.DefaultLoadingManager.itemsLoaded === THREE.DefaultLoadingManager.itemsTotal) {
-            resolve();
-            return true;
+            resolve(); return true;
         }
         return false;
     };
@@ -168,11 +143,9 @@ startBtn.addEventListener('click', () => {
     setTimeout(() => mainMenu.classList.add('hidden'), 800);
     loadingScreen.classList.remove('hidden');
 
-    if (bgMusic.context.state === 'suspended') {
-        bgMusic.context.resume();
-    }
+    if (bgMusic.context.state === 'suspended') bgMusic.context.resume();
 
-    const physicsPromise = physicsWorld.init(capsulas, clawMachine, POS_MAQUINA, ROT_MAQUINA);
+    const physicsPromise = physicsWorld.init(capsules, clawMachine, MACHINE_POS, MACHINE_ROT);
 
     Promise.all([physicsPromise, assetsPromise]).then(() => {
         setTimeout(() => {

@@ -1,461 +1,306 @@
 import * as THREE from "three";
 
-/**
- * CapsuleOpener — Fluxo completo de abertura da cápsula
- *
- * Estados:
- *  INATIVA        → à espera de ser ativada através de .abrirCapsula()
- *  TRANSPORTAR    → a cápsula voa suavemente para a frente da câmara
- *  AGUARDAR       → a cápsula está parada à frente, à espera da tecla ESPAÇO
- *  ABRIR          → animação da dobradiça a abrir
- *  DESAPARECER    → a cápsula parte-se, o modelo cresce
- *  CONTROLO_LIVRE → o modelo flutua, a câmara orbita à volta
- */
 export class CapsuleOpener {
-    constructor(scene, camera, controls, confetis, basePos = new THREE.Vector3(0, 0, 0), baseRotY = 0, openSound = null) {
+    // States: IDLE | TRANSPORT | WAIT | OPEN | DISSOLVE | FREE_VIEW | CLOSING
+    constructor(scene, camera, controls, confetti, basePos = new THREE.Vector3(), baseRotY = 0, openSound = null) {
         this.scene = scene;
         this.camera = camera;
         this.controls = controls;
-        this.confetis = confetis;
+        this.confetti = confetti;
         this.basePos = basePos;
         this.baseRotY = baseRotY;
         this.openSound = openSound;
 
-
-        this.estado = "INATIVA";
-        this.modelo = null;
-        this.capsula = null;
-        this.capsulaFisica = null;
-        this.escalaAlvo = 2;
-        this.opacidadeCapsula = 1.0;
-
-        // Luzes de destaque para o prémio
-        this._luzCima = new THREE.PointLight(0xffffff, 0, 50);
-        this._luzBaixo = new THREE.PointLight(0xffffff, 0, 50);
-        
-        this.scene.add(this._luzCima);
-        this.scene.add(this._luzBaixo);
-
-        // Animação do prémio
+        this.state = "IDLE";
+        this.model = null;
+        this.capsule = null;
+        this.capsulePhysics = null;
+        this.targetScale = 2;
+        this.capsuleOpacity = 1.0;
+        this.displayName = "";
+        this.currentTheme = "classic";
         this.mixer = null;
         this._prevTime = 0;
 
-        // Posição alvo no mundo (frente da câmara)
-        this._alvoMundo = new THREE.Vector3();
-        // Posição inicial da cápsula no mundo (para interpolar)
-        this._origemMundo = new THREE.Vector3();
-        this._frameTransporte = 0;
-        this._FRAMES_TRANSPORTE = 100; // Duração do voo aumentada de 60
+        this._lightTop = new THREE.PointLight(0xffffff, 0, 50);
+        this._lightBottom = new THREE.PointLight(0xffffff, 0, 50);
+        this.scene.add(this._lightTop);
+        this.scene.add(this._lightBottom);
 
-        // Dica de interface
-        this._hintEl = null;
-        this._nomePremioEl = null;
-        this._criarHint();
-        this._criarNomePremioUI();
+        this._targetWorld = new THREE.Vector3();
+        this._originWorld = new THREE.Vector3();
+        this._transportFrame = 0;
+        this._TRANSPORT_FRAMES = 100;
 
-        this.nomeExibicao = "";
-        this.temaAtual = "classico";
+        this._hintEl = document.getElementById("capsule-hint");
+        this._prizeNameEl = document.getElementById("capsule-prize-name");
 
-        // Ouvintes
+        this._closingTime = 0;
+        this._CLOSING_DURATION = 0.8;
+        this._camFromPos = new THREE.Vector3();
+        this._camFromTarget = new THREE.Vector3();
+        this._camToPos = new THREE.Vector3();
+        this._camToTarget = new THREE.Vector3();
+
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onSceneTouch = this._onSceneTouch.bind(this);
-
-        // Variáveis para encerramento suave
-        this._timeEncerramento = 0;
-        this._DURACAO_ENCERRAMENTO = 0.8; // segundos
-        this._camOrigemPos = new THREE.Vector3();
-        this._camOrigemTarget = new THREE.Vector3();
-        this._camAlvoPos = new THREE.Vector3();
-        this._camAlvoTarget = new THREE.Vector3();
     }
 
-    /**
-     * Chamado quando o utilizador clica numa cápsula.
-     * @param {object} capsulaObj   { grupo: THREE.Group, dobradica: THREE.Group }
-     * @param {object} capsulaFis   Entrada no array de física { mesh, vel, apanhada, ... }
-     * @param {string} nomeAnimacao  Nome da animação inicial (opcional) do modelo
-     * @param {string} nomeExibicao  Nome legível para mostrar na UI do prémio
-     */
-    abrirCapsula(capsulaObj, capsulaFis, modeloObj, escalaFinal = 2, clipes = [], nomeAnimacao = null, nomeExibicao = "") {
-        if (this.estado !== "INATIVA") return; // Ignora se já estiver a ser usado
+    openCapsule(capsuleObj, capsulePhys, modelObj, finalScale = 2, clips = [], animationName = null, displayName = "") {
+        if (this.state !== "IDLE") return;
 
-        this.capsula = capsulaObj;
-        this.capsulaFisica = capsulaFis;
-        this.modelo = modeloObj;
-        this.escalaAlvo = escalaFinal;
-        this.nomeExibicao = nomeExibicao;
+        this.capsule = capsuleObj;
+        this.capsulePhysics = capsulePhys;
+        this.model = modelObj;
+        this.targetScale = finalScale;
+        this.displayName = displayName;
 
-        // Setup Animações se existirem
-        if (clipes && clipes.length > 0) {
-            this.mixer = new THREE.AnimationMixer(this.modelo);
-            let idleClip = null;
-            if (nomeAnimacao) {
-                // Tenta correspondência exata
-                idleClip = clipes.find(c => c.name === nomeAnimacao);
-
-                // Se não encontrar, tenta case-insensitive ou se há sobreposição de nomes
-                if (!idleClip) {
-                    idleClip = clipes.find(c => {
-                        const clipName = c.name.toLowerCase();
-                        const targetName = nomeAnimacao.toLowerCase();
-                        return clipName === targetName || clipName.includes(targetName) || targetName.includes(clipName);
-                    });
-                }
-            }
-            if (!idleClip) {
-                // Fallback padrão se não houver nome configurado ou não for encontrado
-                idleClip = clipes.find(c => c.name.toLowerCase().includes("idle")) || clipes[0];
-            }
-            // Rodar animação
-            const action = this.mixer.clipAction(idleClip);
-            action.play();
+        if (clips?.length > 0) {
+            this.mixer = new THREE.AnimationMixer(this.model);
+            const clip = this._findClip(clips, animationName);
+            this.mixer.clipAction(clip).play();
         }
 
-        // Congela a cápsula na física
-        if (this.capsulaFisica) {
-            this.capsulaFisica.apanhada = true;
-            this.capsulaFisica.vel.set(0, 0, 0);
+        if (this.capsulePhysics) {
+            this.capsulePhysics.apanhada = true;
+            this.capsulePhysics.vel.set(0, 0, 0);
         }
 
-        // Guarda a posição de origem (world space)
-        this._origemMundo.copy(this.capsula.grupo.position);
+        this._originWorld.copy(this.capsule.grupo.position);
 
-        // Calcula a posição alvo: 20 unidades à frente da câmara
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
+        this._targetWorld.copy(this.camera.position).add(dir.multiplyScalar(20));
+        this._targetWorld.y -= 6;
 
-        // A cápsula vem parar à frente do utilizador
-        this._alvoMundo.copy(this.camera.position).add(dir.multiplyScalar(20));
-        this._alvoMundo.y -= 6;
-
-        // Reposição da opacidade da cápsula
-        this.opacidadeCapsula = 1.0;
-        this.capsula.grupo.traverse(child => {
+        this.capsuleOpacity = 1.0;
+        this.capsule.grupo.traverse(child => {
             if (child.isMesh) {
-                // Guarda a opacidade original se ainda não tiver sido guardada
-                if (child.material.userData.originalOpacity === undefined) {
+                if (child.material.userData.originalOpacity === undefined)
                     child.material.userData.originalOpacity = child.material.opacity;
-                }
                 child.material.transparent = true;
-                // Restaura a opacidade original em vez de forçar 1.0 (para manter o vidro)
                 child.material.opacity = child.material.userData.originalOpacity;
             }
         });
 
-        // Reset dobradiça e orientação da cápsula
-        this.capsula.grupo.rotation.set(0, 0, 0);
-        this.capsula.dobradica.rotation.set(0, 0, 0);
-        this.capsula.dobradica.position.set(0, 0, -1.5);
-        this.capsula.grupo.children[0].position.set(0, 0, 0);
+        this.capsule.grupo.rotation.set(0, 0, 0);
+        this.capsule.dobradica.rotation.set(0, 0, 0);
+        this.capsule.dobradica.position.set(0, 0, -1.5);
+        this.capsule.grupo.children[0].position.set(0, 0, 0);
 
-        this._frameTransporte = 0;
-        this.estado = "TRANSPORTAR";
-
-        // Reset luzes
-        this._luzCima.intensity = 0;
-        this._luzBaixo.intensity = 0;
-        
-        this._luzCima.position.copy(this._alvoMundo).add(new THREE.Vector3(0, 8, 0));
-        this._luzBaixo.position.copy(this._alvoMundo).add(new THREE.Vector3(0, -8, 0));
-
-        // Desabilita o orbit durante o transporte
+        this._transportFrame = 0;
+        this.state = "TRANSPORT";
+        this._lightTop.intensity = 0;
+        this._lightBottom.intensity = 0;
+        this._lightTop.position.copy(this._targetWorld).add(new THREE.Vector3(0, 8, 0));
+        this._lightBottom.position.copy(this._targetWorld).add(new THREE.Vector3(0, -8, 0));
         if (this.controls) this.controls.enabled = false;
     }
 
-    atualizarCapsula(time) {
-        if (this.estado === "INATIVA") return;
+    update(time) {
+        if (this.state === "IDLE") return;
 
-        // Calcula delta para o mixer
         const delta = this._prevTime === 0 ? 0 : (time - this._prevTime) / 1000;
         this._prevTime = time;
-
         if (this.mixer) this.mixer.update(delta);
 
-        // ── TRANSPORTAR ────────────────────────────────────────────────────────────
-        if (this.estado === "TRANSPORTAR") {
-            this._frameTransporte++;
-            const t = Math.min(this._frameTransporte / this._FRAMES_TRANSPORTE, 1);
-            // Easing suave (ease-in-out cúbico)
+        if (this.state === "TRANSPORT") {
+            this._transportFrame++;
+            const t = Math.min(this._transportFrame / this._TRANSPORT_FRAMES, 1);
             const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-            this.capsula.grupo.position.lerpVectors(this._origemMundo, this._alvoMundo, ease);
-
-            // Faz a cápsula rodar suavemente num único sentido
-            this.capsula.grupo.rotation.y += 0.04;
-            this.capsula.grupo.rotation.x = 0;
-            this.capsula.grupo.rotation.z = 0;
+            this.capsule.grupo.position.lerpVectors(this._originWorld, this._targetWorld, ease);
+            this.capsule.grupo.rotation.y += 0.04;
+            this.capsule.grupo.rotation.x = 0;
+            this.capsule.grupo.rotation.z = 0;
 
             if (t >= 1) {
-                this.estado = "AGUARDAR";
+                this.state = "WAIT";
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._mostrarHint(isTouch ? "Toque para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
-                
-                if (isTouch) {
-                    window.addEventListener("touchstart", this._onSceneTouch, { once: true });
-                } else {
-                    window.addEventListener("keydown", this._onKeyDown);
-                }
+                this._showHint(isTouch ? "Toque para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
+                isTouch
+                    ? window.addEventListener("touchstart", this._onSceneTouch, { once: true })
+                    : window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
-        // ── AGUARDAR (à espera de SPACE) ─────────────────────────────────────────────
-        if (this.estado === "AGUARDAR") {
-            // Pequena flutuação para indicar que está interativa
-            this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
-            this.capsula.grupo.position.x = this._alvoMundo.x;
-            this.capsula.grupo.position.z = this._alvoMundo.z;
-            this.capsula.grupo.rotation.y += 0.01;
-            this.capsula.grupo.rotation.x = 0;
-            this.capsula.grupo.rotation.z = 0;
-
-            // Câmara suavemente focada na cápsula
+        if (this.state === "WAIT") {
+            this.capsule.grupo.position.y = this._targetWorld.y + Math.sin(time * 0.003) * 0.15;
+            this.capsule.grupo.position.x = this._targetWorld.x;
+            this.capsule.grupo.position.z = this._targetWorld.z;
+            this.capsule.grupo.rotation.y += 0.01;
+            this.capsule.grupo.rotation.x = 0;
+            this.capsule.grupo.rotation.z = 0;
             if (this.controls) {
-                this.controls.target.lerp(this._alvoMundo, 0.08);
+                this.controls.target.lerp(this._targetWorld, 0.08);
                 this.controls.update();
             }
         }
 
-        // ABRIR
-        if (this.estado === "ABRIR") {
-            const dobradica = this.capsula.dobradica;
-            this.capsula.grupo.position.y = this._alvoMundo.y + Math.sin(time * 0.003) * 0.15;
-            this.capsula.grupo.position.x = this._alvoMundo.x;
-            this.capsula.grupo.position.z = this._alvoMundo.z;
+        if (this.state === "OPEN") {
+            const hinge = this.capsule.dobradica;
+            this.capsule.grupo.position.set(this._targetWorld.x, this._targetWorld.y + Math.sin(time * 0.003) * 0.15, this._targetWorld.z);
 
-            if (dobradica.rotation.x > -Math.PI / 1.2) {
-                dobradica.rotation.x -= 0.04; // Reduzido de 0.08
+            if (hinge.rotation.x > -Math.PI / 1.2) {
+                hinge.rotation.x -= 0.04;
             } else {
-                this.estado = "DESAPARECER";
-                if (this.nomeExibicao) {
-                    this._mostrarNomePremio(this.nomeExibicao);
-                }
-                if (this.confetis) this.confetis.disparar(this.capsula.grupo.position);
+                this.state = "DISSOLVE";
+                if (this.displayName) this._showPrizeName(this.displayName);
+                if (this.confetti) this.confetti.disparar(this.capsule.grupo.position);
             }
 
-            // Mantém a câmara focada
             if (this.controls) {
-                this.controls.target.lerp(this.capsula.grupo.position, 0.1);
+                this.controls.target.lerp(this.capsule.grupo.position, 0.1);
                 this.controls.update();
             }
         }
 
-        // DESAPARECER
-        if (this.estado === "DESAPARECER") {
-            const parteDebaixo = this.capsula.grupo.children[0];
-            const parteCima = this.capsula.dobradica;
+        if (this.state === "DISSOLVE") {
+            const bottom = this.capsule.grupo.children[0];
+            const top = this.capsule.dobradica;
+            bottom.position.y -= 0.1;
+            bottom.position.z += 0.05;
+            top.position.y -= 0.1;
+            top.position.z -= 0.05;
 
-            // Cápsula parte-se (mais devagar)
-            parteDebaixo.position.y -= 0.1;
-            parteDebaixo.position.z += 0.05;
-            parteCima.position.y -= 0.1;
-            parteCima.position.z -= 0.05;
-
-            // Se o modelo ainda for filho da cápsula, extrair para a root da cena (sem alterar posição/rotação visuais)
-            if (this.modelo && this.modelo.parent !== this.scene) {
-                this.scene.add(this.modelo);
-                this.modelo.position.copy(this._alvoMundo);
+            if (this.model?.parent !== this.scene) {
+                this.scene.add(this.model);
+                this.model.position.copy(this._targetWorld);
             }
 
-            // Modelo cresce (mais devagar)
-            if (this.modelo && this.modelo.scale.x < this.escalaAlvo) {
-                const passo = this.escalaAlvo / 50; // Reduzido de 20
-                const limiteTam = this.escalaAlvo * 1.25;
-                const novoTam = Math.min(this.modelo.scale.x + passo, limiteTam);
-                this.modelo.scale.set(novoTam, novoTam, novoTam);
-                this.modelo.position.y = this._alvoMundo.y + 0.5;
+            if (this.model && this.model.scale.x < this.targetScale) {
+                const newSize = Math.min(this.model.scale.x + this.targetScale / 50, this.targetScale * 1.25);
+                this.model.scale.setScalar(newSize);
+                this.model.position.y = this._targetWorld.y + 0.5;
             }
 
-            // Luzes aparecem progressivamente
-            this._luzCima.intensity = THREE.MathUtils.lerp(this._luzCima.intensity, 3, 0.1);
-            this._luzBaixo.intensity = THREE.MathUtils.lerp(this._luzBaixo.intensity, 2, 0.1);
+            this._lightTop.intensity = THREE.MathUtils.lerp(this._lightTop.intensity, 3, 0.1);
+            this._lightBottom.intensity = THREE.MathUtils.lerp(this._lightBottom.intensity, 2, 0.1);
 
-            // Fade-out da cápsula (mais devagar)
-            this.opacidadeCapsula -= 0.01; // Reduzido de 0.02
-            this.capsula.grupo.traverse(child => {
+            this.capsuleOpacity -= 0.01;
+            this.capsule.grupo.traverse(child => {
                 if (child.isMesh) {
-                    const opOriginal = child.material.userData.originalOpacity ?? 1.0;
+                    const base = child.material.userData.originalOpacity ?? 1.0;
                     child.material.transparent = true;
-                    // Multiplica, de forma a ir desaparecendo consoante o início
-                    child.material.opacity = Math.max(0, opOriginal * this.opacidadeCapsula);
+                    child.material.opacity = Math.max(0, base * this.capsuleOpacity);
                 }
             });
 
-            if (this.opacidadeCapsula <= 0) {
-                // Remove a cápsula da cena
-                this.scene.remove(this.capsula.grupo);
-                // Reativa o orbit
+            if (this.capsuleOpacity <= 0) {
+                this.scene.remove(this.capsule.grupo);
                 if (this.controls) this.controls.enabled = true;
-                this.estado = "CONTROLO_LIVRE";
+                this.state = "FREE_VIEW";
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._mostrarHint(isTouch ? "Toque para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
-                
-                if (isTouch) {
-                    window.addEventListener("touchstart", this._onSceneTouch, { once: true });
-                } else {
-                    window.addEventListener("keydown", this._onKeyDown);
-                }
+                this._showHint(isTouch ? "Toque para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
+                isTouch
+                    ? window.addEventListener("touchstart", this._onSceneTouch, { once: true })
+                    : window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
-        // ── CONTROLO_LIVRE ───────────────────────────────────────────────────────────
-        if (this.estado === "CONTROLO_LIVRE") {
-            if (this.modelo) {
-                this.modelo.rotation.y += 0.005;
-                // Posição fixa focada (removida a flutuação vertical)
-                this.modelo.position.y = this._alvoMundo.y + 0.5;
-                this.modelo.position.x = this._alvoMundo.x;
-                this.modelo.position.z = this._alvoMundo.z;
+        if (this.state === "FREE_VIEW") {
+            if (this.model) {
+                this.model.rotation.y += 0.005;
+                this.model.position.set(this._targetWorld.x, this._targetWorld.y + 0.5, this._targetWorld.z);
             }
         }
 
-        // ── ENCERRAR (encolhe e volta para a máquina com animação suave) ──────────
-        if (this.estado === "ENCERRAR") {
-            this._esconderNomePremio();
-            
-            this._timeEncerramento += delta;
-            const t = Math.min(this._timeEncerramento / this._DURACAO_ENCERRAMENTO, 1);
-            // Ease-in-out para suavidade máxima
+        if (this.state === "CLOSING") {
+            this._closingTime += delta;
+            const t = Math.min(this._closingTime / this._CLOSING_DURATION, 1);
             const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-            // Animar câmara
-            this.camera.position.lerpVectors(this._camOrigemPos, this._camAlvoPos, ease);
-            this.controls.target.lerpVectors(this._camOrigemTarget, this._camAlvoTarget, ease);
-            // OrbitControls update já é chamado no loop principal ou via cameraManager
+            this.camera.position.lerpVectors(this._camFromPos, this._camToPos, ease);
+            this.controls.target.lerpVectors(this._camFromTarget, this._camToTarget, ease);
 
-            // Encolher modelo (em paralelo)
-            if (this.modelo) {
-                // Diminuição exponencial baseada no tempo
-                const scalePasso = Math.pow(0.01, delta); // Reduz drasticamente em 1 segundo
-                this.modelo.scale.multiplyScalar(scalePasso);
-                this.modelo.rotation.y += 5 * delta;
-                
-                if (this.modelo.scale.x < 0.01) {
-                    this.scene.remove(this.modelo);
-                    this.modelo = null;
+            if (this.model) {
+                this.model.scale.multiplyScalar(Math.pow(0.01, delta));
+                this.model.rotation.y += 5 * delta;
+                if (this.model.scale.x < 0.01) {
+                    this.scene.remove(this.model);
+                    this.model = null;
                 }
             }
 
-            // Luzes também desaparecem
-            this._luzCima.intensity *= Math.pow(0.1, delta);
-            this._luzBaixo.intensity *= Math.pow(0.1, delta);
+            this._lightTop.intensity *= Math.pow(0.1, delta);
+            this._lightBottom.intensity *= Math.pow(0.1, delta);
 
-            // Finaliza quando a animação da câmara termina
-            if (t >= 1) {
-                this._finalizarEncerramento();
-            }
+            if (t >= 1) this._finalizeClose();
         }
     }
 
-    _finalizarEncerramento() {
-        this.capsula = null;
-        this.capsulaFisica = null;
-        this.estado = "INATIVA";
+    _finalizeClose() {
+        this.capsule = null;
+        this.capsulePhysics = null;
+        this.state = "IDLE";
         this._prevTime = 0;
-
-        if (this.mixer) {
-            this.mixer.stopAllAction();
-            this.mixer = null;
-        }
-
+        if (this.mixer) { this.mixer.stopAllAction(); this.mixer = null; }
         if (this.controls) {
             this.controls.enabled = true;
-            // Garante que fica exatamente na posição final
-            this.controls.target.copy(this._camAlvoTarget);
-            this.camera.position.copy(this._camAlvoPos);
+            this.controls.target.copy(this._camToTarget);
+            this.camera.position.copy(this._camToPos);
             this.controls.update();
         }
     }
 
-    // ── Privado ──────────────────────────────────────────────────────────────────
-    _onKeyDown(e) {
-        if (e.code === "Space") {
-            this._triggerAction();
+    _findClip(clips, name) {
+        if (name) {
+            const exact = clips.find(c => c.name === name);
+            if (exact) return exact;
+            const fuzzy = clips.find(c => {
+                const a = c.name.toLowerCase(), b = name.toLowerCase();
+                return a === b || a.includes(b) || b.includes(a);
+            });
+            if (fuzzy) return fuzzy;
         }
+        return clips.find(c => c.name.toLowerCase().includes("idle")) ?? clips[0];
     }
 
+    _onKeyDown(e) { if (e.code === "Space") this._triggerAction(); }
+
     _onSceneTouch(e) {
-        // Evita disparar se tocar em botões da UI (como o widget)
         if (e.target.closest('#gui-container') || e.target.closest('.dg')) return;
-        
         this._triggerAction();
     }
 
     _triggerAction() {
-        if (this.estado === "AGUARDAR") {
-            this._esconderHint();
+        if (this.state === "WAIT") {
+            this._hideHint();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
-            
-            // Tocar som de abertura
             if (this.openSound) {
                 if (this.openSound.isPlaying) this.openSound.stop();
                 this.openSound.play();
             }
-            
-            this.estado = "ABRIR";
+            this.state = "OPEN";
 
-        } else if (this.estado === "CONTROLO_LIVRE") {
-            this._esconderHint();
+        } else if (this.state === "FREE_VIEW") {
+            this._hideHint();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
-            
-            // Iniciar animação suave de retorno
-            this.estado = "ENCERRAR";
-            this._timeEncerramento = 0;
 
-            // Guardar estado atual para interpolar
-            this._camOrigemPos.copy(this.camera.position);
-            this._camOrigemTarget.copy(this.controls.target);
-
-            // Calcular alvos (mesmo cálculo que estava no reset brusco)
-            this._camAlvoTarget.set(this.basePos.x, this.basePos.y + 18, this.basePos.z);
+            this.state = "CLOSING";
+            this._closingTime = 0;
+            this._camFromPos.copy(this.camera.position);
+            this._camFromTarget.copy(this.controls.target);
+            this._camToTarget.set(this.basePos.x, this.basePos.y + 18, this.basePos.z);
             const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
-            const camOffset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
-            this._camAlvoPos.set(this.basePos.x + camOffset.x, this.basePos.y + camOffset.y, this.basePos.z + camOffset.z);
+            const offset = new THREE.Vector3(0, 30, 60).applyQuaternion(quat);
+            this._camToPos.copy(this.basePos).add(offset);
         }
     }
 
-    _criarHint() {
-        this._hintEl = document.getElementById("capsule-hint");
+    _showHint(text) { this._hintEl.textContent = text; this._hintEl.style.display = "block"; }
+    _hideHint() { this._hintEl.style.display = "none"; }
+
+    _showPrizeName(name) {
+        this._prizeNameEl.textContent = name;
+        this._prizeNameEl.setAttribute('data-theme', this.currentTheme || 'default');
+        this._prizeNameEl.classList.add("visible");
+        setTimeout(() => this._prizeNameEl.classList.add("visible"), 100);
     }
 
-    _mostrarHint(texto) {
-        this._hintEl.textContent = texto;
-        this._hintEl.style.display = "block";
-    }
+    _hidePrizeName() { this._prizeNameEl.classList.remove("visible"); }
 
-    _esconderHint() {
-        this._hintEl.style.display = "none";
-    }
-
-    _criarNomePremioUI() {
-        this._nomePremioEl = document.getElementById("capsule-prize-name");
-    }
-
-    _mostrarNomePremio(nome) {
-        this._nomePremioEl.textContent = nome;
-        this._nomePremioEl.classList.add("visible");
-
-        // Aplicar cores do tema (condizente com o card de comandos)
-        let shadowColor = "#cc0000"; // Clássico
-
-        // Atualizar classe de tema se necessário
-        this._nomePremioEl.setAttribute('data-theme', this.temaAtual || 'default');
-
-        setTimeout(() => {
-            this._nomePremioEl.classList.add("visible");
-        }, 100);
-    }
-
-    _esconderNomePremio() {
-        this._nomePremioEl.classList.remove("visible");
-    }
-
-    /**
-     * Atualiza o visual do nome do prémio para condizer com o tema
-     * @param {string} nomeTema 
-     */
-    atualizarTema(nomeTema) {
-        this.temaAtual = nomeTema;
-    }
+    updateTheme(theme) { this.currentTheme = theme; }
 }

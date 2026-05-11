@@ -5,38 +5,38 @@ export function setupOrbitControls(camera, renderer) {
     controls.enableDamping = true;
     controls.minDistance = 20;
     controls.maxDistance = 85;
-    controls.maxPolarAngle = Math.PI / 2.1; // Evita ver por baixo do chão
-    controls.minAzimuthAngle = 0; // Impede ir para a esquerda da máquina (atravessar a parede)
-    controls.maxAzimuthAngle = Math.PI * 0.75; // Reduzido ligeiramente para permitir mais zoom out sem bater na parede do fundo
+    controls.maxPolarAngle = Math.PI / 2.1;
+    controls.minAzimuthAngle = 0;
+    controls.maxAzimuthAngle = Math.PI * 0.75;
     controls.target.set(0, 18, 0);
     controls.update();
     return controls;
 }
 
 export function setupKeyboard(canAct, onSpaceAction) {
-    const teclas = { up: false, down: false, left: false, right: false, action: false };
+    const keys = { up: false, down: false, left: false, right: false, action: false };
 
     window.addEventListener("keydown", (e) => {
         if (!canAct()) return;
-
-        if (e.key === "ArrowUp")    teclas.up    = true;
-        if (e.key === "ArrowDown")  teclas.down  = true;
-        if (e.key === "ArrowLeft")  teclas.left  = true;
-        if (e.key === "ArrowRight") teclas.right = true;
-
+        const key = e.key.toLowerCase();
+        if (key === "arrowup"    || key === "w") keys.up    = true;
+        if (key === "arrowdown"  || key === "s") keys.down  = true;
+        if (key === "arrowleft"  || key === "a") keys.left  = true;
+        if (key === "arrowright" || key === "d") keys.right = true;
         if (e.key === " ") {
-            teclas.action = true;
+            keys.action = true;
             if (onSpaceAction) onSpaceAction();
-            setTimeout(() => (teclas.action = false), 300);
+            setTimeout(() => (keys.action = false), 300);
         }
     });
 
     window.addEventListener("keyup", (e) => {
-        if (e.key === "ArrowUp")    teclas.up    = false;
-        if (e.key === "ArrowDown")  teclas.down  = false;
-        if (e.key === "ArrowLeft")  teclas.left  = false;
-        if (e.key === "ArrowRight") teclas.right = false;
+        const key = e.key.toLowerCase();
+        if (key === "arrowup"    || key === "w") keys.up    = false;
+        if (key === "arrowdown"  || key === "s") keys.down  = false;
+        if (key === "arrowleft"  || key === "a") keys.left  = false;
+        if (key === "arrowright" || key === "d") keys.right = false;
     });
 
-    return teclas;
+    return keys;
 }
