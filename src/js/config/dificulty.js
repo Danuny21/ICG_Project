@@ -1,11 +1,17 @@
-export const MODO_FACIL = {
-    nome: "fácil",
-    aberturaFecho: -Math.PI / 7,
-    abano: 0.01
+export const EASY_MODE = {
+    name: "fácil",
+    gripRotation: -Math.PI / 7,
+    shake: 0.01
 };
 
-export const MODO_REALISTA = {
-    nome: "realista",
-    aberturaFecho: -Math.PI / 5,
-    abano: 0.06
+export const NORMAL_MODE = {
+    name: "normal",
+    gripRotation: -Math.PI / 5,
+    shake: 0.06
+};
+
+export const HARD_MODE = {
+    name: "difícil",
+    gripRotation: -Math.PI / 2,
+    shake: 0.12
 };

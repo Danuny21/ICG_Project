@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
-const cacheModelos = {}; // { caminho: { scene: THREE.Group, animations: AnimationClip[] } }
+const modelCache = {}; // { path: { scene: THREE.Group, animations: AnimationClip[] } }
 
-// Carregar prémio pa cache e cena
-export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
-    if (cacheModelos[caminhoFicheiro]) {
-        const cached = cacheModelos[caminhoFicheiro];
-        // SkeletonUtils.clone é essencial para modelos com SkinnedMesh (ossos)
+// Carrega um prémio para a cache e para a cena, garantindo que clones funcionam corretamente com SkeletonUtils.
+export function loadPrize(filePath, parentGroup, onLoadCallback) {
+    if (modelCache[filePath]) {
+        const cached = modelCache[filePath];
+        // SkeletonUtils.clone é essencial para modelos com SkinnedMesh (ossos/animações)
         const clone = SkeletonUtils.clone(cached.scene);
 
         clone.scale.set(1, 1, 1);
@@ -21,7 +21,7 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
 
     const loader = new GLTFLoader();
 
-    loader.load(`./src/js/models/glb/${caminhoFicheiro}`, function (gltf) {
+    loader.load(`./src/js/models/glb/${filePath}`, function (gltf) {
         const baseScene = gltf.scene;
         const animations = gltf.animations;
 
@@ -42,17 +42,17 @@ export function carregarPremio(caminhoFicheiro, parentGroup, onLoadCallback) {
             }
         });
 
-        cacheModelos[caminhoFicheiro] = { scene: baseScene, animations: animations };
+        modelCache[filePath] = { scene: baseScene, animations: animations };
 
-        const cloneInicial = SkeletonUtils.clone(baseScene);
+        const initialClone = SkeletonUtils.clone(baseScene);
 
-        cloneInicial.scale.set(1, 1, 1);
-        cloneInicial.position.set(0, 0, 0);
+        initialClone.scale.set(1, 1, 1);
+        initialClone.position.set(0, 0, 0);
 
-        if (parentGroup) parentGroup.add(cloneInicial);
-        if (onLoadCallback) onLoadCallback(cloneInicial, animations);
+        if (parentGroup) parentGroup.add(initialClone);
+        if (onLoadCallback) onLoadCallback(initialClone, animations);
 
     }, undefined, function (error) {
-        console.error(`Erro a carregar o modelo ${caminhoFicheiro}:`, error);
+        console.error(`Erro ao carregar o modelo ${filePath}:`, error);
     });
 }

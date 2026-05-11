@@ -23,7 +23,7 @@
   <div id="main-menu">
     <div class="menu-content">
       <h1 class="glitch" data-text="CLAW MACHINE 3D">MÁQUINA DE GARRAS 3D</h1>
-      <p>Uma experiência retro de arcade</p>
+      <p>Uma experiência de arcade</p>
       <div class="menu-buttons">
         <button id="start-button">INSERIR MOEDA</button>
         <button id="help-button">AJUDA</button>
@@ -38,36 +38,38 @@
       <h2>Como Jogar</h2>
       <div class="help-grid">
         <div class="help-item">
-          <span class="help-icon">CONTROLO</span>
+          <span class="help-icon">🕹️</span>
           <h3>Mover a Garra</h3>
           <p class="desktop-only">Usa as <b>setas do teclado ou WASD</b> para posicionar a garra sobre as cápsulas.</p>
           <p class="mobile-only">Usa o <b>joystick</b> para posicionar a garra sobre as cápsulas.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">AÇÃO</span>
+          <span class="help-icon">👾</span>
           <h3>Apanhar</h3>
           <p class="desktop-only">Prime <b>ESPAÇO</b> para descer a garra e tentar apanhar uma cápsula.</p>
           <p class="mobile-only">Carrega no botão <b>IR</b> para descer a garra e tentar apanhar uma cápsula.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">ABRIR</span>
+          <span class="help-icon">🎁</span>
           <h3>Abrir Cápsula</h3>
           <p class="desktop-only"><b>Clica</b> na cápsula que saiu para a abrir e descobrir o prémio lá dentro!</p>
           <p class="mobile-only"><b>Toca</b> na cápsula que saiu para a abrir e descobrir o prémio lá dentro!</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">PREMIOS</span>
+          <span class="help-icon">🏆</span>
           <h3>Coleção</h3>
-          <p class="desktop-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Clica</b> neles para os inspecionar!</p>
-          <p class="mobile-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Toca</b> neles para os inspecionar!</p>
+          <p class="desktop-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Clica</b>
+            neles para os inspecionar!</p>
+          <p class="mobile-only">Muda para a vista <b>COLEÇÃO</b> para veres os prémios desbloqueados. <b>Toca</b> neles
+            para os inspecionar!</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">PAUSA</span>
+          <span class="help-icon">☕</span>
           <h3>Mesa</h3>
           <p>Vai até à vista <b>MESA</b> para uma pausa relaxante no ambiente do arcade.</p>
         </div>
         <div class="help-item">
-          <span class="help-icon">OPÇÕES</span>
+          <span class="help-icon">⚙️</span>
           <h3>Configurações</h3>
           <p>Usa o painel <b>Configurações</b> (canto superior direito) para mudar a dificuldade, tema e volume.</p>
         </div>
@@ -113,7 +115,10 @@
   <!-- UI do Inspetor de Prémios -->
   <div id="prize-inspector-ui" class="inspector-ui-container">
     <h1 id="inspector-title" class="inspector-title"></h1>
-    <p id="inspector-hint" class="game-ui-hint"><b>Pressiona ESPAÇO para continuar</b></p>
+    <p id="inspector-hint" class="game-ui-hint">
+      <span class="desktop-only"><b>Prima ESPAÇO para continuar</b></span>
+      <span class="mobile-only"><b>Clica em IR para continuar</b></span>
+    </p>
   </div>
 
   <script type="module" src="./src/js/main.js"></script>

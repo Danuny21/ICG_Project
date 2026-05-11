@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { criarCapsula } from "../models/capsule.js";
+import { createCapsule } from "../models/capsule.js";
 import { CAPSULE_RADIUS } from "./PhysicsSystem.js";
 
 // Responsável por gerar as cápsulas dentro da máquina de garras.
@@ -9,7 +9,7 @@ export class CapsuleSpawner {
         const capsules = [];
 
         for (let i = 0; i < count; i++) {
-            const { grupo, dobradica } = criarCapsula();
+            const { group, hinge } = createCapsule();
 
             // Gera uma posição aleatória que não coincida com o buraco de saída
             let posX, posZ, inHole = true;
@@ -22,13 +22,13 @@ export class CapsuleSpawner {
             // Aplica a rotação da máquina à posição relativa e adiciona à posição base
             const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), baseRotY);
             const relPos = new THREE.Vector3(posX, 22 + Math.random() * 12, posZ).applyQuaternion(quat);
-            grupo.position.set(basePos.x + relPos.x, basePos.y + relPos.y, basePos.z + relPos.z);
-            scene.add(grupo);
+            group.position.set(basePos.x + relPos.x, basePos.y + relPos.y, basePos.z + relPos.z);
+            scene.add(group);
 
             // Regista o estado da cápsula para o sistema de física e interação
             capsules.push({
-                mesh: grupo,
-                dobradica,
+                mesh: group,
+                dobradica: hinge,
                 modeloInterno: null,  // Modelo 3D do prémio (carregado ao abrir)
                 vel: new THREE.Vector3(),
                 radius: CAPSULE_RADIUS,

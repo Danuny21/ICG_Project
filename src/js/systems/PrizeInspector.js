@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// Gere a inspeção detalhada de um prémio da coleção, transportando-o para a frente da câmara com um pedestal.
 export class PrizeInspector {
     // States: IDLE | TRANSPORT | INSPECT | RETURNING | CLOSING
     constructor(scene, camera, controls) {
@@ -50,6 +51,7 @@ export class PrizeInspector {
         this._onPointerUp = this._onPointerUp.bind(this);
     }
 
+    // Inicia a inspeção de um modelo da coleção.
     inspect(originalModel, name) {
         if (this.state !== "IDLE") return;
 
@@ -167,10 +169,10 @@ export class PrizeInspector {
 
     _onKeyDown(e) {
         if ((e.code === "Space" || e.code === "Escape") && this.state === "INSPECT")
-            this._prepareReturn();
+            this.prepareReturn();
     }
 
-    _prepareReturn() {
+    prepareReturn() {
         this.state = "RETURNING";
         this._closingTime = 0;
         this._camFromPos.copy(this.camera.position);

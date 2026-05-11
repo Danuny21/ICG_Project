@@ -3,13 +3,13 @@ import { setupScene } from "./config/scene.js";
 import { setupLighting } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
 import { createArcadeBuilding } from "./models/arcadeBuilding.js";
-import { criarClawMachine } from "./models/clawMachine.js";
+import { createClawMachine } from "./models/clawMachine.js";
 import { PhysicsWorld } from "./systems/PhysicsSystem.js";
 import { CapsuleSpawner } from "./systems/CapsuleSpawner.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
-import { criarConfetis } from "./models/confetti.js";
+import { createConfetti } from "./models/confetti.js";
 import { updateClawAnimation } from "./systems/ClawAnimation.js";
-import { MODO_REALISTA } from "./config/dificulty.js";
+import { NORMAL_MODE } from "./config/dificulty.js";
 import { setupWidget } from "./config/widget.js";
 import { InteractionSystem } from "./systems/InteractionSystem.js";
 import { MobileControls } from "./systems/MobileControls.js";
@@ -17,11 +17,11 @@ import { CollectionManager } from "./systems/CollectionManager.js";
 import { CameraManager } from "./systems/CameraManager.js";
 import { PrizeInspector } from "./systems/PrizeInspector.js";
 
-// Configuração global do jogo (dificuldade padrão)
-window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULES = 200; // Número de cápsulas geradas no interior da máquina
+// Global game configuration (default difficulty)
+window.CONFIG_JOGO = NORMAL_MODE;
+const NUM_CAPSULES = 200; // Number of capsules generated inside the machine
 
-// Posição e rotação da máquina de garras no mundo
+// Machine position and rotation in the world
 const MACHINE_POS = new THREE.Vector3(-86, 0, 1);
 const MACHINE_ROT = Math.PI / 2;
 
@@ -31,19 +31,19 @@ const controls = setupOrbitControls(camera, renderer);
 setupLighting(scene);
 
 const arcadeBuilding = createArcadeBuilding(scene);
-arcadeBuilding.grupo.position.set(0, 0, 55);
-arcadeBuilding.grupo.scale.set(2, 2, 2);
+arcadeBuilding.group.position.set(0, 0, 55);
+arcadeBuilding.group.scale.set(2, 2, 2);
 
 const collectionManager = new CollectionManager(scene);
 collectionManager.setupRoom(arcadeBuilding);
 
-const clawMachine = criarClawMachine(scene);
-clawMachine.caixa.position.copy(MACHINE_POS);
-clawMachine.caixa.rotation.y = MACHINE_ROT;
+const clawMachine = createClawMachine(scene);
+clawMachine.box.position.copy(MACHINE_POS);
+clawMachine.box.rotation.y = MACHINE_ROT;
 
 const capsules = CapsuleSpawner.spawnCapsules(scene, NUM_CAPSULES, MACHINE_POS, MACHINE_ROT);
 
-// Audio
+// Audio setup
 const listener = new THREE.AudioListener();
 camera.add(listener);
 const audioLoader = new THREE.AudioLoader();
@@ -61,7 +61,7 @@ audioLoader.load('./src/sound/getting-prize.mp3', buffer => {
     capsuleSound.setVolume(0.6);
 });
 
-const confetti = criarConfetis(scene);
+const confetti = createConfetti(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetti, MACHINE_POS, MACHINE_ROT, capsuleSound);
 
 const cameraManager = new CameraManager(camera, controls, capsuleOpener);
@@ -78,6 +78,17 @@ const keys = setupKeyboard(
 );
 
 new MobileControls(keys, () => {
+    // 1. Se estivermos a abrir uma cápsula
+    if (capsuleOpener.state === "WAIT" || capsuleOpener.state === "FREE_VIEW") {
+        capsuleOpener.triggerAction();
+        return;
+    }
+    // 2. Se estivermos a inspecionar um prémio na prateleira
+    if (prizeInspector.state === "INSPECT") {
+        prizeInspector.prepareReturn();
+        return;
+    }
+    // 3. Ação normal do jogo (descer garra)
     if (gameState === "IDLE" && capsuleOpener.state === "IDLE" && cameraManager.viewState === "machine") {
         gameState = "DESCEND";
     }
@@ -86,13 +97,13 @@ new MobileControls(keys, () => {
 const moveSpeed = 0.15;
 const moveLimits = { x: 11.4, z: 11.4 };
 
-// Ajusta o FOV consoante orientação do ecrã (retrato em mobile)
+// Adjust FOV based on orientation
 const isPortrait = window.innerHeight > window.innerWidth;
 camera.fov = isPortrait ? 85 : 60;
 camera.updateProjectionMatrix();
 
-// Cria o painel de configurações (lil-GUI) e as estatísticas de FPS
-const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound });
+// Create settings panel (lil-GUI) and FPS stats
+const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding);
 
 const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
 interactionSystem.init();
@@ -100,7 +111,7 @@ interactionSystem.init();
 const physicsWorld = new PhysicsWorld();
 let lastFrameTime = performance.now();
 
-// ─── CICLO DE RENDERIZAÇÃO ───────────────────────────────────────────────────
+// ─── RENDERING LOOP ──────────────────────────────────────────────────────────
 function animate(time) {
     if (stats) stats.update();
     requestAnimationFrame(animate);
@@ -108,26 +119,26 @@ function animate(time) {
     const delta = (time - lastFrameTime) / 1000;
     lastFrameTime = time;
 
-    // Só atualiza a câmara se o inspetor de prémios não estiver ativo
+    // Only update camera if prize inspector is idle
     if (prizeInspector?.state === "IDLE") cameraManager.update();
 
     collectionManager.update(delta);
     if (prizeInspector) prizeInspector.update(delta);
 
-    // Avança a animação da garra com base no estado atual
+    // Update claw animation based on state
     const clawResult = updateClawAnimation(gameState, animTime, clawMachine, keys, moveLimits, moveSpeed);
     gameState = clawResult.newState;
     animTime = clawResult.newTime;
 
     physicsWorld.update(capsules, clawMachine);
     capsuleOpener.update(time);
-    confetti.atualizarMovimento();
+    confetti.update();
 
     controls.update();
     renderer.render(scene, camera);
 }
 
-// ─── FLUXO DO JOGO: MENU → LOADING → JOGO ───────────────────────────────────
+// ─── GAME FLOW: MENU → LOADING → GAME ────────────────────────────────────────
 const startBtn = document.getElementById('start-button');
 const mainMenu = document.getElementById('main-menu');
 const loadingScreen = document.getElementById('loading-screen');

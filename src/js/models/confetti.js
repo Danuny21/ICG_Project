@@ -1,52 +1,53 @@
 import * as THREE from "three";
 import { THEME } from "../config/theme.js";
 
-export function criarConfetis(scene) {
-    const confettis = [];
-    const coresConfetis = THEME.PALETA_CORES;
+// Cria um sistema de partículas de confetis para celebrar quando o jogador ganha um prémio.
+export function createConfetti(scene) {
+    const confettiList = [];
+    const confettiColors = THEME.COLOR_PALETTE;
 
     // Gerar meshes
     for (let i = 0; i < 500; i++) {
-        const cor = coresConfetis[Math.floor(Math.random() * coresConfetis.length)];
-        const confMaterial = new THREE.MeshPhongMaterial({ color: cor, flatShading: true });
-        const confGeo = new THREE.ConeGeometry(0.35, 0.35, 3);
-        const confMesh = new THREE.Mesh(confGeo, confMaterial);
+        const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        const material = new THREE.MeshPhongMaterial({ color: color, flatShading: true });
+        const geometry = new THREE.ConeGeometry(0.35, 0.35, 3);
+        const mesh = new THREE.Mesh(geometry, material);
 
-        confMesh.visible = false;
-        scene.add(confMesh);
+        mesh.visible = false;
+        scene.add(mesh);
 
-        confettis.push({
-            mesh: confMesh,
-            velocidade: new THREE.Vector3(),
-            rotacaoSpd: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+        confettiList.push({
+            mesh: mesh,
+            velocity: new THREE.Vector3(),
+            rotationSpeed: new THREE.Vector3(Math.random(), Math.random(), Math.random())
         });
     }
 
     // Funções para controlar os confetis
     return {
-        disparar: function (posicao = new THREE.Vector3(0, 0, 0)) {
-            confettis.forEach(c => {
-                c.mesh.position.copy(posicao);
+        fire: function (position = new THREE.Vector3(0, 0, 0)) {
+            confettiList.forEach(c => {
+                c.mesh.position.copy(position);
                 c.mesh.visible = true;
-                c.velocidade.set(
-                    (Math.random() - 0.5) * 0.3, // Reduzido de 0.5
-                    Math.random() * 0.4 + 0.2,   // Reduzido de 0.6+0.3
-                    (Math.random() - 0.5) * 0.3  // Reduzido de 0.5
+                c.velocity.set(
+                    (Math.random() - 0.5) * 0.3,
+                    Math.random() * 0.4 + 0.2,
+                    (Math.random() - 0.5) * 0.3
                 );
             });
         },
-        esconder: function () {
-            confettis.forEach(c => { c.mesh.visible = false; });
+        hide: function () {
+            confettiList.forEach(c => { c.mesh.visible = false; });
         },
-        atualizarMovimento: function () {
-            confettis.forEach(c => {
+        update: function () {
+            confettiList.forEach(c => {
                 if (c.mesh.visible) {
-                    c.velocidade.y -= 0.005; // Gravidade reduzida de 0.01
-                    c.mesh.position.add(c.velocidade);
+                    c.velocity.y -= 0.005; // Gravity
+                    c.mesh.position.add(c.velocity);
 
-                    c.mesh.rotation.x += c.rotacaoSpd.x * 0.1; // Reduzido de 0.2
-                    c.mesh.rotation.y += c.rotacaoSpd.y * 0.1;
-                    c.mesh.rotation.z += c.rotacaoSpd.z * 0.1;
+                    c.mesh.rotation.x += c.rotationSpeed.x * 0.1;
+                    c.mesh.rotation.y += c.rotationSpeed.y * 0.1;
+                    c.mesh.rotation.z += c.rotationSpeed.z * 0.1;
 
                     if (c.mesh.position.y < -10) {
                         c.mesh.visible = false;
@@ -54,10 +55,10 @@ export function criarConfetis(scene) {
                 }
             });
         },
-        atualizarCores: function (novaPaleta) {
-            confettis.forEach(c => {
-                const novaCor = novaPaleta[Math.floor(Math.random() * novaPaleta.length)];
-                c.mesh.material.color.set(novaCor);
+        updateColors: function (newPalette) {
+            confettiList.forEach(c => {
+                const newColor = newPalette[Math.floor(Math.random() * newPalette.length)];
+                c.mesh.material.color.set(newColor);
             });
         }
     };

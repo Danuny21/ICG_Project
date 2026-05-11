@@ -1,6 +1,6 @@
 export class MobileControls {
-    constructor(teclas, onAction) {
-        this.teclas = teclas;
+    constructor(keys, onAction) {
+        this.keys = keys;
         this.onAction = onAction;
 
         this.joystick = document.getElementById('joystick-container');
@@ -24,9 +24,9 @@ export class MobileControls {
         // Action Button
         this.actionButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.teclas.action = true;
+            this.keys.action = true;
             if (this.onAction) this.onAction();
-            setTimeout(() => (this.teclas.action = false), 300);
+            setTimeout(() => (this.keys.action = false), 300);
         });
     }
 
@@ -58,10 +58,10 @@ export class MobileControls {
 
         // Update teclas
         const threshold = 15;
-        this.teclas.left = deltaX < -threshold;
-        this.teclas.right = deltaX > threshold;
-        this.teclas.up = deltaY < -threshold;
-        this.teclas.down = deltaY > threshold;
+        this.keys.left = deltaX < -threshold;
+        this.keys.right = deltaX > threshold;
+        this.keys.up = deltaY < -threshold;
+        this.keys.down = deltaY > threshold;
     }
 
     onEnd() {
@@ -70,9 +70,9 @@ export class MobileControls {
         this.stick.style.transform = `translate(-50%, -50%)`;
 
         // Reset teclas
-        this.teclas.left = false;
-        this.teclas.right = false;
-        this.teclas.up = false;
-        this.teclas.down = false;
+        this.keys.left = false;
+        this.keys.right = false;
+        this.keys.up = false;
+        this.keys.down = false;
     }
 }

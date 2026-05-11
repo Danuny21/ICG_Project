@@ -7,9 +7,9 @@ import * as THREE from "three";
  * @param {object} repeat Configuração de repetição { x, y }
  * @returns {object} Objeto com as texturas carregadas
  */
-export function carregarConjuntoTexturas(basePath, maps = [], repeat = { x: 1, y: 1 }) {
+export function loadTextureSet(basePath, maps = [], repeat = { x: 1, y: 1 }) {
     const textureLoader = new THREE.TextureLoader();
-    const texturas = {};
+    const textures = {};
 
     maps.forEach(mapType => {
         // Tenta carregar .jpg (padrão do teu projeto)
@@ -19,10 +19,10 @@ export function carregarConjuntoTexturas(basePath, maps = [], repeat = { x: 1, y
         tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
         tex.repeat.set(repeat.x, repeat.y);
         
-        // Guarda no objeto (ex: texturas.color)
+        // Guarda no objeto (ex: textures.color)
         const key = mapType.toLowerCase().replace("gl", "").replace("dx", "");
-        texturas[key] = tex;
+        textures[key] = tex;
     });
 
-    return texturas;
+    return textures;
 }

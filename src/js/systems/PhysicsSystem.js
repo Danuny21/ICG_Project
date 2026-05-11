@@ -151,11 +151,12 @@ export class PhysicsWorld {
 
     // Cria corpos cinemáticos para os segmentos dos dedos da garra
     _createFingerBodies(clawMachine) {
-        for (const dedo of clawMachine.dedos) {
+        // CORREÇÃO: Usar 'fingers' em vez de 'dedos' para corresponder ao objeto retornado por clawMachine.js
+        for (const finger of clawMachine.fingers) {
             const segments = [
-                { mesh: dedo, h: [0.35, 1.50, 0.30], t: [0, -1.50, 1.0] },
-                { mesh: dedo.children[0], h: [0.35, 1.10, 0.30], t: [0, -1.10, 0.0] },
-                { mesh: dedo.children[0].children[0], h: [0.35, 0.65, 0.30], t: [0, -0.65, 0.0] }
+                { mesh: finger, h: [0.35, 1.50, 0.30], t: [0, -1.50, 1.0] },
+                { mesh: finger.children[0], h: [0.35, 1.10, 0.30], t: [0, -1.10, 0.0] },
+                { mesh: finger.children[0].children[0], h: [0.35, 0.65, 0.30], t: [0, -0.65, 0.0] }
             ];
             for (const seg of segments) {
                 const body = this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
@@ -165,14 +166,15 @@ export class PhysicsWorld {
                         .setFriction(0.9).setRestitution(0.05),
                     body
                 );
-                this._fingerBodies.push({ body, dedo: seg.mesh });
+                this._fingerBodies.push({ body, finger: seg.mesh });
             }
         }
     }
 
     // Cria o corpo cinemático da porta de saída
     _createDoorBody(clawMachine) {
-        if (!clawMachine.porta) return;
+        // CORREÇÃO: Usar 'door' em vez de 'porta'
+        if (!clawMachine.door) return;
         const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
         const relPos = new THREE.Vector3(-7.8, 7.8, 14.82).applyQuaternion(quat);
         this._doorBody = this.world.createRigidBody(
@@ -187,10 +189,10 @@ export class PhysicsWorld {
 
     // Sincroniza as posições dos dedos da garra (Three.js → Rapier)
     _syncFingerBodies(clawMachine) {
-        for (const { body, dedo } of this._fingerBodies) {
-            dedo.updateWorldMatrix(true, false);
-            dedo.getWorldPosition(this._tmpV3);
-            dedo.getWorldQuaternion(this._tmpQ);
+        for (const { body, finger } of this._fingerBodies) {
+            finger.updateWorldMatrix(true, false);
+            finger.getWorldPosition(this._tmpV3);
+            finger.getWorldQuaternion(this._tmpQ);
             body.setNextKinematicTranslation({ x: this._tmpV3.x, y: this._tmpV3.y, z: this._tmpV3.z });
             body.setNextKinematicRotation({ x: this._tmpQ.x, y: this._tmpQ.y, z: this._tmpQ.z, w: this._tmpQ.w });
         }
@@ -198,7 +200,8 @@ export class PhysicsWorld {
 
     // Simula a porta de saída com efeito de mola: cápsulas que batem na porta empurram-na
     _updateDoor(capsules, clawMachine) {
-        if (!clawMachine.porta || !this._doorBody) return;
+        // CORREÇÃO: Usar 'door' em vez de 'porta'
+        if (!clawMachine.door || !this._doorBody) return;
         const invQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -this.baseRotY);
         const CHUTE_X_MIN = -11.1, CHUTE_X_MAX = -4.5;
         const pz = DOOR_Z;
@@ -218,13 +221,13 @@ export class PhysicsWorld {
         }
 
         // Aplica mola (fecha a porta) e amortecimento
-        this._doorAngVel += (0 - clawMachine.porta.rotation.x) * DOOR_SPRING;
+        this._doorAngVel += (0 - clawMachine.door.rotation.x) * DOOR_SPRING;
         this._doorAngVel *= DOOR_DAMPING;
-        clawMachine.porta.rotation.x = Math.max(DOOR_MAX_OPEN, Math.min(0, clawMachine.porta.rotation.x + this._doorAngVel));
+        clawMachine.door.rotation.x = Math.max(DOOR_MAX_OPEN, Math.min(0, clawMachine.door.rotation.x + this._doorAngVel));
 
         // Sincroniza o corpo Rapier com a rotação visual da porta
         const qBase = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
-        const qLocal = new THREE.Quaternion().setFromEuler(new THREE.Euler(clawMachine.porta.rotation.x, 0, 0));
+        const qLocal = new THREE.Quaternion().setFromEuler(new THREE.Euler(clawMachine.door.rotation.x, 0, 0));
         const qFinal = qBase.clone().multiply(qLocal);
         const relPos = new THREE.Vector3(-7.8, 7.8, 14.82).applyQuaternion(qBase);
         this._doorBody.setNextKinematicTranslation({ x: this.basePos.x + relPos.x, y: this.basePos.y + relPos.y, z: this.basePos.z + relPos.z });

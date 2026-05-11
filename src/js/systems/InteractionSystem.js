@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { drawPrize } from "../config/prizes.js";
-import { carregarPremio } from "./PrizeLoader.js";
+import { loadPrize } from "./PrizeLoader.js";
 
 // Gere a deteção de cliques do rato/toque para interação com cápsulas e prémios da coleção.
 // Usa raycasting para identificar o objeto clicado e delega a ação ao sistema responsável.
@@ -73,13 +73,13 @@ export class InteractionSystem {
         capsule.aberta = true;
         const prize = drawPrize();
 
-        carregarPremio(prize.file, capsule.mesh, (model, animations) => {
+        loadPrize(prize.file, capsule.mesh, (model, animations) => {
             model.scale.setScalar(prize.scale);
             model.position.set(0, prize.offsetY, 0);
             capsule.modeloInterno = model;
 
             this.capsuleOpener.openCapsule(
-                { grupo: capsule.mesh, dobradica: capsule.dobradica },
+                { group: capsule.mesh, hinge: capsule.dobradica }, // Usando nomes em inglês (group, hinge)
                 capsule,
                 model,
                 prize.targetScale,

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createFloatingShelf } from '../models/shelf.js';
 import { PRIZE_LIST } from '../config/prizes.js';
-import { carregarPremio } from './PrizeLoader.js';
+import { loadPrize } from './PrizeLoader.js';
 
 // Gere a coleção de prémios desbloqueados pelo jogador.
 // Prémios bloqueados aparecem como silhuetas negras; ao desbloquear, restauram os materiais originais.
@@ -83,9 +83,9 @@ export class CollectionManager {
     // Cria as prateleiras na sala e popula-as com os modelos de cada categoria
     setupRoom(arcadeBuilding) {
         const categories = [
-            { id: "animals",    width: 48 },
+            { id: "animals", width: 48 },
             { id: "dinossaurs", width: 30 },
-            { id: "monsters",   width: 15 },
+            { id: "monsters", width: 15 },
         ];
         const ySpacing = 8, yBase = 10, zBase = 43;
 
@@ -93,14 +93,17 @@ export class CollectionManager {
             const shelf = createFloatingShelf(cat.width);
             shelf.rotation.y = Math.PI / 2;
             shelf.position.set(-48.5, yBase + index * ySpacing, zBase);
-            arcadeBuilding.grupo.add(shelf);
+
+            if (arcadeBuilding && arcadeBuilding.group) {
+                arcadeBuilding.group.add(shelf);
+            }
 
             const prizes = PRIZE_LIST.filter(p => p.file.includes(cat.id));
             const spacing = (cat.width - 2) / (prizes.length || 1);
             const startX = -cat.width / 2 + 1 + spacing / 2;
 
             prizes.forEach((cfg, i) => {
-                carregarPremio(cfg.file, null, (model, animations) => {
+                loadPrize(cfg.file, null, (model, animations) => {
                     const s = cfg.scale * 2.5;
                     model.scale.setScalar(s);
                     model.position.set(startX + i * spacing, 0.5 - cfg.offsetY * s, 0);

@@ -75,6 +75,14 @@ export class CameraManager {
                 this.viewState = state;
                 this._setActiveButton(state);
                 this.isTransitioning = true;
+                
+                // IMPORTANTE: Resetar os limites durante a transição para evitar conflitos com o lerp
+                this.controls.minAzimuthAngle = -Infinity;
+                this.controls.maxAzimuthAngle = Infinity;
+                this.controls.minPolarAngle = 0;
+                this.controls.maxPolarAngle = Math.PI;
+                this.controls.minDistance = 0;
+                this.controls.maxDistance = Infinity;
             });
         });
     }
@@ -84,14 +92,19 @@ export class CameraManager {
         if (this.isTransitioning) {
             const target = this.views[this.viewState];
             // Interpola suavemente a posição e o alvo da câmara
-            this.camera.position.lerp(target.pos, 0.05);
-            this.controls.target.lerp(target.target, 0.05);
+            this.camera.position.lerp(target.pos, 0.08);
+            this.controls.target.lerp(target.target, 0.08);
+            
             // Termina a transição quando a câmara está suficientemente próxima do destino
-            if (this.camera.position.distanceTo(target.pos) < 0.1 &&
-                this.controls.target.distanceTo(target.target) < 0.1) {
+            if (this.camera.position.distanceTo(target.pos) < 0.2 &&
+                this.controls.target.distanceTo(target.target) < 0.2) {
                 this.isTransitioning = false;
+                // Forçar posição final
+                this.camera.position.copy(target.pos);
+                this.controls.target.copy(target.target);
             }
             this.controls.update();
+            return; // Sai cedo para não aplicar os limites enquanto transita
         }
 
         // Aplica os limites de rotação/zoom consoante a vista ativa
@@ -119,15 +132,8 @@ export class CameraManager {
             this.controls.maxAzimuthAngle = Infinity;
             this.controls.minPolarAngle = 0;
             this.controls.maxPolarAngle = Math.PI;
-        } else {
-            // Vista padrão (fallback)
-            this.controls.enabled = true;
-            this.controls.minAzimuthAngle = -Infinity;
-            this.controls.maxAzimuthAngle = Infinity;
-            this.controls.minPolarAngle = 0;
-            this.controls.maxPolarAngle = Math.PI / 2.1;
-            this.controls.minDistance = 20;
-            this.controls.maxDistance = 250;
         }
+        
+        this.controls.update();
     }
 }

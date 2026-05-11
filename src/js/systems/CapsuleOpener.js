@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// Gere a sequência de abertura de uma cápsula: transporte para o centro, animação da tampa e revelação do prémio.
 export class CapsuleOpener {
     // States: IDLE | TRANSPORT | WAIT | OPEN | DISSOLVE | FREE_VIEW | CLOSING
     constructor(scene, camera, controls, confetti, basePos = new THREE.Vector3(), baseRotY = 0, openSound = null) {
@@ -46,10 +47,11 @@ export class CapsuleOpener {
         this._onSceneTouch = this._onSceneTouch.bind(this);
     }
 
+    // Inicia o processo de abertura de uma cápsula específica.
     openCapsule(capsuleObj, capsulePhys, modelObj, finalScale = 2, clips = [], animationName = null, displayName = "") {
         if (this.state !== "IDLE") return;
 
-        this.capsule = capsuleObj;
+        this.capsule = capsuleObj; // Deve conter { group, hinge }
         this.capsulePhysics = capsulePhys;
         this.model = modelObj;
         this.targetScale = finalScale;
@@ -62,11 +64,11 @@ export class CapsuleOpener {
         }
 
         if (this.capsulePhysics) {
-            this.capsulePhysics.apanhada = true;
+            this.capsulePhysics.apanhada = true; // Impede que a física continue a mover a cápsula
             this.capsulePhysics.vel.set(0, 0, 0);
         }
 
-        this._originWorld.copy(this.capsule.grupo.position);
+        this._originWorld.copy(this.capsule.group.position);
 
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
@@ -74,7 +76,7 @@ export class CapsuleOpener {
         this._targetWorld.y -= 6;
 
         this.capsuleOpacity = 1.0;
-        this.capsule.grupo.traverse(child => {
+        this.capsule.group.traverse(child => {
             if (child.isMesh) {
                 if (child.material.userData.originalOpacity === undefined)
                     child.material.userData.originalOpacity = child.material.opacity;
@@ -83,10 +85,10 @@ export class CapsuleOpener {
             }
         });
 
-        this.capsule.grupo.rotation.set(0, 0, 0);
-        this.capsule.dobradica.rotation.set(0, 0, 0);
-        this.capsule.dobradica.position.set(0, 0, -1.5);
-        this.capsule.grupo.children[0].position.set(0, 0, 0);
+        this.capsule.group.rotation.set(0, 0, 0);
+        this.capsule.hinge.rotation.set(0, 0, 0);
+        this.capsule.hinge.position.set(0, 0, -1.5);
+        this.capsule.group.children[0].position.set(0, 0, 0);
 
         this._transportFrame = 0;
         this.state = "TRANSPORT";
@@ -109,28 +111,28 @@ export class CapsuleOpener {
             const t = Math.min(this._transportFrame / this._TRANSPORT_FRAMES, 1);
             const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-            this.capsule.grupo.position.lerpVectors(this._originWorld, this._targetWorld, ease);
-            this.capsule.grupo.rotation.y += 0.04;
-            this.capsule.grupo.rotation.x = 0;
-            this.capsule.grupo.rotation.z = 0;
+            this.capsule.group.position.lerpVectors(this._originWorld, this._targetWorld, ease);
+            this.capsule.group.rotation.y += 0.04;
+            this.capsule.group.rotation.x = 0;
+            this.capsule.group.rotation.z = 0;
 
             if (t >= 1) {
                 this.state = "WAIT";
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._showHint(isTouch ? "Toque para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
+                this._showHint(isTouch ? "Clica em IR para abrir a cápsula" : "Prima ESPAÇO para abrir a cápsula");
                 isTouch
-                    ? window.addEventListener("touchstart", this._onSceneTouch, { once: true })
+                    ? null 
                     : window.addEventListener("keydown", this._onKeyDown);
             }
         }
 
         if (this.state === "WAIT") {
-            this.capsule.grupo.position.y = this._targetWorld.y + Math.sin(time * 0.003) * 0.15;
-            this.capsule.grupo.position.x = this._targetWorld.x;
-            this.capsule.grupo.position.z = this._targetWorld.z;
-            this.capsule.grupo.rotation.y += 0.01;
-            this.capsule.grupo.rotation.x = 0;
-            this.capsule.grupo.rotation.z = 0;
+            this.capsule.group.position.y = this._targetWorld.y + Math.sin(time * 0.003) * 0.15;
+            this.capsule.group.position.x = this._targetWorld.x;
+            this.capsule.group.position.z = this._targetWorld.z;
+            this.capsule.group.rotation.y += 0.01;
+            this.capsule.group.rotation.x = 0;
+            this.capsule.group.rotation.z = 0;
             if (this.controls) {
                 this.controls.target.lerp(this._targetWorld, 0.08);
                 this.controls.update();
@@ -138,26 +140,26 @@ export class CapsuleOpener {
         }
 
         if (this.state === "OPEN") {
-            const hinge = this.capsule.dobradica;
-            this.capsule.grupo.position.set(this._targetWorld.x, this._targetWorld.y + Math.sin(time * 0.003) * 0.15, this._targetWorld.z);
+            const hinge = this.capsule.hinge;
+            this.capsule.group.position.set(this._targetWorld.x, this._targetWorld.y + Math.sin(time * 0.003) * 0.15, this._targetWorld.z);
 
             if (hinge.rotation.x > -Math.PI / 1.2) {
                 hinge.rotation.x -= 0.04;
             } else {
                 this.state = "DISSOLVE";
                 if (this.displayName) this._showPrizeName(this.displayName);
-                if (this.confetti) this.confetti.disparar(this.capsule.grupo.position);
+                if (this.confetti) this.confetti.fire(this.capsule.group.position);
             }
 
             if (this.controls) {
-                this.controls.target.lerp(this.capsule.grupo.position, 0.1);
+                this.controls.target.lerp(this.capsule.group.position, 0.1);
                 this.controls.update();
             }
         }
 
         if (this.state === "DISSOLVE") {
-            const bottom = this.capsule.grupo.children[0];
-            const top = this.capsule.dobradica;
+            const bottom = this.capsule.group.children[0];
+            const top = this.capsule.hinge;
             bottom.position.y -= 0.1;
             bottom.position.z += 0.05;
             top.position.y -= 0.1;
@@ -178,7 +180,7 @@ export class CapsuleOpener {
             this._lightBottom.intensity = THREE.MathUtils.lerp(this._lightBottom.intensity, 2, 0.1);
 
             this.capsuleOpacity -= 0.01;
-            this.capsule.grupo.traverse(child => {
+            this.capsule.group.traverse(child => {
                 if (child.isMesh) {
                     const base = child.material.userData.originalOpacity ?? 1.0;
                     child.material.transparent = true;
@@ -187,13 +189,13 @@ export class CapsuleOpener {
             });
 
             if (this.capsuleOpacity <= 0) {
-                this.scene.remove(this.capsule.grupo);
+                this.scene.remove(this.capsule.group);
                 if (this.controls) this.controls.enabled = true;
                 this.state = "FREE_VIEW";
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                this._showHint(isTouch ? "Toque para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
+                this._showHint(isTouch ? "Clica em IR para voltar a jogar" : "Prima ESPAÇO para voltar a jogar");
                 isTouch
-                    ? window.addEventListener("touchstart", this._onSceneTouch, { once: true })
+                    ? null 
                     : window.addEventListener("keydown", this._onKeyDown);
             }
         }
@@ -230,6 +232,7 @@ export class CapsuleOpener {
     }
 
     _finalizeClose() {
+        this._hidePrizeName();
         this.capsule = null;
         this.capsulePhysics = null;
         this.state = "IDLE";
@@ -256,14 +259,14 @@ export class CapsuleOpener {
         return clips.find(c => c.name.toLowerCase().includes("idle")) ?? clips[0];
     }
 
-    _onKeyDown(e) { if (e.code === "Space") this._triggerAction(); }
+    _onKeyDown(e) { if (e.code === "Space") this.triggerAction(); }
 
     _onSceneTouch(e) {
         if (e.target.closest('#gui-container') || e.target.closest('.dg')) return;
-        this._triggerAction();
+        this.triggerAction();
     }
 
-    _triggerAction() {
+    triggerAction() {
         if (this.state === "WAIT") {
             this._hideHint();
             window.removeEventListener("keydown", this._onKeyDown);
@@ -276,6 +279,7 @@ export class CapsuleOpener {
 
         } else if (this.state === "FREE_VIEW") {
             this._hideHint();
+            this._hidePrizeName();
             window.removeEventListener("keydown", this._onKeyDown);
             window.removeEventListener("touchstart", this._onSceneTouch);
 

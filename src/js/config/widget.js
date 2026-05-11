@@ -1,12 +1,14 @@
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import Stats from 'three/addons/libs/stats.module.js';
-import { MODO_FACIL, MODO_REALISTA } from "./dificulty.js";
-import { TEMAS } from "./theme.js";
+import { EASY_MODE, NORMAL_MODE, HARD_MODE } from "./dificulty.js";
+import { THEMES } from "./theme.js";
 
-export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds) {
+// Configura o painel de interface (GUI) para ajustar definições como dificuldade, tema e áudio.
+export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds, arcadeBuilding) {
     const config = {
-        difficulty: "realista",
-        theme: "classico",
+        difficulty: "normal",
+        theme: "classic",
+        exterior: "noite",
         showStats: false,
         musicVolume: 0.08,
         prizeVolume: 0.6
@@ -36,16 +38,18 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     window.addEventListener('resize', updateUIScale);
     setTimeout(updateUIScale, 100);
 
-    gui.add(config, 'difficulty', ['fácil', 'realista']).name("Dificuldade").onChange(val => {
-        window.CONFIG_JOGO = val === 'realista' ? MODO_REALISTA : MODO_FACIL;
+    gui.add(config, 'difficulty', ['fácil', 'normal', 'difícil']).name("Dificuldade").onChange(val => {
+        if (val === 'normal') window.CONFIG_JOGO = NORMAL_MODE;
+        else if (val === 'difícil') window.CONFIG_JOGO = HARD_MODE;
+        else window.CONFIG_JOGO = EASY_MODE;
     });
 
-    gui.add(config, 'theme', Object.keys(TEMAS)).name("Tema").onChange(val => {
-        const theme = TEMAS[val];
-        if (clawMachine) clawMachine.atualizarTema(theme);
-        if (confetti) confetti.atualizarCores(theme.PALETA_CORES);
+    gui.add(config, 'theme', Object.keys(THEMES)).name("Tema").onChange(val => {
+        const theme = THEMES[val];
+        if (clawMachine) clawMachine.updateTheme(theme);
+        if (confetti) confetti.updateColors(theme.COLOR_PALETTE);
         if (capsuleOpener) capsuleOpener.updateTheme(val);
-        if (scene) scene.background.set(theme.FUNDO);
+        if (scene) scene.background.set(theme.BACKGROUND);
 
         if (capsules) {
             capsules.forEach(c => {
@@ -53,9 +57,9 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
                     if (child.isMesh && child.geometry.type === 'SphereGeometry') {
                         if (child.geometry.parameters.phiStart === 0 && child.geometry.parameters.phiLength === Math.PI * 2) {
                             if (child.geometry.parameters.thetaStart === 0) {
-                                child.material.color.set(theme.CAPSULA_TOPO);
+                                child.material.color.set(theme.CAPSULE_TOP);
                             } else {
-                                child.material.color.set(theme.PALETA_CORES[Math.floor(Math.random() * theme.PALETA_CORES.length)]);
+                                child.material.color.set(theme.COLOR_PALETTE[Math.floor(Math.random() * theme.COLOR_PALETTE.length)]);
                             }
                         }
                     }
@@ -65,9 +69,13 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
 
         const uiEl = document.getElementById("ui");
         if (uiEl) {
-            const shadow = val === 'cyberpunk' ? '#ff00ff' : (val === 'floresta' ? '#1b4d3e' : '#cc0000');
+            const shadow = val === 'cyberpunk' ? '#ff00ff' : (val === 'forest' ? '#1b4d3e' : '#cc0000');
             uiEl.style.boxShadow = `4px 4px 0px ${shadow}`;
         }
+    });
+
+    gui.add(config, 'exterior', ['dia', 'noite']).name("Exterior").onChange(val => {
+        if (arcadeBuilding) arcadeBuilding.setExteriorTheme(val);
     });
 
     gui.add(config, 'showStats').name("Mostrar FPS").onChange(val => {
