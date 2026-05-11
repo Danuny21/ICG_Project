@@ -23,10 +23,10 @@ export function createCashRegister() {
     displayCanvas.width = 256;
     displayCanvas.height = 80;
     const ctx = displayCanvas.getContext('2d');
-    ctx.fillStyle = '#001108';          // Fundo escuro
+    ctx.fillStyle = '#001108';            // Fundo escuro
     ctx.fillRect(0, 0, 256, 80);
-    ctx.font = 'bold 52px monospace';   // Fonte monoespaçada para aspeto de LCD
-    ctx.fillStyle = '#00ff88';          // Verde brilhante
+    ctx.font = 'bold 52px monospace';       // Fonte monoespaçada para aspeto de LCD
+    ctx.fillStyle = '#00ff88';            // Verde brilhante
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText('0.00', 236, 42);
