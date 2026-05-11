@@ -1,21 +1,25 @@
 import * as THREE from "three";
 
+// Gere os diferentes pontos de vista da câmara: MÁQUINA, COLEÇÃO e MESA.
+// As transições entre vistas são suavizadas com interpolação linear (lerp).
 export class CameraManager {
     constructor(camera, controls, capsuleOpener) {
         this.camera = camera;
         this.controls = controls;
         this.capsuleOpener = capsuleOpener;
 
-        this.viewState = "machine";
-        this.isTransitioning = false;
-        this.views = {};
-        this.viewBtns = {};
+        this.viewState = "machine";      // Vista ativa atual
+        this.isTransitioning = false;    // Indica se uma transição está a decorrer
+        this.views = {};                 // Posições e alvos de cada vista
+        this.viewBtns = {};              // Referências aos botões HTML da câmara
     }
 
+    // Inicializa as posições de câmara com base na localização da máquina
     init(machinePos, machineRotY, baseDistance = 75) {
         const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), machineRotY);
         const camOffset = new THREE.Vector3(0, 30, baseDistance).applyQuaternion(quat);
 
+        // Define a posição e o alvo de cada vista
         this.views = {
             machine: {
                 pos: new THREE.Vector3(machinePos.x + camOffset.x, 30, machinePos.z + camOffset.z),
@@ -31,6 +35,7 @@ export class CameraManager {
             }
         };
 
+        // Obtém as referências dos botões do HTML
         this.viewBtns = {
             machine:    document.getElementById('btn-view-machine'),
             collection: document.getElementById('btn-view-collection'),
@@ -45,24 +50,27 @@ export class CameraManager {
         this._setupEvents();
     }
 
+    // Atualiza o botão ativo e os painéis de ajuda consoante a vista selecionada
     _setActiveButton(state) {
         if (this.viewBtns.machine && this.viewBtns.collection && this.viewBtns.table) {
             Object.values(this.viewBtns).forEach(btn => btn.classList.remove('active'));
             this.viewBtns[state].classList.add('active');
         }
 
-        // Toggle helpers using the existing .hidden CSS class
+        // Mostra/esconde os painéis de instrução de cada vista
         document.getElementById('ui')?.classList.toggle('hidden', state !== 'machine');
         document.getElementById('ui-collection')?.classList.toggle('hidden', state !== 'collection');
         document.getElementById('ui-table')?.classList.toggle('hidden', state !== 'table');
         document.getElementById('mobile-controls')?.classList.toggle('hidden', state !== 'machine');
     }
 
+    // Liga os botões HTML aos eventos de mudança de vista
     _setupEvents() {
         if (!this.viewBtns.machine) return;
         Object.keys(this.viewBtns).forEach(state => {
             this.viewBtns[state].addEventListener('click', () => {
                 if (this.viewState === state && !this.isTransitioning) return;
+                // Se o inspetor de cápsula estiver ativo, inicia o fecho suave
                 if (this.capsuleOpener?.state === "FREE_VIEW") this.capsuleOpener.state = "CLOSING";
                 this.viewState = state;
                 this._setActiveButton(state);
@@ -71,11 +79,14 @@ export class CameraManager {
         });
     }
 
+    // Atualiza a câmara a cada frame: suaviza a transição e aplica os limites da vista ativa
     update() {
         if (this.isTransitioning) {
             const target = this.views[this.viewState];
+            // Interpola suavemente a posição e o alvo da câmara
             this.camera.position.lerp(target.pos, 0.05);
             this.controls.target.lerp(target.target, 0.05);
+            // Termina a transição quando a câmara está suficientemente próxima do destino
             if (this.camera.position.distanceTo(target.pos) < 0.1 &&
                 this.controls.target.distanceTo(target.target) < 0.1) {
                 this.isTransitioning = false;
@@ -83,6 +94,7 @@ export class CameraManager {
             this.controls.update();
         }
 
+        // Aplica os limites de rotação/zoom consoante a vista ativa
         if (this.viewState === "machine") {
             this.controls.enabled = true;
             this.controls.minAzimuthAngle = 0.1;
@@ -92,6 +104,7 @@ export class CameraManager {
             this.controls.minDistance = 20;
             this.controls.maxDistance = 250;
         } else if (this.viewState === "table") {
+            // Vista da mesa: ângulo fixo, como se o jogador estivesse sentado
             this.controls.enabled = true;
             this.controls.minAzimuthAngle = -Math.PI / 1.2;
             this.controls.maxAzimuthAngle = Math.PI / 4;
@@ -100,12 +113,14 @@ export class CameraManager {
             this.controls.minDistance = 1;
             this.controls.maxDistance = 300;
         } else if (this.viewState === "collection") {
+            // Vista da coleção: câmara fixa, sem controlos do utilizador
             this.controls.enabled = false;
             this.controls.minAzimuthAngle = -Infinity;
             this.controls.maxAzimuthAngle = Infinity;
             this.controls.minPolarAngle = 0;
             this.controls.maxPolarAngle = Math.PI;
         } else {
+            // Vista padrão (fallback)
             this.controls.enabled = true;
             this.controls.minAzimuthAngle = -Infinity;
             this.controls.maxAzimuthAngle = Infinity;

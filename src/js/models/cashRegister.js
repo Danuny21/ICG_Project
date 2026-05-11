@@ -16,7 +16,29 @@ export function createCashRegister() {
     const mDGray = mat(0x888898, 0.60, 0.10);
     const mBlack = mat(0x111111, 0.80, 0.10);
     const mChrome = mat(0xbbbbcc, 0.25, 0.85);
-    const mLED = mat(0x001108, 0.20, 0.00); // Ecrã escuro
+    const mLED = mat(0x001108, 0.20, 0.00); // Ecrã escuro (base)
+
+    // Cria uma textura de canvas com o texto "0.00" estilo LCD verde
+    const displayCanvas = document.createElement('canvas');
+    displayCanvas.width = 256;
+    displayCanvas.height = 80;
+    const ctx = displayCanvas.getContext('2d');
+    ctx.fillStyle = '#001108';          // Fundo escuro
+    ctx.fillRect(0, 0, 256, 80);
+    ctx.font = 'bold 52px monospace';   // Fonte monoespaçada para aspeto de LCD
+    ctx.fillStyle = '#00ff88';          // Verde brilhante
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('0.00', 236, 42);
+    const displayTexture = new THREE.CanvasTexture(displayCanvas);
+    const mDisplay = new THREE.MeshStandardMaterial({
+        map: displayTexture,
+        emissiveMap: displayTexture,
+        emissive: new THREE.Color(0x003a18),
+        emissiveIntensity: 0.8,
+        roughness: 0.3,
+        metalness: 0.0
+    });
 
     const mTeal = mat(0x3a9a8a, 0.75, 0.05);
     const mBlue = mat(0x3a6acc, 0.75, 0.05);
@@ -55,7 +77,7 @@ export function createCashRegister() {
     // ── Poste + display traseiro ──────────────────
     box(0.12, 1.00, 0.12, mBlack, -1.20, 2.30, -0.95);   // poste
     box(1.30, 0.45, 0.22, mBlack, -1.20, 2.90, -1.02);   // caixa display topo
-    box(1.10, 0.30, 0.02, mLED, -1.20, 2.90, -1.14);   // ecrã LED topo
+    box(1.10, 0.30, 0.02, mDisplay, -1.20, 2.90, -1.14);   // ecrã LED com "0.00"
 
     // ── Teclado ─────────────────────────────────────────────────
     const keyLayout = [

@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { drawPrize } from "../config/prizes.js";
 import { carregarPremio } from "./PrizeLoader.js";
 
+// Gere a deteção de cliques do rato/toque para interação com cápsulas e prémios da coleção.
+// Usa raycasting para identificar o objeto clicado e delega a ação ao sistema responsável.
 export class InteractionSystem {
     constructor(camera, capsules, capsuleOpener, collectionManager, prizeInspector) {
         this.camera = camera;
@@ -16,18 +18,23 @@ export class InteractionSystem {
         this._onMouseClick = this._onMouseClick.bind(this);
     }
 
+    // Liga o listener de clique ao window
     init() { window.addEventListener("click", this._onMouseClick); }
+
+    // Remove o listener (limpeza)
     dispose() { window.removeEventListener("click", this._onMouseClick); }
 
     _onMouseClick(e) {
+        // Ignora cliques se algum sistema de inspeção estiver ativo
         if (this.capsuleOpener.state !== "IDLE") return;
         if (this.prizeInspector?.state !== "IDLE") return;
 
+        // Converte as coordenadas do ecrã para espaço normalizado (-1 a 1)
         this.clickPoint.x = (e.clientX / window.innerWidth) * 2 - 1;
         this.clickPoint.y = -(e.clientY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(this.clickPoint, this.camera);
 
-        // Check capsules
+        // Verifica se o clique acertou numa cápsula que já saiu e ainda não foi aberta
         const available = this.capsules.filter(c => c.saiu && !c.aberta && !c.apanhada);
         const capsuleHits = this.raycaster.intersectObjects(available.map(c => c.mesh), true);
 
@@ -41,17 +48,19 @@ export class InteractionSystem {
             if (capsule) { this._openCapsule(capsule); return; }
         }
 
-        // Check collection prizes
+        // Verifica se o clique acertou num modelo da coleção
         if (this.collectionManager && this.prizeInspector) {
             const collectionModels = this.collectionManager.getClickableModels();
             const collectionHits = this.raycaster.intersectObjects(collectionModels, true);
 
             if (collectionHits.length > 0) {
+                // Sobe na hierarquia até encontrar o objeto raiz da coleção (prefixo 'collection_')
                 let root = collectionHits[0].object;
                 while (root.parent && !root.name.startsWith('collection_')) root = root.parent;
 
                 if (root.name.startsWith('collection_')) {
                     const prizeId = root.userData.prizeId;
+                    // Só permite inspecionar se o prémio já foi desbloqueado
                     if (this.collectionManager.getPrizeCount(prizeId) > 0)
                         this.prizeInspector.inspect(root, prizeId);
                 }
@@ -59,6 +68,7 @@ export class InteractionSystem {
         }
     }
 
+    // Sorteia um prémio, carrega o modelo 3D e inicia a sequência de abertura da cápsula
     _openCapsule(capsule) {
         capsule.aberta = true;
         const prize = drawPrize();
@@ -78,6 +88,7 @@ export class InteractionSystem {
                 prize.name
             );
 
+            // Desbloqueia o prémio na coleção
             this.collectionManager?.unlockPrize(prize.name);
         });
     }

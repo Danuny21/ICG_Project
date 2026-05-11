@@ -1,3 +1,7 @@
+// Lista de todos os prémios disponíveis na máquina de garras.
+// Cada entrada define o nome, ficheiro 3D, peso de probabilidade,
+// escala inicial (dentro da cápsula), escala final (na inspeção),
+// deslocamento vertical e nome da animação em repouso.
 export const PRIZE_LIST = [
     // ANIMAIS
     { name: "Alpaca",       file: "animals/Alpaca.glb",       weight: 10, scale: 0.25, targetScale: 0.75, offsetY: -0.5, idle: "Idle_2" },
@@ -20,11 +24,13 @@ export const PRIZE_LIST = [
     { name: "Velociraptor",    file: "dinossaurs/Velociraptor.glb",    weight: 10, scale: 0.18, targetScale: 0.75, offsetY: -0.3, idle: "Armature|Velociraptor_Run" },
 
     // MONSTROS
-    { name: "Dragão",   file: "monsters/Dragon.glb",   weight: 10, scale: 0.3,  targetScale: 1.5, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
+    { name: "Dragão",    file: "monsters/Dragon.glb",   weight: 10, scale: 0.3,  targetScale: 1.5, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
     { name: "Esqueleto", file: "monsters/Skeleton.glb", weight: 10, scale: 0.25, targetScale: 1.1, offsetY: -0.3, idle: "SkeletonArmature|Skeleton_Running" },
     { name: "Slime",     file: "monsters/Slime.glb",    weight: 10, scale: 0.5,  targetScale: 1.5, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk" },
 ];
 
+// Sorteia um prémio da lista com base no peso de cada entrada.
+// Prémios com maior peso têm mais probabilidade de ser selecionados.
 export function drawPrize() {
     const total = PRIZE_LIST.reduce((acc, p) => acc + p.weight, 0);
     let roll = Math.random() * total;
@@ -32,5 +38,6 @@ export function drawPrize() {
         if (roll < prize.weight) return prize;
         roll -= prize.weight;
     }
+    // Fallback: devolve o primeiro prémio caso haja algum erro de arredondamento
     return PRIZE_LIST[0];
 }

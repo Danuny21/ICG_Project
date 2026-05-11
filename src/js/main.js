@@ -17,9 +17,11 @@ import { CollectionManager } from "./systems/CollectionManager.js";
 import { CameraManager } from "./systems/CameraManager.js";
 import { PrizeInspector } from "./systems/PrizeInspector.js";
 
+// Configuração global do jogo (dificuldade padrão)
 window.CONFIG_JOGO = MODO_REALISTA;
-const NUM_CAPSULES = 200;
+const NUM_CAPSULES = 200; // Número de cápsulas geradas no interior da máquina
 
+// Posição e rotação da máquina de garras no mundo
 const MACHINE_POS = new THREE.Vector3(-86, 0, 1);
 const MACHINE_ROT = Math.PI / 2;
 
@@ -84,10 +86,12 @@ new MobileControls(keys, () => {
 const moveSpeed = 0.15;
 const moveLimits = { x: 11.4, z: 11.4 };
 
+// Ajusta o FOV consoante orientação do ecrã (retrato em mobile)
 const isPortrait = window.innerHeight > window.innerWidth;
 camera.fov = isPortrait ? 85 : 60;
 camera.updateProjectionMatrix();
 
+// Cria o painel de configurações (lil-GUI) e as estatísticas de FPS
 const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound });
 
 const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
@@ -96,6 +100,7 @@ interactionSystem.init();
 const physicsWorld = new PhysicsWorld();
 let lastFrameTime = performance.now();
 
+// ─── CICLO DE RENDERIZAÇÃO ───────────────────────────────────────────────────
 function animate(time) {
     if (stats) stats.update();
     requestAnimationFrame(animate);
@@ -103,11 +108,13 @@ function animate(time) {
     const delta = (time - lastFrameTime) / 1000;
     lastFrameTime = time;
 
+    // Só atualiza a câmara se o inspetor de prémios não estiver ativo
     if (prizeInspector?.state === "IDLE") cameraManager.update();
 
     collectionManager.update(delta);
     if (prizeInspector) prizeInspector.update(delta);
 
+    // Avança a animação da garra com base no estado atual
     const clawResult = updateClawAnimation(gameState, animTime, clawMachine, keys, moveLimits, moveSpeed);
     gameState = clawResult.newState;
     animTime = clawResult.newTime;
@@ -120,7 +127,7 @@ function animate(time) {
     renderer.render(scene, camera);
 }
 
-// Game flow: Menu → Loading → Game
+// ─── FLUXO DO JOGO: MENU → LOADING → JOGO ───────────────────────────────────
 const startBtn = document.getElementById('start-button');
 const mainMenu = document.getElementById('main-menu');
 const loadingScreen = document.getElementById('loading-screen');

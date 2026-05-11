@@ -3,15 +3,18 @@ import { createFloatingShelf } from '../models/shelf.js';
 import { PRIZE_LIST } from '../config/prizes.js';
 import { carregarPremio } from './PrizeLoader.js';
 
+// Gere a coleção de prémios desbloqueados pelo jogador.
+// Prémios bloqueados aparecem como silhuetas negras; ao desbloquear, restauram os materiais originais.
 export class CollectionManager {
     constructor(scene) {
         this.scene = scene;
-        this.inventory = new Map();
-        this.originalMaterials = new Map();
-        this.mixers = new Map();
+        this.inventory = new Map();           // prizeId → quantidade obtida
+        this.originalMaterials = new Map();   // Materiais originais de cada modelo
+        this.mixers = new Map();              // Animadores de cada modelo
         this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
     }
 
+    // Regista um modelo na coleção; aplica silhueta se ainda não desbloqueado
     registerPrize(prizeId, model, animations = [], idleAnimName = null) {
         if (!this.inventory.has(prizeId)) this.inventory.set(prizeId, 0);
 
@@ -37,11 +40,12 @@ export class CollectionManager {
             const clip = this._findClip(animations, idleAnimName);
             const action = mixer.clipAction(clip);
             action.play();
-            if (isLocked) action.paused = true;
+            if (isLocked) action.paused = true; // Pausa animação até desbloquear
             this.mixers.set(prizeId, mixer);
         }
     }
 
+    // Desbloqueia um prémio: restaura materiais e retoma a animação; incrementa contador
     unlockPrize(prizeId) {
         const count = this.inventory.get(prizeId) || 0;
 
@@ -60,34 +64,30 @@ export class CollectionManager {
                 }
                 this.mixers.get(prizeId)?._actions.forEach(a => a.paused = false);
             } else {
-                console.warn(`[CollectionManager] Model '${prizeId}' not found.`);
+                console.warn(`[CollectionManager] Modelo '${prizeId}' não encontrado.`);
             }
         }
 
         this.inventory.set(prizeId, count + 1);
     }
 
+    // Atualiza todos os animadores a cada frame
     update(deltaTime) {
         this.mixers.forEach(mixer => mixer.update(deltaTime));
     }
 
-    getPrizeCount(prizeId) {
-        return this.inventory.get(prizeId) || 0;
-    }
+    getPrizeCount(prizeId) { return this.inventory.get(prizeId) || 0; }
 
-    getInventoryState() {
-        return Object.fromEntries(this.inventory);
-    }
+    getInventoryState() { return Object.fromEntries(this.inventory); }
 
+    // Cria as prateleiras na sala e popula-as com os modelos de cada categoria
     setupRoom(arcadeBuilding) {
         const categories = [
             { id: "animals",    width: 48 },
             { id: "dinossaurs", width: 30 },
             { id: "monsters",   width: 15 },
         ];
-        const ySpacing = 8;
-        const yBase = 10;
-        const zBase = 43;
+        const ySpacing = 8, yBase = 10, zBase = 43;
 
         categories.forEach((cat, index) => {
             const shelf = createFloatingShelf(cat.width);
@@ -112,6 +112,7 @@ export class CollectionManager {
         });
     }
 
+    // Devolve todos os objetos da coleção clicáveis (prefixo 'collection_')
     getClickableModels() {
         const models = [];
         this.scene.traverse(obj => {
@@ -120,6 +121,7 @@ export class CollectionManager {
         return models;
     }
 
+    // Procura uma animação pelo nome (exato ou aproximado), com fallback para 'idle'
     _findClip(clips, name) {
         if (name) {
             const exact = clips.find(c => c.name === name);
