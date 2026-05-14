@@ -97,10 +97,20 @@ new MobileControls(keys, () => {
 const moveSpeed = 0.15;
 const moveLimits = { x: 11.4, z: 11.4 };
 
-// Adjust FOV based on orientation
-const isPortrait = window.innerHeight > window.innerWidth;
-camera.fov = isPortrait ? 85 : 60;
-camera.updateProjectionMatrix();
+// Function to update camera on resize/orientation change
+function onWindowResize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isPortrait = height > width;
+
+    camera.aspect = width / height;
+    camera.fov = isPortrait ? 85 : 60;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+}
+
+window.addEventListener('resize', onWindowResize);
+onWindowResize(); // Initial call
 
 // Create settings panel (lil-GUI) and FPS stats
 const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding);

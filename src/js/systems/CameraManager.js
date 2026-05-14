@@ -61,7 +61,15 @@ export class CameraManager {
         document.getElementById('ui')?.classList.toggle('hidden', state !== 'machine');
         document.getElementById('ui-collection')?.classList.toggle('hidden', state !== 'collection');
         document.getElementById('ui-table')?.classList.toggle('hidden', state !== 'table');
-        document.getElementById('mobile-controls')?.classList.toggle('hidden', state !== 'machine');
+        
+        // Controlos Mobile: Joystick apenas na máquina, IR na máquina e coleção.
+        // As vistas de câmara (dentro de #mobile-controls) devem estar sempre visíveis.
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) {
+            mobileControls.classList.remove('hidden'); // Sempre visível para mostrar os botões de câmara
+            document.getElementById('joystick-container')?.classList.toggle('hidden', state !== 'machine');
+            document.getElementById('action-button')?.classList.toggle('hidden', state === 'table');
+        }
     }
 
     // Liga os botões HTML aos eventos de mudança de vista
@@ -110,11 +118,14 @@ export class CameraManager {
             this.camera.position.lerp(target.pos, 0.08);
             this.controls.target.lerp(target.target, 0.08);
             
-            if (this.camera.position.distanceTo(target.pos) < 0.2 &&
-                this.controls.target.distanceTo(target.target) < 0.2) {
+            if (this.camera.position.distanceTo(target.pos) < 0.1 &&
+                this.controls.target.distanceTo(target.target) < 0.1) {
                 this.isTransitioning = false;
                 this.camera.position.copy(target.pos);
                 this.controls.target.copy(target.target);
+                
+                // Garantir que os controlos estão habilitados/desabilitados corretamente após a transição
+                this.controls.enabled = (this.viewState === "machine");
             }
             this.controls.update();
             this._clampCamera();
@@ -124,6 +135,8 @@ export class CameraManager {
         // Aplica os limites de rotação/zoom consoante a vista ativa
         if (this.viewState === "machine") {
             this.controls.enabled = true;
+            this.controls.enablePan = true;
+            this.controls.enableZoom = true;
             this.controls.minAzimuthAngle = 0.1;
             this.controls.maxAzimuthAngle = Math.PI * 0.85;
             this.controls.minPolarAngle = 0;
@@ -131,9 +144,35 @@ export class CameraManager {
             this.controls.minDistance = 20;
             this.controls.maxDistance = 250;
         } else if (this.viewState === "table") {
-            // Vista da mesa: Câmara fixa, como na coleção
-            this.controls.enabled = false;
-        } else if (this.viewState === "collection") {
+            // Vista da mesa: Câmara fixa no desktop, mas permite rodar um pouco no mobile
+            const isMobile = window.matchMedia('(pointer: coarse)').matches;
+            if (isMobile) {
+                this.controls.enabled = true;
+                this.controls.enablePan = false;
+                this.controls.enableZoom = false;
+
+                // Calcular a distância e ângulos atuais para fixar a câmara
+                const dist = this.views.table.pos.distanceTo(this.views.table.target);
+                const relPos = new THREE.Vector3().subVectors(this.views.table.pos, this.views.table.target);
+                const baseAzimuth = Math.atan2(relPos.x, relPos.z);
+                const basePolar = Math.acos(relPos.y / dist);
+
+                // Fixar a distância para a câmara não se mover no espaço (apenas orbitar)
+                this.controls.minDistance = dist;
+                this.controls.maxDistance = dist;
+
+                // Limites estreitos para focar apenas na mesa (esquerda/direita)
+                this.controls.minAzimuthAngle = baseAzimuth - 0.5;
+                this.controls.maxAzimuthAngle = baseAzimuth + 0.5;
+
+                // Fixar o ângulo polar para a câmara não subir nem descer
+                this.controls.minPolarAngle = basePolar;
+                this.controls.maxPolarAngle = basePolar;
+            } else {
+                this.controls.enabled = false;
+            }
+        }
+ else if (this.viewState === "collection") {
             // Vista da coleção: câmara fixa, sem controlos do utilizador
             this.controls.enabled = false;
         }
