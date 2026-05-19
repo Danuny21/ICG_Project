@@ -53,10 +53,10 @@ export function createCounter() {
     return {
         group,
         updateTheme: (theme) => {
-            matBalcao.color.setHex(theme.STRUCTURE);
+            matBalcao.color.setHex(theme.COUNTER || theme.STRUCTURE);
             matMetal.color.setHex(theme.METAL);
-            matNeonAzul.color.setHex(theme.FRAME);
-            matNeonAzul.emissive.setHex(theme.FRAME);
+            matNeonAzul.color.setHex(theme.NEON || theme.FRAME);
+            matNeonAzul.emissive.setHex(theme.NEON || theme.FRAME);
         }
     };
 }

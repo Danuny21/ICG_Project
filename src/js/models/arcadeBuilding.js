@@ -408,7 +408,6 @@ export function createArcadeBuilding(scene) {
     fanObj.group.scale.setScalar(SCALE_FACTOR * 1.5);
     buildingGroup.add(fanObj.group);
 
-    // A ventoinha e os tokens da mesa redonda já foram adicionados antes
 
     return {
         group: buildingGroup,
@@ -421,8 +420,8 @@ export function createArcadeBuilding(scene) {
             arcadeMachines.forEach(m => m.updateTheme(theme));
             counterObj.updateTheme(theme);
             chairs.forEach(c => c.updateTheme(theme));
-            blueNeonMat.color.setHex(theme.FRAME);
-            blueNeonMat.emissive.setHex(theme.FRAME);
+            blueNeonMat.color.setHex(theme.NEON || theme.FRAME);
+            blueNeonMat.emissive.setHex(theme.NEON || theme.FRAME);
         },
         // Função para alternar entre dia e noite
         setExteriorTheme: (theme) => {

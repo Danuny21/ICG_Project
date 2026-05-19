@@ -59,8 +59,8 @@ export function createChair() {
     return {
         group: chairGroup,
         updateTheme: (theme) => {
-            plasticMaterial.color.setHex(theme.FRAME);
-            metalMaterial.color.setHex(theme.METAL);
+            plasticMaterial.color.setHex(theme.CHAIR || theme.FRAME);
+            metalMaterial.color.setHex(theme.CHAIR_LEGS || theme.METAL);
         }
     };
 }

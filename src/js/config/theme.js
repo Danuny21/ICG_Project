@@ -24,9 +24,13 @@ export const THEMES = {
         COLOR_PALETTE: [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffaa00, 0xff007f],
         BACKGROUND: 0x87ceeb,
         TABLE: 0xcc2222,
-        TABLE_LEGS: 0x888888
+        TABLE_LEGS: 0x888888,
+        CHAIR: 0xcc2222,
+        CHAIR_LEGS: 0x888888,
+        COUNTER: 0x151525,
+        NEON: 0x00ffff
     },
-    escuro: {
+    dark: {
         name: "Escuro",
         STRUCTURE: 0x11052C,
         ARCADE_COLORS: [0x050A1F, 0x3B0059, 0x001B3D, 0x2B2B36], // Pretos, Roxos escuros, Azuis escuros, Cinzentos
@@ -48,7 +52,11 @@ export const THEMES = {
         COLOR_PALETTE: [0xFF0055, 0x00E5FF, 0xCCFF00, 0x7000FF, 0xFF00FF, 0x00FF9D, 0xFF5500],
         BACKGROUND: 0x87ceeb,
         TABLE: 0x001B3D,
-        TABLE_LEGS: 0x888888
+        TABLE_LEGS: 0x888888,
+        CHAIR: 0x001B3D,
+        CHAIR_LEGS: 0x888888,
+        COUNTER: 0x11052C,
+        NEON: 0x00E5FF
     }
 };
 

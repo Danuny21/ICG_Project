@@ -46,7 +46,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         else window.CONFIG_JOGO = EASY_MODE;
     });
 
-    gui.add(config, 'theme', Object.keys(THEMES)).name("Tema").onChange(val => {
+    gui.add(config, 'theme', { 'clássico': 'classic', 'escuro': 'dark' }).name("Tema").onChange(val => {
         const theme = THEMES[val];
         if (clawMachine) clawMachine.updateTheme(theme);
         if (confetti) confetti.updateColors(theme.COLOR_PALETTE);
@@ -70,7 +70,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
             });
         }
 
-        const shadow = val === 'escuro' ? '#ff00ff' : '#cc0000';
+        const shadow = val === 'dark' ? '#ff00ff' : '#cc0000';
 
         const uiElements = document.querySelectorAll('.game-ui, .game-ui-hint');
         uiElements.forEach(el => {
@@ -79,7 +79,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
 
         const helpItems = document.querySelectorAll('.help-item');
         if (helpItems) {
-            const color = val === 'escuro' ? '#00E5FF' : '#ffcc00';
+            const color = val === 'dark' ? '#00E5FF' : '#ffcc00';
             helpItems.forEach(item => {
                 item.style.boxShadow = `4px 4px 0px ${shadow}`;
                 const title = item.querySelector('.help-title');
