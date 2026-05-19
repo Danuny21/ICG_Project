@@ -65,8 +65,14 @@ audioLoader.load('./src/sound/getting-prize.mp3', buffer => {
     capsuleSound.setVolume(0.6);
 });
 
+const physicsWorld = new PhysicsWorld();
+
 const confetti = createConfetti(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetti, MACHINE_POS, MACHINE_ROT, capsuleSound);
+
+// Liga as referências de limpeza: ao fechar uma cápsula, o CapsuleOpener
+// remove o corpo Rapier, faz dispose do mesh e retira do array de cápsulas.
+capsuleOpener.setCleanupRefs(physicsWorld, capsules);
 
 const cameraManager = new CameraManager(camera, controls, capsuleOpener);
 cameraManager.init(MACHINE_POS, MACHINE_ROT, 75);
@@ -117,12 +123,11 @@ window.addEventListener('resize', onWindowResize);
 onWindowResize(); // Initial call
 
 // Create settings panel (lil-GUI) and FPS stats
-const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding, isNightInit);
+const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding, isNightInit, physicsWorld, MACHINE_POS, MACHINE_ROT);
 
 const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
 interactionSystem.init();
 
-const physicsWorld = new PhysicsWorld();
 let lastFrameTime = performance.now();
 
 // ─── RENDERING LOOP ──────────────────────────────────────────────────────────

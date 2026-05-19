@@ -238,7 +238,7 @@ export class PhysicsWorld {
     _syncMeshes(capsules) {
         const invQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -this.baseRotY);
         for (const c of capsules) {
-            if (c.apanhada) continue; // Cápsulas agarradas são controladas pelo CapsuleOpener
+            if (c.apanhada || c.aberta) continue; // Cápsulas agarradas ou abertas ignoradas
             const body = this._capsuleBodies.get(c);
             if (!body) continue;
             const t = body.translation(), r = body.rotation();
@@ -255,6 +255,15 @@ export class PhysicsWorld {
                 body.setLinvel({ x: v.x * 0.97, y: v.y, z: v.z * 0.97 }, true);
                 body.setAngvel({ x: av.x * 0.97, y: av.y * 0.97, z: av.z * 0.97 }, true);
             }
+        }
+    }
+
+    // Remove o corpo Rapier de uma cápsula aberta, libertando memória do motor de física
+    removeCapsuleBody(capsule) {
+        const body = this._capsuleBodies.get(capsule);
+        if (body && this.world) {
+            this.world.removeRigidBody(body);
+            this._capsuleBodies.delete(capsule);
         }
     }
 }

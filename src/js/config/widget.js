@@ -3,9 +3,10 @@ import Stats from 'three/addons/libs/stats.module.js';
 import { EASY_MODE, NORMAL_MODE, HARD_MODE } from "./dificulty.js";
 import { THEMES } from "./theme.js";
 import { updateLightsForTimeOfDay } from "./lighting.js";
+import { CapsuleSpawner } from "../systems/CapsuleSpawner.js";
 
 // Configura o painel de interface (GUI) para ajustar definições como dificuldade, tema e áudio.
-export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds, arcadeBuilding, isNightInit = false) {
+export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds, arcadeBuilding, isNightInit = false, physicsWorld = null, machinePos = null, machineRotY = 0) {
     const config = {
         difficulty: "normal",
         theme: "classic",
@@ -104,6 +105,46 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     audioFolder.add(config, 'prizeVolume', 0, 1).name("Som de Prémio").onChange(val => {
         if (sounds?.capsuleSound) sounds.capsuleSound.setVolume(val);
     });
+
+    const actionsFolder = gui.addFolder("Ações");
+    actionsFolder.add({
+        resetCapsules: () => {
+            if (!scene || !capsules) return;
+
+            // 1. Remove todas as cápsulas actuais da cena, da física e liberta memória
+            while (capsules.length > 0) {
+                const c = capsules.pop();
+                // Remove da cena Three.js
+                scene.remove(c.mesh);
+                // Liberta geometria e materiais da GPU
+                c.mesh.traverse(child => {
+                    if (child.isMesh) {
+                        child.geometry?.dispose();
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material?.dispose();
+                    }
+                });
+                // Remove o corpo Rapier
+                if (physicsWorld) physicsWorld.removeCapsuleBody(c);
+            }
+
+            // 2. Gera novas cápsulas com os mesmos parâmetros originais
+            if (machinePos) {
+                const novasCapsulas = CapsuleSpawner.spawnCapsules(scene, 200, machinePos, machineRotY);
+                novasCapsulas.forEach(c => capsules.push(c));
+
+                // 3. Regista os novos corpos Rapier no mundo físico existente
+                if (physicsWorld && physicsWorld.world) {
+                    physicsWorld._createCapsuleBodies(capsules);
+                }
+
+                // 4. Actualiza as referências de limpeza do CapsuleOpener
+                if (capsuleOpener) capsuleOpener.setCleanupRefs(physicsWorld, capsules);
+
+                console.log(`[Repor Cápsulas] ${capsules.length} novas cápsulas geradas.`);
+            }
+        }
+    }, 'resetCapsules').name("Repor Cápsulas");
 
     return { gui, stats };
 }
