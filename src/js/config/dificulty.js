@@ -6,12 +6,12 @@ export const EASY_MODE = {
 
 export const NORMAL_MODE = {
     name: "normal",
-    gripRotation: -Math.PI / 5,
+    gripRotation: -Math.PI / 6,
     shake: 0.06
 };
 
 export const HARD_MODE = {
     name: "difícil",
-    gripRotation: -Math.PI / 2,
-    shake: 0.12
+    gripRotation: -Math.PI / 5,
+    shake: 0.08
 };

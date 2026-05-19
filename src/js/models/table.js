@@ -42,8 +42,8 @@ export function createRoundTable() {
     return {
         group: tableGroup,
         updateTheme: (theme) => {
-            plasticMaterial.color.setHex(theme.FRAME);
-            metalMaterial.color.setHex(theme.METAL);
+            plasticMaterial.color.setHex(theme.TABLE || theme.FRAME);
+            metalMaterial.color.setHex(theme.TABLE_LEGS || theme.METAL);
         }
     };
 }
