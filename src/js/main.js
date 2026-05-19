@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { setupScene } from "./config/scene.js";
-import { setupLighting } from "./config/lighting.js";
+import { setupLighting, updateLightsForTimeOfDay } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
 import { createArcadeBuilding } from "./models/arcadeBuilding.js";
 import { createClawMachine } from "./models/clawMachine.js";
@@ -33,6 +33,11 @@ setupLighting(scene);
 const arcadeBuilding = createArcadeBuilding(scene);
 arcadeBuilding.group.position.set(0, 0, 55);
 arcadeBuilding.group.scale.set(2, 2, 2);
+
+// --- Inicialização e Controlo do Ciclo Dia/Noite ---
+const currentHour = new Date().getHours();
+const isNightInit = (currentHour < 7 || currentHour >= 19); // Noite das 19h às 7h
+updateLightsForTimeOfDay(scene, isNightInit);
 
 const collectionManager = new CollectionManager(scene);
 collectionManager.setupRoom(arcadeBuilding);
@@ -113,7 +118,7 @@ window.addEventListener('resize', onWindowResize);
 onWindowResize(); // Initial call
 
 // Create settings panel (lil-GUI) and FPS stats
-const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding);
+const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding, isNightInit);
 
 const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
 interactionSystem.init();
@@ -134,6 +139,10 @@ function animate(time) {
 
     collectionManager.update(delta);
     if (prizeInspector) prizeInspector.update(delta);
+
+    if (arcadeBuilding.fan) {
+        arcadeBuilding.fan.rotation.y += 2.0 * delta;
+    }
 
     // Update claw animation based on state
     const clawResult = updateClawAnimation(gameState, animTime, clawMachine, keys, moveLimits, moveSpeed);

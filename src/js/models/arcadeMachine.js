@@ -1,26 +1,15 @@
 import * as THREE from 'three';
 import { loadTextureSet } from "../systems/TextureLoader.js";
 
-export function createArcadeMachine(mainColor = 0x3366ff) {
+export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     const arcadeGroup = new THREE.Group();
     arcadeGroup.name = "ArcadeMachine";
-
-    // --- Carregamento de Texturas de Metal ---
-    const tm = loadTextureSet(
-        "./src/js/textures/metal/PaintedMetal004_1K-JPG",
-        ["Color", "NormalGL", "Roughness", "Metalness"],
-        { x: 1, y: 1 }
-    );
 
     // Materiais
     const bodyMat = new THREE.MeshStandardMaterial({ 
         color: mainColor, 
-        map: tm.color,
-        normalMap: tm.normal,
-        roughnessMap: tm.roughness,
-        metalnessMap: tm.metalness,
-        roughness: 0.5,
-        metalness: 0.8
+        roughness: 0.4,
+        metalness: 0.3
     });
 
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
@@ -121,5 +110,14 @@ export function createArcadeMachine(mainColor = 0x3366ff) {
     marquee.rotation.x = 0;
     arcadeGroup.add(marquee);
 
-    return arcadeGroup;
+    return {
+        group: arcadeGroup,
+        updateTheme: (theme) => {
+            if (theme.ARCADE_COLORS && theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length] !== undefined) {
+                bodyMat.color.setHex(theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length]);
+            } else {
+                bodyMat.color.setHex(theme.STRUCTURE);
+            }
+        }
+    };
 }

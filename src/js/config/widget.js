@@ -2,13 +2,14 @@ import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import Stats from 'three/addons/libs/stats.module.js';
 import { EASY_MODE, NORMAL_MODE, HARD_MODE } from "./dificulty.js";
 import { THEMES } from "./theme.js";
+import { updateLightsForTimeOfDay } from "./lighting.js";
 
 // Configura o painel de interface (GUI) para ajustar definições como dificuldade, tema e áudio.
-export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds, arcadeBuilding) {
+export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, sounds, arcadeBuilding, isNightInit = false) {
     const config = {
         difficulty: "normal",
         theme: "classic",
-        exterior: "noite",
+        timeOfDay: isNightInit ? "noite" : "dia",
         showStats: false,
         musicVolume: 0.08,
         prizeVolume: 0.6
@@ -50,6 +51,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         if (confetti) confetti.updateColors(theme.COLOR_PALETTE);
         if (capsuleOpener) capsuleOpener.updateTheme(val);
         if (scene) scene.background.set(theme.BACKGROUND);
+        if (arcadeBuilding && arcadeBuilding.updateTheme) arcadeBuilding.updateTheme(theme);
 
         if (capsules) {
             capsules.forEach(c => {
@@ -74,8 +76,8 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         }
     });
 
-    gui.add(config, 'exterior', ['dia', 'noite']).name("Exterior").onChange(val => {
-        if (arcadeBuilding) arcadeBuilding.setExteriorTheme(val);
+    gui.add(config, 'timeOfDay', ['dia', 'noite']).name("Luz (Dia/Noite)").onChange(val => {
+        updateLightsForTimeOfDay(scene, val === 'noite');
     });
 
     gui.add(config, 'showStats').name("Mostrar FPS").onChange(val => {

@@ -7,22 +7,12 @@ export function createClawMachine(scene) {
     const group = new THREE.Group();
     scene.add(group);
 
-    // --- Carregamento de Texturas da Máquina ---
-    const textureRepeat = { x: 2, y: 2 };
-    const tm = loadTextureSet(
-        "./src/js/textures/metal/PaintedMetal004_1K-JPG",
-        ["Color", "NormalGL", "Roughness", "Metalness"],
-        textureRepeat
-    );
-
     // Materiais
     const materials = {
-        structure: new THREE.MeshPhongMaterial({
+        structure: new THREE.MeshStandardMaterial({
             color: THEME.STRUCTURE,
-            map: tm.color,
-            normalMap: tm.normal,
-            specularMap: tm.roughness,
-            shininess: 100
+            roughness: 0.4,
+            metalness: 0.3
         }),
         glass: new THREE.MeshPhongMaterial({ color: THEME.GLASS, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide }),
         floor: new THREE.MeshPhongMaterial({

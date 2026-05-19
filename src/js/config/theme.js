@@ -5,6 +5,7 @@ export const THEMES = {
     classic: {
         name: "Clássico",
         STRUCTURE: 0xcc0000,
+        ARCADE_COLORS: [0xff3333, 0x33ff33, 0x3333ff, 0xffff33],
         FLOOR: 0xeeeeee,
         FRAME: 0xffa500,
         GLASS: 0x87ceeb,
@@ -26,6 +27,7 @@ export const THEMES = {
     cyberpunk: {
         name: "Cyberpunk",
         STRUCTURE: 0x11052C,
+        ARCADE_COLORS: [0x050A1F, 0x3B0059, 0x001B3D, 0x2B2B36], // Pretos, Roxos escuros, Azuis escuros, Cinzentos
         FLOOR: 0x050A1F,
         FRAME: 0x00E5FF,
         GLASS: 0x00A2E8,
@@ -47,6 +49,7 @@ export const THEMES = {
     forest: {
         name: "Floresta",
         STRUCTURE: 0x4A3018,
+        ARCADE_COLORS: [0x274E13, 0x3E2723, 0xFFB7C5, 0x8C705F], // Verde árvore, Castanho, Folhas Cherry Blossom, Castanho cinza
         FLOOR: 0x384D23,
         FRAME: 0xC0A062,
         GLASS: 0xE8F5E9,

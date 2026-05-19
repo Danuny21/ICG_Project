@@ -11,6 +11,9 @@ import { createTablePlant } from './plantTable.js';
 import { createBalloons } from './ballon.js';
 import { createFrame } from './frame.js';
 import { createCounter } from './counter.js';
+import { createLamp } from './lamp.js';
+import { createCeilingFan } from './ceilingFan.js';
+import { createTokens } from './tokens.js';
 
 // Cria a estrutura do edifício do arcade, incluindo paredes, chão, mobiliário e iluminação.
 export function createArcadeBuilding(scene) {
@@ -98,9 +101,10 @@ export function createArcadeBuilding(scene) {
     buildingGroup.add(backGlass);
 
     // --- Exterior (rua fora da janela) ---
+    const exteriorMat = new THREE.MeshBasicMaterial({ color: 0x000088, side: THREE.DoubleSide });
     const exterior = new THREE.Mesh(
         new THREE.PlaneGeometry(windowWidth * 3, windowHeight * 3),
-        new THREE.MeshBasicMaterial({ color: 0x000088, side: THREE.DoubleSide })
+        exteriorMat
     );
     exterior.position.set(0, 25, backWallZ - 20);
     buildingGroup.add(exterior);
@@ -114,6 +118,11 @@ export function createArcadeBuilding(scene) {
     windowSpot.target.position.set(0, 10, 0);
     buildingGroup.add(windowSpot);
     buildingGroup.add(windowSpot.target);
+
+    // Guardar na scene para controlo de dia/noite
+    scene.userData.exteriorMat = exteriorMat;
+    scene.userData.windowLight = windowLight;
+    scene.userData.windowSpot = windowSpot;
 
     // --- Parede Esquerda ---
     const sideLength = DEPTH + THICKNESS * 2;
@@ -179,10 +188,10 @@ export function createArcadeBuilding(scene) {
     buildingGroup.add(blindGroup);
 
     // --- Balcão ---
-    const counterGroup = createCounter();
-    counterGroup.position.set(-(WIDTH / 2) + 15, 0, DEPTH / 2 - 28);
-    counterGroup.scale.setScalar(0.8);
-    buildingGroup.add(counterGroup);
+    const counterObj = createCounter();
+    counterObj.group.position.set(-(WIDTH / 2) + 15, 0, DEPTH / 2 - 28);
+    counterObj.group.scale.setScalar(0.8);
+    buildingGroup.add(counterObj.group);
 
     // --- Teto ---
     const roof = new THREE.Mesh(new THREE.BoxGeometry(WIDTH + THICKNESS * 2, THICKNESS, DEPTH + THICKNESS * 2), wallMat);
@@ -200,26 +209,31 @@ export function createArcadeBuilding(scene) {
     addNeon(0.5, 0.5, DEPTH, WIDTH / 2, 0.25, 0);
 
     // --- Máquinas de Arcade ---
+    const arcadeMachines = [];
     [0xff3333, 0x33ff33, 0x3333ff, 0xffff33].forEach((color, i) => {
-        const m = createArcadeMachine(color);
-        m.scale.setScalar(SCALE_FACTOR);
-        m.position.set(50, 0, -55 + i * 12);
-        m.rotation.y = -Math.PI / 2;
-        buildingGroup.add(m);
+        const m = createArcadeMachine(color, i);
+        m.group.scale.setScalar(SCALE_FACTOR);
+        m.group.position.set(50, 0, -55 + i * 12);
+        m.group.rotation.y = -Math.PI / 2;
+        buildingGroup.add(m.group);
+        arcadeMachines.push(m);
     });
 
     // --- Mesa de Bilhar ---
     const poolTable = createBilliardTable();
-    const poolScale = SCALE_FACTOR * 1.5 * 0.80;
+    const poolScale = SCALE_FACTOR * 1.0; // Diminuído de 1.2 (1.5*0.8) para 1.0
     poolTable.scale.setScalar(poolScale);
-    poolTable.position.set(0, 0, -55);
-    poolTable.rotation.y = Math.PI / 2;
+    poolTable.position.set(0, 0, -45);
+    poolTable.rotation.y = 0;
     buildingGroup.add(poolTable);
 
     // --- Mesas Redondas com cadeiras ---
     const tableScale = SCALE_FACTOR * 0.90;
+    const roundTables = [];
     [{ x: 32, z: 15 }, { x: 32, z: 45 }].forEach((pos, index) => {
-        const table = createRoundTable();
+        const tableObj = createRoundTable();
+        const table = tableObj.group;
+        roundTables.push(tableObj);
         table.scale.setScalar(tableScale);
         table.position.set(pos.x, 0, pos.z);
 
@@ -239,6 +253,11 @@ export function createArcadeBuilding(scene) {
             const juice = createJuiceGlass();
             juice.position.set(1.0, 3.1, -0.5);
             table.add(juice);
+            
+            const tableTokens = createTokens();
+            tableTokens.position.set(-1.0, 3.1, 0.5);
+            tableTokens.scale.setScalar(0.4);
+            table.add(tableTokens);
         }
         buildingGroup.add(table);
 
@@ -255,7 +274,7 @@ export function createArcadeBuilding(scene) {
     });
 
     // --- Plantas de chão ---
-    [{ x: -45, z: 65 }, { x: 45, z: -65 }].forEach(pos => {
+    [{ x: -45, z: 65 }, { x: 45, z: -65 }, { x: -45, z: -65 }].forEach(pos => {
         const p = createFloorPlant();
         p.scale.setScalar(SCALE_FACTOR);
         p.position.set(pos.x, 0, pos.z);
@@ -285,11 +304,68 @@ export function createArcadeBuilding(scene) {
     addFrame(27, 20, backWallZ + 1.1, 0, 4, 4, 5); // Pinball
     addFrame(-(WIDTH / 2) + 1.1, 25, 0, Math.PI / 2, 5, 8, 10); // Street Fighter
 
+    // --- Novos Elementos Decorativos ---
+
+    // 1. Candeeiro de Bilhar (com lâmpada)
+    const poolLamp = createLamp(true, 150);
+    poolLamp.position.set(0, 35, -45); // Exatamente por cima da mesa de bilhar
+    poolLamp.scale.setScalar(SCALE_FACTOR * 1.0); // Ajustado para condizer com a mesa mais pequena
+    buildingGroup.add(poolLamp);
+    scene.userData.poolLamp = poolLamp;
+
+    // 1.2. Luz focada nas Coleções (apenas a luz, sem o modelo)
+    const shelfSpot = new THREE.SpotLight(0xffffff, 150);
+    shelfSpot.position.set(-42, 45, 43); // No cimo
+    shelfSpot.angle = Math.PI / 3;
+    shelfSpot.penumbra = 0.6;
+    shelfSpot.decay = 1.5;
+    shelfSpot.distance = 55;
+    shelfSpot.castShadow = true;
+    const shelfTarget = new THREE.Object3D();
+    shelfTarget.position.set(-48.5, 20, 43); // Aponta para o meio das estantes
+    buildingGroup.add(shelfTarget);
+    shelfSpot.target = shelfTarget;
+    buildingGroup.add(shelfSpot);
+    scene.userData.shelfSpot = shelfSpot;
+
+    // 1.3. Luzes focadas nas Mesas Redondas (apenas a luz, sem o modelo)
+    scene.userData.tableSpots = [];
+    const tablePositions = [{ x: 32, z: 15 }, { x: 32, z: 45 }];
+    tablePositions.forEach(pos => {
+        const tableSpot = new THREE.SpotLight(0xffffff, 100);
+        tableSpot.position.set(pos.x, 45, pos.z);
+        tableSpot.angle = Math.PI / 4;
+        tableSpot.penumbra = 0.5;
+        tableSpot.decay = 1.5;
+        tableSpot.distance = 50;
+        tableSpot.castShadow = true;
+        const tableTarget = new THREE.Object3D();
+        tableTarget.position.set(pos.x, 0, pos.z);
+        buildingGroup.add(tableTarget);
+        tableSpot.target = tableTarget;
+        buildingGroup.add(tableSpot);
+        scene.userData.tableSpots.push(tableSpot);
+    });
+
+    // 4. Ventoinha de Teto
+    const fanObj = createCeilingFan();
+    fanObj.group.position.set(0, HEIGHT - 13.5, 0); // Rebaixado para ser visível na câmara
+    fanObj.group.scale.setScalar(SCALE_FACTOR * 1.5);
+    buildingGroup.add(fanObj.group);
+
+    // A ventoinha e os tokens da mesa redonda já foram adicionados antes
+
     return {
         group: buildingGroup,
         door: doorGroup,
-        counter: counterGroup,
+        counter: counterObj.group,
         blinds: blindGroup,
+        fan: fanObj.blades, // Exportamos as pás para animar no main.js
+        updateTheme: (theme) => {
+            roundTables.forEach(t => t.updateTheme(theme));
+            arcadeMachines.forEach(m => m.updateTheme(theme));
+            counterObj.updateTheme(theme);
+        },
         // Função para alternar entre dia e noite
         setExteriorTheme: (theme) => {
             if (theme === 'dia') {

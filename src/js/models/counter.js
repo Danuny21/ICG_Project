@@ -4,15 +4,15 @@ import { createTablePlant } from './plantTable.js';
 import { createPizza } from './pizza.js';
 import { createJuiceGlass } from './juice.js';
 
-const matNeonAzul = new THREE.MeshPhongMaterial({
-    color: 0x00ffff,
-    emissive: 0x00ffff,
-    emissiveIntensity: 2,
-});
-const matBalcao = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
-const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
-
 export function createCounter() {
+    const matNeonAzul = new THREE.MeshPhongMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 2,
+    });
+    const matBalcao = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
+    const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
+
     const group = new THREE.Group();
 
     const altura = 8 * 1.05;
@@ -50,5 +50,13 @@ export function createCounter() {
     juice.position.set(1.5, 9.4, 3);
     group.add(juice);
 
-    return group;
+    return {
+        group,
+        updateTheme: (theme) => {
+            matBalcao.color.setHex(theme.STRUCTURE);
+            matMetal.color.setHex(theme.METAL);
+            matNeonAzul.color.setHex(theme.FRAME);
+            matNeonAzul.emissive.setHex(theme.FRAME);
+        }
+    };
 }

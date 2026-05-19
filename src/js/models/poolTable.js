@@ -99,18 +99,22 @@ export function createBilliardTable() {
     tableGroup.add(railB);
 
     // --- Buracos (Pockets) ---
-    const pocketGeom = new THREE.CircleGeometry(0.3, 16); // Maior para ser visível
+    const pocketRadius = 0.12; // Maior que o raio da bola (0.08)
+    const pocketGeom = new THREE.CircleGeometry(pocketRadius, 32); 
     pocketGeom.rotateX(-Math.PI / 2);
 
     const pocketY = height - 0.19; // Um pouco mais acima do feltro
-    // Posicionar no limite interno da madeira (railWidth = 0.4, width/2 = 2.25 => limite feltro = 1.85)
-    const pX = (width / 2) - railWidth;
-    const pZ = (length / 2) - railWidth;
+    const pX_edge = (width / 2) - railWidth;
+    const pZ_edge = (length / 2) - railWidth;
+    
+    // Mover os buracos mais para o centro para ficarem totalmente redondos e visíveis
+    const pX = pX_edge - pocketRadius + 0.02;
+    const pZ = pZ_edge - pocketRadius + 0.02;
 
     const pocketCoords = [
-        [pX, pZ], [-pX, pZ],          // Cantos
-        [pX + 0.1, 0], [-pX - 0.1, 0], // Meio (ligeiramente mais para a madeira)
-        [pX, -pZ], [-pX, -pZ]         // Cantos
+        [pX, pZ], [-pX, pZ],          // Cantos topo
+        [pX, 0], [-pX, 0],            // Meio
+        [pX, -pZ], [-pX, -pZ]         // Cantos baixo
     ];
 
     pocketCoords.forEach(coord => {
@@ -170,6 +174,50 @@ export function createBilliardTable() {
     cueStick.rotation.set(Math.PI / 2, 0, 0.05);
     cueStick.castShadow = true;
     tableGroup.add(cueStick);
+
+    // --- Segundo Taco ---
+    const cueStick2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.035, 5.0),
+        cueStickMat
+    );
+    cueStick2.position.set(width / 2 - 0.7, ballY, -0.5);
+    cueStick2.rotation.set(Math.PI / 2, 0, -0.05);
+    cueStick2.castShadow = true;
+    tableGroup.add(cueStick2);
+
+    // --- Giz (Chalk) ---
+    const chalkMat = new THREE.MeshStandardMaterial({ color: 0x0044ff, roughness: 0.9 });
+    const chalk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), chalkMat);
+    chalk.position.set(width / 2 - railWidth / 2, height + 0.05, 0); 
+    chalk.rotation.y = Math.PI / 6;
+    chalk.castShadow = true;
+    tableGroup.add(chalk);
+
+    // --- Triângulo (Rack) ---
+    const triangleGroup = new THREE.Group();
+    const triWoodMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.8 });
+    
+    const triLength = 1.0;
+    const triThick = 0.03;
+    const triHeight = 0.05;
+
+    const baseBar = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
+    baseBar.position.set(0, 0, -0.4);
+    triangleGroup.add(baseBar);
+
+    const sideBar1 = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
+    sideBar1.position.set(0.25, 0, 0.05);
+    sideBar1.rotation.y = -Math.PI / 3;
+    triangleGroup.add(sideBar1);
+
+    const sideBar2 = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
+    sideBar2.position.set(-0.25, 0, 0.05);
+    sideBar2.rotation.y = Math.PI / 3;
+    triangleGroup.add(sideBar2);
+
+    triangleGroup.position.set(-1.0, ballY - 0.05, 2.0);
+    triangleGroup.rotation.y = Math.PI / 4;
+    tableGroup.add(triangleGroup);
 
     return tableGroup;
 }

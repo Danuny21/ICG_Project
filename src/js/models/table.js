@@ -39,5 +39,11 @@ export function createRoundTable() {
     base.position.y = 0.05;
     tableGroup.add(base);
 
-    return tableGroup;
+    return {
+        group: tableGroup,
+        updateTheme: (theme) => {
+            plasticMaterial.color.setHex(theme.FRAME);
+            metalMaterial.color.setHex(theme.METAL);
+        }
+    };
 }

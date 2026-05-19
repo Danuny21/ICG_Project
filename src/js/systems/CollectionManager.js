@@ -87,7 +87,7 @@ export class CollectionManager {
             { id: "dinossaurs", width: 30 },
             { id: "monsters", width: 15 },
         ];
-        const ySpacing = 8, yBase = 10, zBase = 43;
+        const ySpacing = 8, yBase = 14, zBase = 43;
 
         categories.forEach((cat, index) => {
             const shelf = createFloatingShelf(cat.width);
