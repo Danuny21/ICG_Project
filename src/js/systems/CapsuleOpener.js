@@ -229,6 +229,10 @@ export class CapsuleOpener {
 
     _finalizeClose() {
         this._hidePrizeName();
+        if (this.model) {
+            this.scene.remove(this.model);
+            this.model = null;
+        }
         this.capsule = null;
         this.capsulePhysics = null;
         this.state = "IDLE";

@@ -24,8 +24,8 @@ export const THEMES = {
         COLOR_PALETTE: [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffaa00, 0xff007f],
         BACKGROUND: 0x87ceeb
     },
-    cyberpunk: {
-        name: "Cyberpunk",
+    dark: {
+        name: "Dark",
         STRUCTURE: 0x11052C,
         ARCADE_COLORS: [0x050A1F, 0x3B0059, 0x001B3D, 0x2B2B36], // Pretos, Roxos escuros, Azuis escuros, Cinzentos
         FLOOR: 0x050A1F,
@@ -46,8 +46,8 @@ export const THEMES = {
         COLOR_PALETTE: [0xFF0055, 0x00E5FF, 0xCCFF00, 0x7000FF, 0xFF00FF, 0x00FF9D, 0xFF5500],
         BACKGROUND: 0x87ceeb
     },
-    forest: {
-        name: "Floresta",
+    light: {
+        name: "Light",
         STRUCTURE: 0x4A3018,
         ARCADE_COLORS: [0x274E13, 0x3E2723, 0xFFB7C5, 0x8C705F], // Verde árvore, Castanho, Folhas Cherry Blossom, Castanho cinza
         FLOOR: 0x384D23,

@@ -152,7 +152,7 @@ export function createArcadeBuilding(scene) {
 
     // --- Porta ---
     const doorGroup = new THREE.Group();
-    doorGroup.position.set(doorWidth / 2, doorHeight / 2, frontWallZ);
+    doorGroup.position.set(doorWidth / 2, doorHeight / 2, frontWallZ - 1);
     const doorThickness = THICKNESS * 0.4;
     const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, doorHeight, doorThickness), doorMat);
     doorMesh.position.set(-doorWidth / 2, 0, 0);
@@ -277,7 +277,7 @@ export function createArcadeBuilding(scene) {
     });
 
     // --- Plantas de chão ---
-    [{ x: -45, z: 65 }, { x: 45, z: -65 }, { x: -45, z: -65 }].forEach(pos => {
+    [{ x: 45, z: -65 }, { x: -45, z: -65 }].forEach(pos => {
         const p = createFloorPlant();
         p.scale.setScalar(SCALE_FACTOR);
         p.position.set(pos.x, 0, pos.z);

@@ -12,7 +12,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         timeOfDay: isNightInit ? "noite" : "dia",
         showStats: false,
         musicVolume: 0.08,
-        prizeVolume: 0.6
+        prizeVolume: 0.2
     };
 
     const gui = new GUI({ title: "Configurações" });
@@ -69,10 +69,23 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
             });
         }
 
-        const uiEl = document.getElementById("ui");
-        if (uiEl) {
-            const shadow = val === 'cyberpunk' ? '#ff00ff' : (val === 'forest' ? '#1b4d3e' : '#cc0000');
-            uiEl.style.boxShadow = `4px 4px 0px ${shadow}`;
+        const shadow = val === 'dark' ? '#ff00ff' : (val === 'light' ? '#1b4d3e' : '#cc0000');
+
+        const uiElements = document.querySelectorAll('.game-ui, .game-ui-hint');
+        uiElements.forEach(el => {
+            el.style.boxShadow = `4px 4px 0px ${shadow}`;
+        });
+
+        const helpItems = document.querySelectorAll('.help-item');
+        if (helpItems) {
+            const color = val === 'dark' ? '#00E5FF' : (val === 'light' ? '#90ee90' : '#ffcc00');
+            helpItems.forEach(item => {
+                item.style.boxShadow = `4px 4px 0px ${shadow}`;
+                const title = item.querySelector('.help-title');
+                if (title) {
+                    title.style.color = color;
+                }
+            });
         }
     });
 
