@@ -76,7 +76,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         }
     });
 
-    gui.add(config, 'timeOfDay', ['dia', 'noite']).name("Luz (Dia/Noite)").onChange(val => {
+    gui.add(config, 'timeOfDay', ['dia', 'noite']).name("Tempo").onChange(val => {
         updateLightsForTimeOfDay(scene, val === 'noite');
     });
 

@@ -26,16 +26,16 @@ export function setupLighting(scene) {
     leftLight.position.set(-30, 30, 20);
     scene.add(leftLight);
 
-    // Luz focada em cima da Máquina de Garra (apenas luz, sem modelo)
-    const clawSpot = new THREE.SpotLight(0xffffff, 150); // Forte
-    clawSpot.position.set(-86, 48, 1);
+    // Luz focada Máquina de Garra (apenas luz, direcionada em ângulo)
+    const clawSpot = new THREE.SpotLight(0xffffff, 200); // Forte
+    clawSpot.position.set(-50, 35, 25); // Movido para o lado e para baixo
     clawSpot.angle = Math.PI / 4;
-    clawSpot.penumbra = 0.6;
+    clawSpot.penumbra = 0.5;
     clawSpot.decay = 1.5;
-    clawSpot.distance = 60;
+    clawSpot.distance = 80;
     clawSpot.castShadow = true;
     const clawTarget = new THREE.Object3D();
-    clawTarget.position.set(-86, 15, 1); // Direcionado para o corpo da máquina de garras
+    clawTarget.position.set(-86, 12, 1); // Direcionado para a frente da máquina de garras
     scene.add(clawTarget);
     clawSpot.target = clawTarget;
     scene.add(clawSpot);
@@ -81,14 +81,26 @@ export function updateLightsForTimeOfDay(scene, isNight) {
         });
     }
     // 7. Spotlight das Coleções
-    if (scene.userData.shelfSpot) {
-        scene.userData.shelfSpot.intensity = isNight ? 150 : 0;
+    if (scene.userData.shelfSpots) {
+        scene.userData.shelfSpots.forEach(spot => {
+            spot.intensity = isNight ? 150 : 0;
+        });
     }
     // 8. Spotlights das Mesas Redondas
     if (scene.userData.tableSpots) {
         scene.userData.tableSpots.forEach(spot => {
-            spot.intensity = isNight ? 100 : 0;
+            spot.intensity = isNight ? 150 : 0;
         });
+    }
+    // 8.1 Spotlights das Máquinas de Arcada
+    if (scene.userData.arcadeSpots) {
+        scene.userData.arcadeSpots.forEach(spot => {
+            spot.intensity = isNight ? 150 : 0;
+        });
+    }
+    // 8.2 Spotlight do Balcão
+    if (scene.userData.counterSpot) {
+        scene.userData.counterSpot.intensity = isNight ? 150 : 0;
     }
     // 9. Luz exterior e cor do céu na janela
     if (scene.userData.windowLight) {

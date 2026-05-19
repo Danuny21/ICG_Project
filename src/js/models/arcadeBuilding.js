@@ -230,6 +230,7 @@ export function createArcadeBuilding(scene) {
     // --- Mesas Redondas com cadeiras ---
     const tableScale = SCALE_FACTOR * 0.90;
     const roundTables = [];
+    const chairs = [];
     [{ x: 32, z: 15 }, { x: 32, z: 45 }].forEach((pos, index) => {
         const tableObj = createRoundTable();
         const table = tableObj.group;
@@ -263,7 +264,9 @@ export function createArcadeBuilding(scene) {
 
         const chairOffset = 9;
         [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((rot, i) => {
-            const chair = createChair();
+            const chairObj = createChair();
+            const chair = chairObj.group;
+            chairs.push(chairObj);
             chair.scale.setScalar(SCALE_FACTOR);
             const px = i < 2 ? pos.x : (i === 2 ? pos.x - chairOffset : pos.x + chairOffset);
             const pz = i < 2 ? (i === 0 ? pos.z - chairOffset : pos.z + chairOffset) : pos.z;
@@ -313,39 +316,91 @@ export function createArcadeBuilding(scene) {
     buildingGroup.add(poolLamp);
     scene.userData.poolLamp = poolLamp;
 
-    // 1.2. Luz focada nas Coleções (apenas a luz, sem o modelo)
-    const shelfSpot = new THREE.SpotLight(0xffffff, 150);
-    shelfSpot.position.set(-42, 45, 43); // No cimo
-    shelfSpot.angle = Math.PI / 3;
-    shelfSpot.penumbra = 0.6;
-    shelfSpot.decay = 1.5;
-    shelfSpot.distance = 55;
-    shelfSpot.castShadow = true;
-    const shelfTarget = new THREE.Object3D();
-    shelfTarget.position.set(-48.5, 20, 43); // Aponta para o meio das estantes
-    buildingGroup.add(shelfTarget);
-    shelfSpot.target = shelfTarget;
-    buildingGroup.add(shelfSpot);
-    scene.userData.shelfSpot = shelfSpot;
+    // 1.2. Luzes focadas nas Coleções
+    scene.userData.shelfSpots = [];
+    [{x: -20, y: 35, z: 25}, {x: -20, y: 35, z: 60}].forEach(pos => {
+        const spot = new THREE.SpotLight(0xffffff, 150);
+        spot.position.set(pos.x, pos.y, pos.z);
+        spot.angle = Math.PI / 4;
+        spot.penumbra = 0.5;
+        spot.decay = 1.5;
+        spot.distance = 70;
+        spot.castShadow = true;
+        const target = new THREE.Object3D();
+        target.position.set(-48.5, 20, 43); // Aponta para o meio das estantes
+        buildingGroup.add(target);
+        spot.target = target;
+        buildingGroup.add(spot);
+        scene.userData.shelfSpots.push(spot);
+    });
 
     // 1.3. Luzes focadas nas Mesas Redondas (apenas a luz, sem o modelo)
     scene.userData.tableSpots = [];
     const tablePositions = [{ x: 32, z: 15 }, { x: 32, z: 45 }];
-    tablePositions.forEach(pos => {
-        const tableSpot = new THREE.SpotLight(0xffffff, 100);
-        tableSpot.position.set(pos.x, 45, pos.z);
-        tableSpot.angle = Math.PI / 4;
-        tableSpot.penumbra = 0.5;
-        tableSpot.decay = 1.5;
-        tableSpot.distance = 50;
-        tableSpot.castShadow = true;
-        const tableTarget = new THREE.Object3D();
-        tableTarget.position.set(pos.x, 0, pos.z);
-        buildingGroup.add(tableTarget);
-        tableSpot.target = tableTarget;
-        buildingGroup.add(tableSpot);
-        scene.userData.tableSpots.push(tableSpot);
+    tablePositions.forEach((pos) => {
+        // Spot 1 (esquerda/frente)
+        const spot1 = new THREE.SpotLight(0xffffff, 100);
+        spot1.position.set(pos.x - 15, 35, pos.z - 15);
+        spot1.angle = Math.PI / 4;
+        spot1.penumbra = 0.5;
+        spot1.decay = 1.5;
+        spot1.distance = 60;
+        spot1.castShadow = true;
+        const target1 = new THREE.Object3D();
+        target1.position.set(pos.x, 5, pos.z);
+        buildingGroup.add(target1);
+        spot1.target = target1;
+        buildingGroup.add(spot1);
+        scene.userData.tableSpots.push(spot1);
+
+        // Spot 2 (direita/trás)
+        const spot2 = new THREE.SpotLight(0xffffff, 100);
+        spot2.position.set(pos.x + 15, 35, pos.z + 15);
+        spot2.angle = Math.PI / 4;
+        spot2.penumbra = 0.5;
+        spot2.decay = 1.5;
+        spot2.distance = 60;
+        spot2.castShadow = true;
+        const target2 = new THREE.Object3D();
+        target2.position.set(pos.x, 5, pos.z);
+        buildingGroup.add(target2);
+        spot2.target = target2;
+        buildingGroup.add(spot2);
+        scene.userData.tableSpots.push(spot2);
     });
+
+    // 1.4 Luzes direcionais para as Máquinas de Arcade
+    scene.userData.arcadeSpots = [];
+    [{x: 15, y: 35, z: -40, tx: 50, tz: -49}, {x: 15, y: 35, z: -15, tx: 50, tz: -25}].forEach(spec => {
+        const spot = new THREE.SpotLight(0xffffff, 150);
+        spot.position.set(spec.x, spec.y, spec.z);
+        spot.angle = Math.PI / 3;
+        spot.penumbra = 0.5;
+        spot.decay = 1.5;
+        spot.distance = 70;
+        spot.castShadow = true;
+        const target = new THREE.Object3D();
+        target.position.set(spec.tx, 10, spec.tz);
+        buildingGroup.add(target);
+        spot.target = target;
+        buildingGroup.add(spot);
+        scene.userData.arcadeSpots.push(spot);
+    });
+
+    // 1.5 Luz para o balcão
+    const counterSpot = new THREE.SpotLight(0xffffff, 150);
+    counterSpot.position.set(-10, 35, -5); // Em ângulo
+    counterSpot.angle = Math.PI / 3;
+    counterSpot.penumbra = 0.5;
+    counterSpot.decay = 1.5;
+    counterSpot.distance = 60;
+    counterSpot.castShadow = true;
+    const counterTarget = new THREE.Object3D();
+    counterTarget.position.set(-35, 10, 22);
+    buildingGroup.add(counterTarget);
+    counterSpot.target = counterTarget;
+    buildingGroup.add(counterSpot);
+    scene.userData.counterSpot = counterSpot;
 
     // 4. Ventoinha de Teto
     const fanObj = createCeilingFan();
@@ -365,6 +420,9 @@ export function createArcadeBuilding(scene) {
             roundTables.forEach(t => t.updateTheme(theme));
             arcadeMachines.forEach(m => m.updateTheme(theme));
             counterObj.updateTheme(theme);
+            chairs.forEach(c => c.updateTheme(theme));
+            blueNeonMat.color.setHex(theme.FRAME);
+            blueNeonMat.emissive.setHex(theme.FRAME);
         },
         // Função para alternar entre dia e noite
         setExteriorTheme: (theme) => {

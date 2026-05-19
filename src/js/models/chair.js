@@ -7,8 +7,8 @@ export function createChair() {
     // Material de metal para as pernas e suportes
     const metalMaterial = new THREE.MeshStandardMaterial({
         color: 0x888888,
-        metalness: 0.9,
-        roughness: 0.2
+        metalness: 0.3,
+        roughness: 0.4
     });
 
     // Material de plástico para o assento e encosto
@@ -56,5 +56,11 @@ export function createChair() {
 
     chairGroup.add(sup1, sup2);
 
-    return chairGroup;
+    return {
+        group: chairGroup,
+        updateTheme: (theme) => {
+            plasticMaterial.color.setHex(theme.FRAME);
+            metalMaterial.color.setHex(theme.METAL);
+        }
+    };
 }

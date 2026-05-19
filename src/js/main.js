@@ -35,8 +35,7 @@ arcadeBuilding.group.position.set(0, 0, 55);
 arcadeBuilding.group.scale.set(2, 2, 2);
 
 // --- Inicialização e Controlo do Ciclo Dia/Noite ---
-const currentHour = new Date().getHours();
-const isNightInit = (currentHour < 7 || currentHour >= 19); // Noite das 19h às 7h
+const isNightInit = false; // Começa sempre de dia por predefinição
 updateLightsForTimeOfDay(scene, isNightInit);
 
 const collectionManager = new CollectionManager(scene);

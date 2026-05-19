@@ -99,13 +99,13 @@ export function createBilliardTable() {
     tableGroup.add(railB);
 
     // --- Buracos (Pockets) ---
-    const pocketRadius = 0.12; // Maior que o raio da bola (0.08)
+    const pocketRadius = 0.2; // Maior que o raio da bola (0.08)
     const pocketGeom = new THREE.CircleGeometry(pocketRadius, 32); 
     pocketGeom.rotateX(-Math.PI / 2);
 
     const pocketY = height - 0.19; // Um pouco mais acima do feltro
-    const pX_edge = (width / 2) - railWidth;
-    const pZ_edge = (length / 2) - railWidth;
+    const pX_edge = (width / 2) + 0.1 - railWidth;
+    const pZ_edge = (length / 2) + 0.1 - railWidth;
     
     // Mover os buracos mais para o centro para ficarem totalmente redondos e visíveis
     const pX = pX_edge - pocketRadius + 0.02;
@@ -194,29 +194,39 @@ export function createBilliardTable() {
     tableGroup.add(chalk);
 
     // --- Triângulo (Rack) ---
+    const L_rack = 0.9; // Outer side length
+    const t_rack = 0.04; // Frame thickness
+    const h_rack = L_rack * Math.sqrt(3) / 2;
+    const cy_rack = h_rack / 3;
+    const r_rack = h_rack / 3;
+    const k_rack = (r_rack - t_rack) / r_rack;
+
+    const shape = new THREE.Shape();
+    shape.moveTo(-L_rack/2, -cy_rack);
+    shape.lineTo(L_rack/2, -cy_rack);
+    shape.lineTo(0, h_rack - cy_rack);
+    shape.lineTo(-L_rack/2, -cy_rack);
+
+    const hole = new THREE.Path();
+    hole.moveTo(-L_rack/2 * k_rack, -cy_rack * k_rack);
+    hole.lineTo(L_rack/2 * k_rack, -cy_rack * k_rack);
+    hole.lineTo(0, (h_rack - cy_rack) * k_rack);
+    hole.lineTo(-L_rack/2 * k_rack, -cy_rack * k_rack);
+    shape.holes.push(hole);
+
+    const extrudeSettings = { depth: 0.06, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.005, bevelThickness: 0.005 };
+    const rackGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    rackGeom.translate(0, 0, -0.03); // Centrar na altura
+
+    const rackMat = new THREE.MeshStandardMaterial({ color: 0x442200, roughness: 0.7 });
+    const rackMesh = new THREE.Mesh(rackGeom, rackMat);
+    rackMesh.rotation.x = Math.PI / 2; // Deitar na mesa
+    rackMesh.castShadow = true;
+
     const triangleGroup = new THREE.Group();
-    const triWoodMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.8 });
-    
-    const triLength = 1.0;
-    const triThick = 0.03;
-    const triHeight = 0.05;
-
-    const baseBar = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
-    baseBar.position.set(0, 0, -0.4);
-    triangleGroup.add(baseBar);
-
-    const sideBar1 = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
-    sideBar1.position.set(0.25, 0, 0.05);
-    sideBar1.rotation.y = -Math.PI / 3;
-    triangleGroup.add(sideBar1);
-
-    const sideBar2 = new THREE.Mesh(new THREE.BoxGeometry(triLength, triHeight, triThick), triWoodMat);
-    sideBar2.position.set(-0.25, 0, 0.05);
-    sideBar2.rotation.y = Math.PI / 3;
-    triangleGroup.add(sideBar2);
-
-    triangleGroup.position.set(-1.0, ballY - 0.05, 2.0);
-    triangleGroup.rotation.y = Math.PI / 4;
+    triangleGroup.add(rackMesh);
+    triangleGroup.position.set(-1.0, ballY, 2.0);
+    triangleGroup.rotation.y = Math.PI / 5;
     tableGroup.add(triangleGroup);
 
     return tableGroup;
