@@ -16,6 +16,8 @@ import { MobileControls } from "./systems/MobileControls.js";
 import { CollectionManager } from "./systems/CollectionManager.js";
 import { CameraManager } from "./systems/CameraManager.js";
 import { PrizeInspector } from "./systems/PrizeInspector.js";
+import { preloadAllPrizes } from "./systems/PrizeLoader.js";
+import { PRIZE_LIST } from "./config/prizes.js";
 
 // Global game configuration (default difficulty)
 window.CONFIG_JOGO = NORMAL_MODE;
@@ -39,6 +41,7 @@ const isNightInit = false; // Começa sempre de dia por predefinição
 updateLightsForTimeOfDay(scene, isNightInit);
 
 const collectionManager = new CollectionManager(scene);
+window.collectionManager = collectionManager; // Expor globalmente para que os botões do GUI o encontrem
 collectionManager.setupRoom(arcadeBuilding);
 
 const clawMachine = createClawMachine(scene);
@@ -188,7 +191,11 @@ startBtn.addEventListener('click', () => {
 
     const physicsPromise = physicsWorld.init(capsules, clawMachine, MACHINE_POS, MACHINE_ROT);
 
-    Promise.all([physicsPromise, assetsPromise]).then(() => {
+    // Pré-carrega todos os modelos de prémios em background durante o loading screen
+    // para eliminar o freeze da primeira vez que uma cápsula é aberta.
+    const preloadPromise = preloadAllPrizes(PRIZE_LIST);
+
+    Promise.all([physicsPromise, assetsPromise, preloadPromise]).then(() => {
         setTimeout(() => {
             loadingScreen.classList.add('fade-out');
             if (bgMusic.buffer && !bgMusic.isPlaying) bgMusic.play();

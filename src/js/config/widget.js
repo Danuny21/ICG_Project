@@ -107,7 +107,9 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     });
 
     const actionsFolder = gui.addFolder("Ações");
-    actionsFolder.add({
+    
+    // Objeto temporário para guardar as funções a serem mapeadas no GUI
+    const actionsParams = {
         resetCapsules: () => {
             if (!scene || !capsules) return;
 
@@ -125,26 +127,45 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
                     }
                 });
                 // Remove o corpo Rapier
-                if (physicsWorld) physicsWorld.removeCapsuleBody(c);
+                if (typeof physicsWorld !== "undefined" && physicsWorld) physicsWorld.removeCapsuleBody(c);
             }
 
             // 2. Gera novas cápsulas com os mesmos parâmetros originais
-            if (machinePos) {
-                const novasCapsulas = CapsuleSpawner.spawnCapsules(scene, 200, machinePos, machineRotY);
+            if (typeof machinePos !== "undefined" && machinePos) {
+                // ...existing code...
+                const novasCapsulas = CapsuleSpawner.spawnCapsules(scene, 200, machinePos, typeof machineRotY !== "undefined" ? machineRotY : 0);
                 novasCapsulas.forEach(c => capsules.push(c));
 
                 // 3. Regista os novos corpos Rapier no mundo físico existente
-                if (physicsWorld && physicsWorld.world) {
+                if (typeof physicsWorld !== "undefined" && physicsWorld && physicsWorld.world) {
                     physicsWorld._createCapsuleBodies(capsules);
                 }
 
                 // 4. Actualiza as referências de limpeza do CapsuleOpener
-                if (capsuleOpener) capsuleOpener.setCleanupRefs(physicsWorld, capsules);
+                if (capsuleOpener && typeof capsuleOpener.setCleanupRefs === "function") {
+                    capsuleOpener.setCleanupRefs(physicsWorld, capsules);
+                }
 
                 console.log(`[Repor Cápsulas] ${capsules.length} novas cápsulas geradas.`);
             }
+        },
+        completeCollection: () => {
+            // collectionManager não é passado pelo widget setup.
+            // Contudo podemos usar objectos globais se expostos, caso contrário tentamos chegar a ele.
+            if (window.collectionManager) {
+                window.collectionManager.unlockAll();
+            }
+        },
+        clearCollection: () => {
+            if (window.collectionManager) {
+                window.collectionManager.lockAll();
+            }
         }
-    }, 'resetCapsules').name("Repor Cápsulas");
+    };
+
+    actionsFolder.add(actionsParams, 'resetCapsules').name("Repor Cápsulas");
+    actionsFolder.add(actionsParams, 'completeCollection').name("Completar Coleção");
+    actionsFolder.add(actionsParams, 'clearCollection').name("Apagar Coleção");
 
     return { gui, stats };
 }

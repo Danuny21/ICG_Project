@@ -12,6 +12,7 @@ export class CollectionManager {
         this.originalMaterials = new Map();   // Materiais originais de cada modelo
         this.mixers = new Map();              // Animadores de cada modelo
         this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        this._clickableModels = [];           // Cache dos modelos da coleção (evita traverse por clique)
     }
 
     // Regista um modelo na coleção; aplica silhueta se ainda não desbloqueado
@@ -23,12 +24,14 @@ export class CollectionManager {
         model.userData.animations = animations;
         model.userData.idleAnimName = idleAnimName;
 
+        // Adiciona à cache de modelos clicáveis
+        this._clickableModels.push(model);
+
         const materialsCache = new Map();
         const isLocked = this.inventory.get(prizeId) === 0;
 
         model.traverse(child => {
             if (child.isMesh) {
-                child.frustumCulled = false;
                 materialsCache.set(child.uuid, child.material);
                 if (isLocked) child.material = this.silhouetteMaterial;
             }
@@ -40,7 +43,7 @@ export class CollectionManager {
             const clip = this._findClip(animations, idleAnimName);
             const action = mixer.clipAction(clip);
             action.play();
-            if (isLocked) action.paused = true; // Pausa animação até desbloquear
+            if (isLocked) action.paused = true;
             this.mixers.set(prizeId, mixer);
         }
     }
@@ -69,6 +72,33 @@ export class CollectionManager {
         }
 
         this.inventory.set(prizeId, count + 1);
+    }
+
+    // Desperta/Desbloqueia todos os prémios (para debug/UI)
+    unlockAll() {
+        this.inventory.forEach((count, prizeId) => {
+            if (count === 0) {
+                this.unlockPrize(prizeId);
+            }
+        });
+    }
+
+    // Bloqueia todos os prémios e aplica a silhueta negra
+    lockAll() {
+        this.inventory.forEach((count, prizeId) => {
+            if (count > 0) {
+                this.inventory.set(prizeId, 0);
+                const model = this.scene.getObjectByName(`collection_${prizeId}`);
+                if (model) {
+                    model.traverse(child => {
+                        if (child.isMesh) {
+                            child.material = this.silhouetteMaterial;
+                        }
+                    });
+                    this.mixers.get(prizeId)?._actions.forEach(a => a.paused = true);
+                }
+            }
+        });
     }
 
     // Atualiza todos os animadores a cada frame
@@ -115,13 +145,9 @@ export class CollectionManager {
         });
     }
 
-    // Devolve todos os objetos da coleção clicáveis (prefixo 'collection_')
+    // Devolve todos os objetos da coleção clicáveis (cache local, sem traverse)
     getClickableModels() {
-        const models = [];
-        this.scene.traverse(obj => {
-            if (obj.name?.startsWith('collection_')) models.push(obj);
-        });
-        return models;
+        return this._clickableModels;
     }
 
     // Procura uma animação pelo nome (exato ou aproximado), com fallback para 'idle'

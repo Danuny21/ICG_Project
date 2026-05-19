@@ -49,6 +49,11 @@ export class PrizeInspector {
         this._onPointerDown = this._onPointerDown.bind(this);
         this._onPointerMove = this._onPointerMove.bind(this);
         this._onPointerUp = this._onPointerUp.bind(this);
+
+        // Pré-constrói o pedestal uma única vez para evitar stall de shader na 1ª utilização
+        this.pedestal = this._buildPedestal();
+        this.pedestal.visible = false;
+        this.scene.add(this.pedestal);
     }
 
     // Inicia a inspeção de um modelo da coleção.
@@ -187,15 +192,21 @@ export class PrizeInspector {
     }
 
     _createPedestal() {
+        // Mostra o pedestal pré-construído
+        this.pedestal.position.copy(this.originalModel.position);
+        this.pedestal.position.y -= 5;
+        this.pedestal.visible = true;
+    }
+
+    // Constrói a geometria do pedestal uma única vez
+    _buildPedestal() {
         const group = new THREE.Group();
-        group.add(new THREE.Mesh(
-            new THREE.CylinderGeometry(5, 5.5, 2, 32),
-            new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.2 })
-        ));
-        const neon = new THREE.Mesh(
-            new THREE.TorusGeometry(5.2, 0.3, 16, 100),
-            new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 5 })
-        );
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.2 });
+        const neonMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 5 });
+
+        group.add(new THREE.Mesh(new THREE.CylinderGeometry(5, 5.5, 2, 32), baseMat));
+
+        const neon = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.3, 16, 100), neonMat);
         neon.rotation.x = Math.PI / 2;
         neon.position.y = 0.5;
         group.add(neon);
@@ -204,9 +215,7 @@ export class PrizeInspector {
         this.pedestalLight.position.y = 2;
         group.add(this.pedestalLight);
 
-        this.pedestal = group;
-        this.pedestal.position.copy(this.originalModel.position).y -= 5;
-        this.scene.add(this.pedestal);
+        return group;
     }
 
     _finalize() {
@@ -217,10 +226,9 @@ export class PrizeInspector {
         this._lightTop.intensity = 0;
         this._lightBottom.intensity = 0;
 
+        // Esconde o pedestal (não o destrói — é reutilizado)
         if (this.pedestal) {
-            this.scene.remove(this.pedestal);
-            this.pedestal = null;
-            this.pedestalLight = null;
+            this.pedestal.visible = false;
         }
 
         if (this.originalModel && this._originalParent) {
