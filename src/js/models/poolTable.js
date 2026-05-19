@@ -1,12 +1,44 @@
 import * as THREE from 'three';
+import { loadTextureSet } from '../systems/TextureLoader.js';
 
 export function createBilliardTable() {
     const tableGroup = new THREE.Group();
     tableGroup.name = "BilliardTable";
 
     // Materiais Base
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x663300, roughness: 0.8 });
-    const feltMat = new THREE.MeshStandardMaterial({ color: 0x008822, roughness: 1.0 }); // Verde pano
+    // Materiais Base com Texturas
+    function createWoodMat(repeatX, repeatY) {
+        const tex = loadTextureSet(
+            "./src/js/textures/wood/Wood066_1K-JPG",
+            ["Color", "NormalGL", "Roughness"],
+            { x: repeatX, y: repeatY }
+        );
+        return new THREE.MeshStandardMaterial({ 
+            map: tex.color,
+            normalMap: tex.normal,
+            roughnessMap: tex.roughness,
+            color: 0x885522,
+            roughness: 0.7 
+        });
+    }
+
+    const woodMatLeg = createWoodMat(1, 1);
+    const woodMatBase = createWoodMat(4, 8);
+    const woodMatLong = createWoodMat(8, 1);
+    const woodMatShort = createWoodMat(4, 1);
+    
+    const feltTex = loadTextureSet(
+        "./src/js/textures/fabric/Fabric021_1K-JPG",
+        ["Color", "NormalGL", "Roughness"],
+        { x: 8, y: 16 }
+    );
+    const feltMat = new THREE.MeshStandardMaterial({
+        map: feltTex.color,
+        normalMap: feltTex.normal,
+        roughnessMap: feltTex.roughness,
+        color: 0x008822, 
+        roughness: 1.0 
+    });
     const pocketMat = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Interior preto
 
     const width = 4.5;
@@ -25,7 +57,7 @@ export function createBilliardTable() {
     ];
 
     legCoords.forEach(coord => {
-        const leg = new THREE.Mesh(legGeom, woodMat);
+        const leg = new THREE.Mesh(legGeom, woodMatLeg);
         leg.position.set(coord[0], (height - 0.5) / 2, coord[1]);
         tableGroup.add(leg);
     });
@@ -33,14 +65,14 @@ export function createBilliardTable() {
     // --- Estrutura Inferior de Madeira ---
     const baseFrame = new THREE.Mesh(
         new THREE.BoxGeometry(width, 0.4, length),
-        woodMat
+        woodMatBase
     );
     baseFrame.position.y = height - 0.5;
     tableGroup.add(baseFrame);
 
     // --- Superfície de Feltro ---
     const felt = new THREE.Mesh(
-        new THREE.BoxGeometry(width - railWidth, 0.1, length - railWidth),
+        new THREE.BoxGeometry(width - 2 * railWidth, 0.1, length - 2 * railWidth),
         feltMat
     );
     felt.position.y = height - 0.25;
@@ -48,21 +80,21 @@ export function createBilliardTable() {
 
     // --- Tabelas / Rails ---
     const longRailGeom = new THREE.BoxGeometry(railWidth, 0.3, length);
-    const shortRailGeom = new THREE.BoxGeometry(width, 0.3, railWidth);
+    const shortRailGeom = new THREE.BoxGeometry(width - 2 * railWidth, 0.3, railWidth);
 
-    const railL = new THREE.Mesh(longRailGeom, woodMat);
+    const railL = new THREE.Mesh(longRailGeom, woodMatLong);
     railL.position.set(-width / 2 + railWidth / 2, height - 0.15, 0);
     tableGroup.add(railL);
 
-    const railR = new THREE.Mesh(longRailGeom, woodMat);
+    const railR = new THREE.Mesh(longRailGeom, woodMatLong);
     railR.position.set(width / 2 - railWidth / 2, height - 0.15, 0);
     tableGroup.add(railR);
 
-    const railT = new THREE.Mesh(shortRailGeom, woodMat);
+    const railT = new THREE.Mesh(shortRailGeom, woodMatShort);
     railT.position.set(0, height - 0.15, length / 2 - railWidth / 2);
     tableGroup.add(railT);
 
-    const railB = new THREE.Mesh(shortRailGeom, woodMat);
+    const railB = new THREE.Mesh(shortRailGeom, woodMatShort);
     railB.position.set(0, height - 0.15, -length / 2 + railWidth / 2);
     tableGroup.add(railB);
 
@@ -89,7 +121,7 @@ export function createBilliardTable() {
 
     // --- Lógica para as 15 Bolas em Formação de Triângulo (Rack) ---
     const ballRadius = 0.08;
-    const ballY = height - 0.17;
+    const ballY = height - 0.12;
     const ballGeom = new THREE.SphereGeometry(ballRadius, 16, 16);
 
     const startZ = -1.5;

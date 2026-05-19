@@ -98,12 +98,9 @@ export function createArcadeBuilding(scene) {
     buildingGroup.add(backGlass);
 
     // --- Exterior (rua fora da janela) ---
-    const dayTex = loader.load("./src/js/textures/backgorund/day_street.png");
-    const nightTex = loader.load("./src/js/textures/backgorund/night_street.png");
-
     const exterior = new THREE.Mesh(
         new THREE.PlaneGeometry(windowWidth * 3, windowHeight * 3),
-        new THREE.MeshBasicMaterial({ map: nightTex, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ color: 0x000088, side: THREE.DoubleSide })
     );
     exterior.position.set(0, 25, backWallZ - 20);
     buildingGroup.add(exterior);
@@ -296,13 +293,13 @@ export function createArcadeBuilding(scene) {
         // Função para alternar entre dia e noite
         setExteriorTheme: (theme) => {
             if (theme === 'dia') {
-                exterior.material.map = dayTex;
+                exterior.material.color.setHex(0x87ceeb); // Light blue for day
                 windowLight.color.set(0xffffff);
                 windowLight.intensity = 2;
                 windowSpot.color.set(0xffcc88);
                 windowSpot.intensity = 10;
             } else {
-                exterior.material.map = nightTex;
+                exterior.material.color.setHex(0x000088); // Dark blue for night
                 windowLight.color.set(0x4444ff);
                 windowLight.intensity = 15;
                 windowSpot.color.set(0x4444ff);
