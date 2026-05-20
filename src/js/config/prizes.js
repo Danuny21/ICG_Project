@@ -26,7 +26,8 @@ export const PRIZE_LIST = [
     // MONSTROS
     { name: "Dragão",    file: "monsters/Dragon.glb",   weight: 1, scale: 0.3,  targetScale: 1.5, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
     { name: "Esqueleto", file: "monsters/Skeleton.glb", weight: 1, scale: 0.25, targetScale: 1.1, offsetY: -0.3, idle: "SkeletonArmature|Skeleton_Running" },
-    { name: "Slime",     file: "monsters/Slime.glb",    weight: 1, scale: 0.5,  targetScale: 1.5, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk" },
+    // O modelo do Slime está exportado com orientação invertida — corrigido com rotationY extra
+    { name: "Slime",     file: "monsters/Slime.glb",    weight: 1, scale: 0.5,  targetScale: 1.5, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk", rotationY: Math.PI },
 ];
 
 // Sorteia um prémio da lista com base no peso de cada entrada.

@@ -18,6 +18,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     };
 
     const gui = new GUI({ title: "Configurações" });
+    gui.domElement.style.visibility = 'hidden';
 
     const stats = new Stats();
     stats.setMode(0);

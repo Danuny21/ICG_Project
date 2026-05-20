@@ -20,11 +20,9 @@ import { PrizeInspector } from "./systems/PrizeInspector.js";
 import { preloadAllPrizes } from "./systems/PrizeLoader.js";
 import { PRIZE_LIST } from "./config/prizes.js";
 
-// Global game configuration (default difficulty)
 window.CONFIG_JOGO = NORMAL_MODE;
-const NUM_CAPSULES = 200; // Number of capsules generated inside the machine
+const NUM_CAPSULES = 200;
 
-// Machine position and rotation in the world
 const MACHINE_POS = new THREE.Vector3(-86, 0, 1);
 const MACHINE_ROT = Math.PI / 2;
 
@@ -37,19 +35,17 @@ const arcadeBuilding = createArcadeBuilding(scene);
 arcadeBuilding.group.position.set(0, 0, 55);
 arcadeBuilding.group.scale.set(2, 2, 2);
 
-// Add a hanging lamp directly above the claw machine
 const clawLamp = createLamp(true, 500);
-clawLamp.position.set(MACHINE_POS.x, 70, MACHINE_POS.z); // Altura mundial do teto = 70 (35 * 2)
-clawLamp.scale.setScalar(6.0); // Escala para igualar a da mesa de bilhar (SCALE_FACTOR(3) * 2.0 = 6.0)
+clawLamp.position.set(MACHINE_POS.x, 70, MACHINE_POS.z);
+clawLamp.scale.setScalar(6.0);
 scene.add(clawLamp);
 scene.userData.clawLamp = clawLamp;
 
-// --- Inicialização e Controlo do Ciclo Dia/Noite ---
-const isNightInit = false; // Começa sempre de dia por predefinição
+const isNightInit = false;
 updateLightsForTimeOfDay(scene, isNightInit);
 
 const collectionManager = new CollectionManager(scene);
-window.collectionManager = collectionManager; // Expor globalmente para que os botões do GUI o encontrem
+window.collectionManager = collectionManager;
 collectionManager.setupRoom(arcadeBuilding);
 
 const clawMachine = createClawMachine(scene);
@@ -58,7 +54,7 @@ clawMachine.box.rotation.y = MACHINE_ROT;
 
 const capsules = CapsuleSpawner.spawnCapsules(scene, NUM_CAPSULES, MACHINE_POS, MACHINE_ROT);
 
-// Audio setup
+// ─── ÁUDIO ───────────────────────────────────────────────────────────────────
 const listener = new THREE.AudioListener();
 camera.add(listener);
 const audioLoader = new THREE.AudioLoader();
@@ -70,19 +66,23 @@ audioLoader.load('./src/sound/background-music.mp3', buffer => {
     bgMusic.setVolume(0.08);
 });
 
+const gameStartSound = new THREE.Audio(listener);
+audioLoader.load('./src/sound/game-start.mp3', buffer => {
+    gameStartSound.setBuffer(buffer);
+    gameStartSound.setVolume(0.7);
+});
+
 const capsuleSound = new THREE.Audio(listener);
 audioLoader.load('./src/sound/getting-prize.mp3', buffer => {
     capsuleSound.setBuffer(buffer);
     capsuleSound.setVolume(0.6);
 });
 
+// ─── FÍSICA & SISTEMAS ───────────────────────────────────────────────────────
 const physicsWorld = new PhysicsWorld();
 
 const confetti = createConfetti(scene);
 const capsuleOpener = new CapsuleOpener(scene, camera, controls, confetti, MACHINE_POS, MACHINE_ROT, capsuleSound);
-
-// Liga as referências de limpeza: ao fechar uma cápsula, o CapsuleOpener
-// remove o corpo Rapier, faz dispose do mesh e retira do array de cápsulas.
 capsuleOpener.setCleanupRefs(physicsWorld, capsules);
 
 const cameraManager = new CameraManager(camera, controls, capsuleOpener);
@@ -99,17 +99,14 @@ const keys = setupKeyboard(
 );
 
 new MobileControls(keys, () => {
-    // 1. Se estivermos a abrir uma cápsula
     if (capsuleOpener.state === "WAIT" || capsuleOpener.state === "FREE_VIEW") {
         capsuleOpener.triggerAction();
         return;
     }
-    // 2. Se estivermos a inspecionar um prémio na prateleira
     if (prizeInspector.state === "INSPECT") {
         prizeInspector.prepareReturn();
         return;
     }
-    // 3. Ação normal do jogo (descer garra)
     if (gameState === "IDLE" && capsuleOpener.state === "IDLE" && cameraManager.viewState === "machine") {
         gameState = "DESCEND";
     }
@@ -118,22 +115,17 @@ new MobileControls(keys, () => {
 const moveSpeed = 0.15;
 const moveLimits = { x: 11.4, z: 11.4 };
 
-// Function to update camera on resize/orientation change
 function onWindowResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const isPortrait = height > width;
-
     camera.aspect = width / height;
-    camera.fov = isPortrait ? 85 : 60;
+    camera.fov = height > width ? 85 : 60;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
 }
-
 window.addEventListener('resize', onWindowResize);
-onWindowResize(); // Initial call
+onWindowResize();
 
-// Create settings panel (lil-GUI) and FPS stats
 const { gui, stats } = setupWidget(scene, clawMachine, confetti, capsules, capsuleOpener, { bgMusic, capsuleSound }, arcadeBuilding, isNightInit, physicsWorld, MACHINE_POS, MACHINE_ROT);
 
 const interactionSystem = new InteractionSystem(camera, capsules, capsuleOpener, collectionManager, prizeInspector);
@@ -141,7 +133,7 @@ interactionSystem.init();
 
 let lastFrameTime = performance.now();
 
-// ─── RENDERING LOOP ──────────────────────────────────────────────────────────
+// ─── LOOP DE RENDERIZAÇÃO ────────────────────────────────────────────────────
 function animate(time) {
     if (stats) stats.update();
     requestAnimationFrame(animate);
@@ -149,17 +141,13 @@ function animate(time) {
     const delta = (time - lastFrameTime) / 1000;
     lastFrameTime = time;
 
-    // Only update camera if prize inspector is idle
     if (prizeInspector?.state === "IDLE") cameraManager.update();
 
     collectionManager.update(delta);
     if (prizeInspector) prizeInspector.update(delta);
 
-    if (arcadeBuilding.fan) {
-        arcadeBuilding.fan.rotation.y += 2.0 * delta;
-    }
+    if (arcadeBuilding.fan) arcadeBuilding.fan.rotation.y += 2.0 * delta;
 
-    // Update claw animation based on state
     const clawResult = updateClawAnimation(gameState, animTime, clawMachine, keys, moveLimits, moveSpeed);
     gameState = clawResult.newState;
     animTime = clawResult.newTime;
@@ -172,11 +160,12 @@ function animate(time) {
     renderer.render(scene, camera);
 }
 
-// ─── GAME FLOW: MENU → LOADING → GAME ────────────────────────────────────────
+// ─── FLUXO: MENU → LOADING → JOGO ────────────────────────────────────────────
 const startBtn = document.getElementById('start-button');
 const mainMenu = document.getElementById('main-menu');
 const loadingScreen = document.getElementById('loading-screen');
 
+// Resolve quando todos os assets Three.js estiverem carregados (ou após timeout de 15s)
 const assetsPromise = new Promise(resolve => {
     const checkReady = () => {
         if (THREE.DefaultLoadingManager.itemsLoaded === THREE.DefaultLoadingManager.itemsTotal) {
@@ -190,24 +179,45 @@ const assetsPromise = new Promise(resolve => {
     setTimeout(resolve, 15000);
 });
 
+const MENU_FADE_DURATION = 800; // deve coincidir com a transição CSS do #main-menu
+
 startBtn.addEventListener('click', () => {
-    mainMenu.classList.add('fade-out');
-    setTimeout(() => mainMenu.classList.add('hidden'), 800);
-    loadingScreen.classList.remove('hidden');
+    const startTime = performance.now();
 
+    // Desbloqueia o AudioContext e toca o som de arranque imediatamente
     if (bgMusic.context.state === 'suspended') bgMusic.context.resume();
+    if (gameStartSound.buffer && !gameStartSound.isPlaying) gameStartSound.play();
 
+    // Inicia o fade-out do menu
+    mainMenu.classList.add('fade-out');
+
+    // Arranca física e pré-carregamento em paralelo enquanto o menu desaparece
     const physicsPromise = physicsWorld.init(capsules, clawMachine, MACHINE_POS, MACHINE_ROT);
-
-    // Pré-carrega todos os modelos de prémios em background durante o loading screen
-    // para eliminar o freeze da primeira vez que uma cápsula é aberta.
     const preloadPromise = preloadAllPrizes(PRIZE_LIST);
 
+    // Só mostra o loading screen depois do menu ter desaparecido completamente
+    setTimeout(() => {
+        mainMenu.classList.add('hidden');
+        loadingScreen.classList.remove('hidden');
+    }, MENU_FADE_DURATION);
+
     Promise.all([physicsPromise, assetsPromise, preloadPromise]).then(() => {
+        // Garante que o loading screen esteve visível pelo menos 500ms antes de fechar
+        const minVisible = MENU_FADE_DURATION + 500;
+        const remaining = Math.max(0, minVisible - (performance.now() - startTime));
+
         setTimeout(() => {
             loadingScreen.classList.add('fade-out');
-            if (bgMusic.buffer && !bgMusic.isPlaying) bgMusic.play();
+            // Música começa após o som de arranque (~1.5s)
+            setTimeout(() => {
+                if (bgMusic.buffer && !bgMusic.isPlaying) bgMusic.play();
+            }, 1500);
+            // Revela os elementos de jogo e arranca o loop
+            document.getElementById('ui').classList.remove('game-hidden');
+            document.getElementById('camera-views').classList.remove('game-hidden');
+            document.getElementById('mobile-controls').classList.remove('game-hidden');
+            if (gui) gui.domElement.style.visibility = '';
             animate(performance.now());
-        }, 500);
+        }, remaining);
     }).catch(err => console.error(err));
 });

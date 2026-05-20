@@ -142,7 +142,7 @@ export class CollectionManager {
                     const s = cfg.scale * 2.5;
                     model.scale.setScalar(s);
                     model.position.set(startX + i * spacing, 0.5 - cfg.offsetY * s, 0);
-                    model.rotation.y = Math.PI / 2;
+                    model.rotation.y = Math.PI / 2 + (cfg.rotationY ?? 0);
                     
                     // Sombras ativas para cada brinquedo individual da coleção
                     model.traverse(child => {

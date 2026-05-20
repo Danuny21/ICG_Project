@@ -72,13 +72,10 @@
   </div>
 
   <div id="loading-screen" class="hidden">
-    <div class="loader-content">
-      <div class="spinner"></div>
-      <h1>A CARREGAR ...</h1>
-    </div>
+    <h1>A CARREGAR ...</h1>
   </div>
 
-  <div id="ui" class="game-ui">
+  <div id="ui" class="game-ui game-hidden">
     <p class="desktop-only"><b>Setas / WASD</b> para mover <br> <b>Espaço</b> para apanhar</p>
     <p class="mobile-only"><b>Joystick</b> para mover <br> <b>IR</b> para apanhar</p>
   </div>
@@ -90,13 +87,13 @@
   <div id="ui-table" class="game-ui hidden">
     <p><b>Relaxa</b> e aproveita a atmosfera</p>
   </div>
-  <div id="camera-views" class="camera-views">
+  <div id="camera-views" class="camera-views game-hidden">
     <button id="btn-view-machine" class="cam-btn active">MÁQUINA</button>
     <button id="btn-view-collection" class="cam-btn">COLEÇÃO</button>
     <button id="btn-view-table" class="cam-btn">MESA</button>
   </div>
 
-  <div id="mobile-controls">
+  <div id="mobile-controls" class="game-hidden">
     <div id="joystick-container">
       <div id="joystick-base"></div>
       <div id="joystick-stick"></div>
