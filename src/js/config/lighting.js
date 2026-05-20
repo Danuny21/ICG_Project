@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 export function setupLighting(scene) {
     // Luz de Preenchimento
-    // Céu: azul-escuro/roxo noturno | Chão: cinza escuro
+    // Céu: azul-escuro/roxo noturno | Chão: cinzento escuro
     const hemiLight = new THREE.HemisphereLight(0x0a0a2e, 0x222222, 0.15);
     scene.add(hemiLight);
 
@@ -13,10 +13,10 @@ export function setupLighting(scene) {
     dirLight.shadow.bias = -0.001;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.left = -24;
-    dirLight.shadow.camera.right = 24;
-    dirLight.shadow.camera.top = 40;
-    dirLight.shadow.camera.bottom = -20;
+    dirLight.shadow.camera.left = -150;
+    dirLight.shadow.camera.right = 150;
+    dirLight.shadow.camera.top = 150;
+    dirLight.shadow.camera.bottom = -150;
     scene.add(dirLight);
 
     // Guardar referências na scene para controlo de dia/noite
@@ -25,7 +25,8 @@ export function setupLighting(scene) {
 }
 
 export function updateLightsForTimeOfDay(scene, isNight) {
-    // HemisphereLight — preenchimento ambiente
+    // Cor de fundo da cena (céu)
+    scene.background?.set(isNight ? 0x0a0a1a : 0x87ceeb);
     if (scene.userData.hemiLight) {
         if (isNight) {
             scene.userData.hemiLight.color.set(0x1a1a3e);           // Céu noturno
@@ -44,13 +45,9 @@ export function updateLightsForTimeOfDay(scene, isNight) {
         scene.userData.dirLight.color.set(isNight ? 0x8888cc : 0xffffff);
     }
 
-    // Luz interior da Máquina de Garras
-    // só funfa de noite
+    // Luz interior da Máquina de Garras — intensidade baixa de dia, alta de noite
     if (scene.userData.clawInteriorLight) {
-        scene.userData.clawInteriorLight.intensity = isNight ? 50 : 0;
-    }
-    if (scene.userData.clawInteriorBottomLight) {
-        scene.userData.clawInteriorBottomLight.intensity = isNight ? 50 : 0;
+        scene.userData.clawInteriorLight.intensity = isNight ? 2000 : 80;
     }
 
     // Candeeiro em cima da Máquina de Garras

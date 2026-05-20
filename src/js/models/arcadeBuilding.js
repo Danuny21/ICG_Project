@@ -13,7 +13,7 @@ import { createFrame } from './frame.js';
 import { createCounter } from './counter.js';
 import { createLamp } from './lamp.js';
 import { createCeilingFan } from './ceilingFan.js';
-import { createTokens } from './tokens.js';
+import { createExterior } from './exterior.js';
 
 // Cria a estrutura do edifício do arcade, incluindo paredes, chão, mobíla e iluminação.
 export function createArcadeBuilding(scene) {
@@ -102,26 +102,9 @@ export function createArcadeBuilding(scene) {
     backGlass.position.set(0, windowSill + windowHeight / 2, backWallZ + THICKNESS * 0.3);
     buildingGroup.add(backGlass);
 
-    // Exterior aka um plano com cor
-    const exteriorMat = new THREE.MeshBasicMaterial({ color: 0x000088, side: THREE.DoubleSide });
-    const exterior = new THREE.Mesh(new THREE.PlaneGeometry(windowWidth * 3, windowHeight * 3), exteriorMat);
-    exterior.position.set(0, 25, backWallZ - 20);
-    buildingGroup.add(exterior);
-
-    // Luzes exteriores para simular a iluminação da rua a entrar pela janela
-    const windowLight = new THREE.PointLight(0x4444ff, 15, 100);
-    windowLight.position.set(0, 21, backWallZ - 5);
-    buildingGroup.add(windowLight);
-    const windowSpot = new THREE.SpotLight(0x4444ff, 20, 150, Math.PI / 3, 0.5);
-    windowSpot.position.set(0, 21, backWallZ - 2);
-    windowSpot.target.position.set(0, 10, 0);
-    buildingGroup.add(windowSpot);
-    buildingGroup.add(windowSpot.target);
-
-    // Guardar na scene para controlo de dia/noite
-    scene.userData.exteriorMat = exteriorMat;
-    scene.userData.windowLight = windowLight;
-    scene.userData.windowSpot = windowSpot;
+    // Exterior visível pela janela: chão, árvores e céu
+    const exteriorGroup = createExterior(windowWidth, windowHeight, windowSill, backWallZ);
+    buildingGroup.add(exteriorGroup);
 
     // Parede lateral esquerda
     const sideLength = DEPTH + THICKNESS * 2;
@@ -281,10 +264,6 @@ export function createArcadeBuilding(scene) {
             juice.position.set(1.0, 3.1, -0.5);
             table.add(juice);
             
-            const tableTokens = createTokens();
-            tableTokens.position.set(-1.0, 3.1, 0.5);
-            tableTokens.scale.setScalar(0.4);
-            table.add(tableTokens);
         }
         
         // Aplica sombras na mesa e em todos os adereços em cima dela
@@ -360,7 +339,8 @@ export function createArcadeBuilding(scene) {
     // Candeeiro de Bilhar
     const poolLamp = createLamp(true, 150);
     poolLamp.position.set(0, 35, -45);
-    poolLamp.scale.setScalar(SCALE_FACTOR * 1.0); 
+    poolLamp.scale.setScalar(SCALE_FACTOR * 1.0);
+    buildingGroup.add(poolLamp);
     scene.userData.poolLamp = poolLamp;
 
     // Candeeiro de Balcão
@@ -391,21 +371,5 @@ export function createArcadeBuilding(scene) {
             blueNeonMat.color.setHex(theme.NEON || theme.FRAME);
             blueNeonMat.emissive.setHex(theme.NEON || theme.FRAME);
         },
-        // Função para alternar entre dia e noite
-        setExteriorTheme: (theme) => {
-            if (theme === 'dia') {
-                exterior.material.color.setHex(0x87ceeb);
-                windowLight.color.set(0xffffff);
-                windowLight.intensity = 2;
-                windowSpot.color.set(0xffcc88);
-                windowSpot.intensity = 10;
-            } else {
-                exterior.material.color.setHex(0x000088);
-                windowLight.color.set(0x4444ff);
-                windowLight.intensity = 15;
-                windowSpot.color.set(0x4444ff);
-                windowSpot.intensity = 20;
-            }
-        }
     };
 }

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// Colisão da câmara com a geometria da cena — não usado no fluxo principal (substituído pelos limites do CameraManager).
 export class CameraCollision {
     constructor(camera, controls, scene) {
         this.camera = camera;
@@ -7,45 +8,32 @@ export class CameraCollision {
         this.scene = scene;
         this.raycaster = new THREE.Raycaster();
         this.collisionObjects = [];
-        this.offset = 1.0; // Distancia pa n passar paredes
+        this.offset = 1.0; // Distância mínima às paredes
     }
 
+    // Atualiza a lista de objetos que bloqueiam a câmara
     updateCollisionObjects() {
         this.collisionObjects = [];
-        this.scene.traverse((child) => {
-            if (child.isMesh && child.visible && 
-                !child.userData.ignoreCamera &&
-                !child.name.includes("capsule")
-            ) {
+        this.scene.traverse(child => {
+            if (child.isMesh && child.visible && !child.userData.ignoreCamera && !child.name.includes("capsule"))
                 this.collisionObjects.push(child);
-            }
         });
     }
 
+    // Empurra a câmara para fora de colisões com a geometria
     update() {
-        if (!this.controls || !this.camera || !this.controls.enabled) return;
+        if (!this.controls?.enabled) return;
 
-        const target = this.controls.target;
-        const camPos = this.camera.position;
-        
-        // Direção do target para a câmara
-        const direction = new THREE.Vector3().subVectors(camPos, target).normalize();
-        const distance = target.distanceTo(camPos);
+        const direction = new THREE.Vector3().subVectors(this.camera.position, this.controls.target).normalize();
+        const distance = this.controls.target.distanceTo(this.camera.position);
 
-        this.raycaster.set(target, direction);
+        this.raycaster.set(this.controls.target, direction);
         this.raycaster.far = distance;
 
-        const intersects = this.raycaster.intersectObjects(this.collisionObjects, false);
-
-        if (intersects.length > 0) {
-            const hit = intersects[0];
-            
-            // Se houver colisão, move a câmara para o ponto de impacto menos o offset
-            const newDistance = Math.max(2, hit.distance - this.offset);
-            
-            // Calculamos a nova posição baseada na distância segura
-            const newPos = new THREE.Vector3().copy(direction).multiplyScalar(newDistance).add(target);
-            this.camera.position.copy(newPos);
+        const hits = this.raycaster.intersectObjects(this.collisionObjects, false);
+        if (hits.length > 0) {
+            const safeDistance = Math.max(2, hits[0].distance - this.offset);
+            this.camera.position.copy(direction.multiplyScalar(safeDistance).add(this.controls.target));
         }
     }
 }

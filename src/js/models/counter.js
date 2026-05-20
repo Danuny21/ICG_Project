@@ -5,30 +5,30 @@ import { createPizza } from './pizza.js';
 import { createJuiceGlass } from './juice.js';
 
 export function createCounter() {
-    const matNeonBlue = new THREE.MeshPhongMaterial({
-        color: 0x00ffff,
-        emissive: 0x00ffff,
-        emissiveIntensity: 2,
-    });
-    const matCounter = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
-    const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
-
     const group = new THREE.Group();
 
+    const matCounter = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
+    const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
+    const matNeon = new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2 });
+
     const height = 8 * 1.05;
-    const base = new THREE.Mesh(new THREE.BoxGeometry(8, height, 70), matCounter);
-    base.position.set(0, height / 2, 0);
-    group.add(base);
 
-    const topPartHeight = 1;
-    const topPart = new THREE.Mesh(new THREE.BoxGeometry(9, topPartHeight, 71.5), matMetal);
-    topPart.position.set(0, height + topPartHeight / 2, 0);
-    group.add(topPart);
+    // Corpo principal do balcão
+    const body = new THREE.Mesh(new THREE.BoxGeometry(8, height, 70), matCounter);
+    body.position.set(0, height / 2, 0);
+    group.add(body);
 
-    const neon = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 70.5), matNeonBlue);
+    // Tampo metálico
+    const top = new THREE.Mesh(new THREE.BoxGeometry(9, 1, 71.5), matMetal);
+    top.position.set(0, height + 0.5, 0);
+    group.add(top);
+
+    // Faixa de néon decorativa
+    const neon = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 70.5), matNeon);
     neon.position.set(0, 5, 0);
     group.add(neon);
 
+    // Adereços em cima do balcão
     const cashReg = createCashRegister();
     cashReg.scale.setScalar(1.5);
     cashReg.position.set(0, 9.4, 20);
@@ -52,11 +52,11 @@ export function createCounter() {
 
     return {
         group,
-        updateTheme: (theme) => { // Muda o tema ao balcão
+        updateTheme: (theme) => {
             matCounter.color.setHex(theme.COUNTER || theme.STRUCTURE);
             matMetal.color.setHex(theme.METAL);
-            matNeonBlue.color.setHex(theme.NEON || theme.FRAME);
-            matNeonBlue.emissive.setHex(theme.NEON || theme.FRAME);
+            matNeon.color.setHex(theme.NEON || theme.FRAME);
+            matNeon.emissive.setHex(theme.NEON || theme.FRAME);
         }
     };
 }

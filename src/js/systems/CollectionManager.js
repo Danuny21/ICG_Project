@@ -159,6 +159,11 @@ export class CollectionManager {
         });
     }
 
+    // Devolve a quantidade de vezes que um prémio foi obtido
+    getPrizeCount(prizeId) {
+        return this.inventory.get(prizeId) ?? 0;
+    }
+
     // Devolve todos os objetos da coleção clicáveis
     getClickableModels() {
         return this._clickableModels;

@@ -60,10 +60,10 @@ export function createClawMachine(scene) {
     baseFrontRight.position.set(3.55, 7, 11.5);
     group.add(baseFrontRight);
 
-    // Teto
+    // Teto — sem castShadow para não bloquear a luz direcional para o interior
     const roof = new THREE.Mesh(new THREE.BoxGeometry(24, 2.4, 24), structureMat);
     roof.position.y = 42.2;
-    roof.castShadow = true;
+    roof.castShadow = false;
     group.add(roof);
 
     // Colunas
@@ -71,7 +71,7 @@ export function createClawMachine(scene) {
     [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]].forEach(([px, pz]) => {
         const post = new THREE.Mesh(postGeo, structureMat);
         post.position.set(px, 27.5, pz);
-        post.castShadow = true;
+        post.castShadow = false;
         group.add(post);
     });
 
@@ -205,20 +205,15 @@ export function createClawMachine(scene) {
     btnLight.position.set(5, 4, 0);
     panelGroup.add(btnLight);
 
-    // Luz interna no teto
-    const interiorLight = new THREE.PointLight(0xffeedd, 0, 30);
-    interiorLight.position.set(0, 38, 0);
+    // Luz interior
+    const interiorLight = new THREE.PointLight(0xffeedd, 0, 60);
+    interiorLight.position.set(0, 40, 0);
+    interiorLight.castShadow = false;
     group.add(interiorLight);
-    
-    // Luz interna do chão
-    // const interiorBottomLight = new THREE.PointLight(0xffeedd, 0, 20);
-    // interiorBottomLight.position.set(0, 5, 0);
-    // group.add(interiorBottomLight);
-    
-    // Guardar info da luz pa depois mudar a itensidade
-    if (scene) { 
+
+    // Guardar referência da luz interior para controlo de dia/noite
+    if (scene) {
         scene.userData.clawInteriorLight = interiorLight;
-        scene.userData.clawInteriorBottomLight = interiorBottomLight;
     }
 
     // Estrutura da garra (teto + cabo + cabeça)

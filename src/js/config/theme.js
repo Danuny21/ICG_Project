@@ -1,6 +1,6 @@
 // Configurações de temas e paletas de cores para os materiais da cena.
 export const THEMES = {
-    classic: {                  // Equivalente ao tema claro
+    classic: {
         name: "Clássico",
         STRUCTURE: 0xcc0000,
         ARCADE_COLORS: [0xff3333, 0x33ff33, 0x3333ff, 0xffff33],
@@ -20,7 +20,7 @@ export const THEMES = {
         CAPSULE_TOP: 0x00ccff,
         CAPSULE_RING: 0xffffff,
         COLOR_PALETTE: [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffaa00, 0xff007f],
-        BACKGROUND: 0x87ceeb,
+        BACKGROUND: 0x87ceeb,  // Céu azul claro
         TABLE: 0xcc2222,
         TABLE_LEGS: 0x888888,
         CHAIR: 0xcc2222,
@@ -48,7 +48,7 @@ export const THEMES = {
         CAPSULE_TOP: 0xFF0055,
         CAPSULE_RING: 0x2B2B36,
         COLOR_PALETTE: [0xFF0055, 0x00E5FF, 0xCCFF00, 0x7000FF, 0xFF00FF, 0x00FF9D, 0xFF5500],
-        BACKGROUND: 0x87ceeb,
+        BACKGROUND: 0x0a0a1a,  // Azul muito escuro / noturno
         TABLE: 0x001B3D,
         TABLE_LEGS: 0x888888,
         CHAIR: 0x001B3D,
