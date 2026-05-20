@@ -7,7 +7,7 @@ export class CameraCollision {
         this.scene = scene;
         this.raycaster = new THREE.Raycaster();
         this.collisionObjects = [];
-        this.offset = 1.0; // Distance to keep from walls
+        this.offset = 1.0; // Distancia pa n passar paredes
     }
 
     updateCollisionObjects() {

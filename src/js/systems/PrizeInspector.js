@@ -50,7 +50,7 @@ export class PrizeInspector {
         this._onPointerMove = this._onPointerMove.bind(this);
         this._onPointerUp = this._onPointerUp.bind(this);
 
-        // Pré-constrói o pedestal uma única vez para evitar stall de shader na 1ª utilização
+        // Pré-constrói o pedestal uma únicae reutiliza
         this.pedestal = this._buildPedestal();
         this.pedestal.visible = false;
         this.scene.add(this.pedestal);

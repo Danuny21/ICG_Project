@@ -1,30 +1,30 @@
 import * as THREE from "three";
 
-// Out-hole zone (local coordinates of the machine) — the claw cannot enter here while moving in IDLE
-const HOLE_ZONE = { xMin: -11.5, xMax: -4.0, zMin: 4.0, zMax: 11.5 };
-const CLAW_RADIUS = 3.8; // Claw collision radius for hole detection
 
-// Checks if the claw collides with the out-hole zone
+const HOLE_ZONE = { xMin: -11.5, xMax: -4.0, zMin: 4.0, zMax: 11.5 };
+const CLAW_RADIUS = 3.8;
+
+// Checka se a posição (x,z) da garra colide com a zona do buraco
 function collidesWithHole(x, z) {
     return (x + CLAW_RADIUS) > HOLE_ZONE.xMin && (x - CLAW_RADIUS) < HOLE_ZONE.xMax &&
            (z + CLAW_RADIUS) > HOLE_ZONE.zMin && (z - CLAW_RADIUS) < HOLE_ZONE.zMax;
 }
 
-// Places the claw fingers in rest position (semi-open)
+// Por na posição de descanso
 function restClaw(clawMachine) {
     clawMachine.fingers.forEach(f => {
         f.rotation.x = THREE.MathUtils.lerp(f.rotation.x, -Math.PI / 3.2, 0.02);
     });
 }
 
-// Opens the claw fingers completely (for descending)
+// Abrir a garra (para descer)
 function openClaw(clawMachine) {
     clawMachine.fingers.forEach(f => {
         f.rotation.x = THREE.MathUtils.lerp(f.rotation.x, -Math.PI / 2.2, 0.02);
     });
 }
 
-// Closes the claw fingers (angle depends on configured difficulty)
+// Fechar a garra (depende da dificuldade)
 function closeClaw(clawMachine) {
     const closeAngle = window.CONFIG_JOGO ? window.CONFIG_JOGO.gripRotation : -Math.PI / 7;
     clawMachine.fingers.forEach(f => {
@@ -32,22 +32,23 @@ function closeClaw(clawMachine) {
     });
 }
 
-// Main claw animation update function, called every frame.
-// Manages the state machine: IDLE → DESCEND → GRAB → ASCEND → RETURN → DROP → IDLE
+// Função principal
+// Estados: IDLE → DESCEND → GRAB → ASCEND → RETURN → DROP → IDLE
 export function updateClawAnimation(gameState, animTime, clawMachine, keys, limits, moveSpeed) {
     let newState = gameState;
     let newTime = animTime;
 
-    // Straightens the claw mechanism when not moving/swinging
+    // Se não estiver a descer, subir ou retornar, a garra volta à posição de descanso e pode ser movida
     if (newState !== "RETURN" && newState !== "ASCEND" && newState !== "IDLE") {
         clawMachine.clawMechanism.rotation.z = THREE.MathUtils.lerp(clawMachine.clawMechanism.rotation.z, 0, 0.1);
         clawMachine.clawMechanism.rotation.x = THREE.MathUtils.lerp(clawMachine.clawMechanism.rotation.x, 0, 0.1);
     }
 
+    // IDLE: pode mover a garra com as setas ou WASD
     if (newState === "IDLE") {
         restClaw(clawMachine);
 
-        // Move the claw based on keys (arrows or WASD)
+        // Move a garra com as setas ou WASD
         const pos = clawMachine.roofMechanism.position;
         let dx = 0, dz = 0;
         if (keys.up)    dz -= 1;
@@ -55,34 +56,37 @@ export function updateClawAnimation(gameState, animTime, clawMachine, keys, limi
         if (keys.left)  dx -= 1;
         if (keys.right) dx += 1;
 
-        // Normalize diagonal movement
+        // Normalizar movimento diagonal
         if (dx !== 0 && dz !== 0) {
             const len = Math.sqrt(dx * dx + dz * dz);
             dx /= len; dz /= len;
         }
 
-        // Apply movement with limits and hole collision check
+        // Applicar movimento com limites e colisão com o buraco
         if (dz < 0) { const np = pos.z + dz * moveSpeed; if (np - CLAW_RADIUS > -limits.z) pos.z = np; }
         if (dz > 0) { const np = pos.z + dz * moveSpeed; if (np + CLAW_RADIUS < limits.z && !collidesWithHole(pos.x, np)) pos.z = np; }
         if (dx < 0) { const np = pos.x + dx * moveSpeed; if (np - CLAW_RADIUS > -limits.x && !collidesWithHole(np, pos.z)) pos.x = np; }
         if (dx > 0) { const np = pos.x + dx * moveSpeed; if (np + CLAW_RADIUS < limits.x) pos.x = np; }
 
-        // Tilt the claw slightly in the direction of movement
+        // Anima a garra pa rodar um pouco na direção do movimento
         clawMachine.clawMechanism.rotation.x = THREE.MathUtils.lerp(clawMachine.clawMechanism.rotation.x, dz * 0.05, 0.1);
         clawMachine.clawMechanism.rotation.z = THREE.MathUtils.lerp(clawMachine.clawMechanism.rotation.z, -dx * 0.05, 0.1);
     }
 
-    // Animate joystick and button for visual feedback
+    // Animar o joystick
     clawMachine.controls.joystick.rotation.x = THREE.MathUtils.lerp(
         clawMachine.controls.joystick.rotation.x,
         keys.up ? -Math.PI / 8 : keys.down ? Math.PI / 8 : 0, 0.2);
+
     clawMachine.controls.joystick.rotation.z = THREE.MathUtils.lerp(
         clawMachine.controls.joystick.rotation.z,
         keys.left ? Math.PI / 8 : keys.right ? -Math.PI / 8 : 0, 0.2);
+
+    // Animar o botão
     clawMachine.controls.button.position.y = THREE.MathUtils.lerp(
         clawMachine.controls.button.position.y, keys.action ? 0.45 : 0.65, 0.3);
 
-    // DESCEND: cable goes down
+    // DESCEND: cabo desce e a garra abre
     if (newState === "DESCEND") {
         openClaw(clawMachine);
         if (clawMachine.cableMechanism.position.y > -22) {
@@ -93,14 +97,14 @@ export function updateClawAnimation(gameState, animTime, clawMachine, keys, limi
         }
     }
 
-    // GRAB: claw closes and waits
+    // GRAB: a garra fecha, espera e volta ao topo
     if (newState === "GRAB") {
         closeClaw(clawMachine);
         newTime++;
         if (newTime > 150) newState = "ASCEND";
     }
 
-    // ASCEND: cable goes up with a shake effect
+    // ASCEND: A garra sobe com shake e via para o buraco
     if (newState === "ASCEND") {
         closeClaw(clawMachine);
         const shake = window.CONFIG_JOGO ? window.CONFIG_JOGO.shake : 0.02;
@@ -115,7 +119,7 @@ export function updateClawAnimation(gameState, animTime, clawMachine, keys, limi
         }
     }
 
-    // RETURN: claw moves back to the drop position
+    // RETURN: A garra vai para o buraco
     if (newState === "RETURN") {
         closeClaw(clawMachine);
         const pos = clawMachine.roofMechanism.position;
@@ -133,14 +137,14 @@ export function updateClawAnimation(gameState, animTime, clawMachine, keys, limi
         }
     }
 
-    // DROP: claw opens and waits before IDLE
+    // DROP: a garra abre e depois volta po idle
     if (newState === "DROP") {
         openClaw(clawMachine);
         newTime++;
         if (newTime > 80) newState = "IDLE";
     }
 
-    // Update visual cable length
+    // Altera o tamanho do cabo conforme a posição da garra
     const cableLength = Math.abs(clawMachine.cableMechanism.position.y);
     clawMachine.cable.scale.y = Math.max(0.1, cableLength);
 

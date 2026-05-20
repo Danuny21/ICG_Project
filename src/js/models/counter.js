@@ -5,27 +5,27 @@ import { createPizza } from './pizza.js';
 import { createJuiceGlass } from './juice.js';
 
 export function createCounter() {
-    const matNeonAzul = new THREE.MeshPhongMaterial({
+    const matNeonBlue = new THREE.MeshPhongMaterial({
         color: 0x00ffff,
         emissive: 0x00ffff,
         emissiveIntensity: 2,
     });
-    const matBalcao = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
+    const matCounter = new THREE.MeshPhongMaterial({ color: 0x151525, shininess: 40 });
     const matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
 
     const group = new THREE.Group();
 
-    const altura = 8 * 1.05;
-    const base = new THREE.Mesh(new THREE.BoxGeometry(8, altura, 70), matBalcao);
-    base.position.set(0, altura / 2, 0);
+    const height = 8 * 1.05;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(8, height, 70), matCounter);
+    base.position.set(0, height / 2, 0);
     group.add(base);
 
-    const tampoAltura = 1;
-    const tampo = new THREE.Mesh(new THREE.BoxGeometry(9, tampoAltura, 71.5), matMetal);
-    tampo.position.set(0, altura + tampoAltura / 2, 0);
-    group.add(tampo);
+    const topPartHeight = 1;
+    const topPart = new THREE.Mesh(new THREE.BoxGeometry(9, topPartHeight, 71.5), matMetal);
+    topPart.position.set(0, height + topPartHeight / 2, 0);
+    group.add(topPart);
 
-    const neon = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 70.5), matNeonAzul);
+    const neon = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 70.5), matNeonBlue);
     neon.position.set(0, 5, 0);
     group.add(neon);
 
@@ -52,11 +52,11 @@ export function createCounter() {
 
     return {
         group,
-        updateTheme: (theme) => {
-            matBalcao.color.setHex(theme.COUNTER || theme.STRUCTURE);
+        updateTheme: (theme) => { // Muda o tema ao balcão
+            matCounter.color.setHex(theme.COUNTER || theme.STRUCTURE);
             matMetal.color.setHex(theme.METAL);
-            matNeonAzul.color.setHex(theme.NEON || theme.FRAME);
-            matNeonAzul.emissive.setHex(theme.NEON || theme.FRAME);
+            matNeonBlue.color.setHex(theme.NEON || theme.FRAME);
+            matNeonBlue.emissive.setHex(theme.NEON || theme.FRAME);
         }
     };
 }

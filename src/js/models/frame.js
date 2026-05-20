@@ -16,7 +16,7 @@ export function createFrame(width = 10, height = 14, texture = null) {
     frameMesh.castShadow = true;
     frameGroup.add(frameMesh);
  
-    // Fundo (onde fica a arte)
+    // Fundo substituivel por textura
     const backMaterial = new THREE.MeshPhongMaterial({ 
         color: texture ? 0xffffff : 0x050505, 
         map: texture,

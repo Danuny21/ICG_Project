@@ -9,9 +9,11 @@ const tp = loadTextureSet(
     { x: 2, y: 1 } // Repetição leve para envolver a cápsula
 );
 
+// Função para criar uma cápsula
 export function createCapsule() {
     const group = new THREE.Group();
 
+    // Depende do tema
     const colors = THEME.COLOR_PALETTE;
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
@@ -38,33 +40,32 @@ export function createCapsule() {
     const baseGeo = new THREE.SphereGeometry(1.5, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
     const topGeo = new THREE.SphereGeometry(1.5, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2);
 
-    // Bottom half
+    // Parte inferior da cápsula
     const baseMesh = new THREE.Mesh(baseGeo, baseMat);
     baseMesh.castShadow = true;
     baseMesh.receiveShadow = true;
     group.add(baseMesh);
 
-    // Hinge (allows opening)
+    // Dobradiça
     const hinge = new THREE.Group();
     hinge.position.set(0, 0, -1.5);
     group.add(hinge);
 
-    // Top half
+    // Parte superior da cápsula
     const topMesh = new THREE.Mesh(topGeo, topMat);
     topMesh.position.set(0, 0, 1.5);
     topMesh.castShadow = true;
     topMesh.receiveShadow = true;
     hinge.add(topMesh);
 
-    // Ring
+    // Anel
     const ringGeo = new THREE.TorusGeometry(1.54, 0.075, 6, 12);
     const ring = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({ color: THEME.CAPSULE_RING, flatShading: true }));
     ring.rotation.x = Math.PI / 2;
     baseMesh.add(ring);
 
-    // Exporta o grupo e a dobradiça
     return {
-        group: group,
-        hinge: hinge
+        group: group, // O grupo principal da cápsula
+        hinge: hinge //Dobradiça pa animar a cápsula a abrir
     };
 }

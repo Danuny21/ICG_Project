@@ -200,7 +200,6 @@ export class PhysicsWorld {
 
     // Simula a porta de saída com efeito de mola: cápsulas que batem na porta empurram-na
     _updateDoor(capsules, clawMachine) {
-        // CORREÇÃO: Usar 'door' em vez de 'porta'
         if (!clawMachine.door || !this._doorBody) return;
         const invQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -this.baseRotY);
         const CHUTE_X_MIN = -11.1, CHUTE_X_MAX = -4.5;

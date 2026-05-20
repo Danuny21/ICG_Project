@@ -2,15 +2,15 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
+// Cache golbal pa n carregar o mesmo modelo várias vezes
 const modelCache = {}; // { path: { scene: THREE.Group, animations: AnimationClip[] } }
 const _loader = new GLTFLoader(); // Reutilizar o mesmo loader evita overhead de criação
 
-// Carrega um prémio para a cache e para a cena, garantindo que clones funcionam corretamente com SkeletonUtils.
+// Carrega um prémio para a cache e para a cena
 export function loadPrize(filePath, parentGroup, onLoadCallback) {
     if (modelCache[filePath]) {
         const cached = modelCache[filePath];
-        // SkeletonUtils.clone é essencial para modelos com SkinnedMesh (ossos/animações)
-        const clone = SkeletonUtils.clone(cached.scene);
+        const clone = SkeletonUtils.clone(cached.scene); // Clonar tbm o esuqeleto pa animaações
 
         clone.scale.set(1, 1, 1);
         clone.position.set(0, 0, 0);
@@ -20,6 +20,7 @@ export function loadPrize(filePath, parentGroup, onLoadCallback) {
         return;
     }
 
+    // Se n tiver no cache, carrega do ficheiro e depois guarda no cache para futuras chamadas
     const loader = _loader;
 
     loader.load(`./src/js/models/glb/${filePath}`, function (gltf) {
@@ -58,13 +59,7 @@ export function loadPrize(filePath, parentGroup, onLoadCallback) {
     });
 }
 
-/**
- * Pré-carrega todos os modelos da lista para a cache em background.
- * Deve ser chamado durante o loading screen para evitar freezes durante o jogo.
- * @param {Array} prizeList - Array de { file } de prizes.js
- * @param {Function} [onProgress] - Callback(loaded, total) chamado a cada modelo carregado
- * @returns {Promise} Resolve quando todos os modelos estiverem em cache
- */
+// Carrega uma lista de prémios para a cache
 export function preloadAllPrizes(prizeList, onProgress) {
     const toLoad = prizeList.filter(p => !modelCache[p.file]);
     if (toLoad.length === 0) return Promise.resolve();

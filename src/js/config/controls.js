@@ -3,11 +3,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 // Cria e configura os controlos de câmara orbital (zoom, rotação, pan)
 export function setupOrbitControls(camera, renderer) {
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;         // Suaviza os movimentos da câmara
-    controls.minDistance = 20;             // Distância mínima ao alvo
-    controls.maxDistance = 85;             // Distância máxima ao alvo
-    controls.maxPolarAngle = Math.PI / 2.1; // Impede a câmara de ir abaixo do chão
-    controls.minAzimuthAngle = 0;
+    controls.enableDamping = true;          // Suaviza os movimentos da câmara
+    controls.minDistance = 20;              // Distância mínima ao alvo
+    controls.maxDistance = 85;              // Distância máxima ao alvo
+    controls.maxPolarAngle = Math.PI / 2.1; // Impede a câmara dpassar do chão
+    controls.minAzimuthAngle = 0;           // Impede a câmara de pssar do teto
     controls.maxAzimuthAngle = Math.PI * 0.75;
     controls.target.set(0, 18, 0);         // Ponto inicial para onde a câmara olha
     controls.update();
@@ -29,12 +29,12 @@ export function setupKeyboard(canAct, onSpaceAction) {
         if (key === "arrowright" || key === "d") keys.right = true;
         if (e.key === " ") {
             keys.action = true;
-            if (onSpaceAction) onSpaceAction(); // Dispara a descida da garra
+            if (onSpaceAction) onSpaceAction();           // Dispara a descida da garra/animações das cápsulas e prémiso
             setTimeout(() => (keys.action = false), 300); // Reseta após animação do botão
         }
     });
 
-    window.addEventListener("keyup", (e) => {
+    window.addEventListener("keyup", (e) => { // Resetar o estado quando soltra a tecla
         const key = e.key.toLowerCase();
         if (key === "arrowup"    || key === "w") keys.up    = false;
         if (key === "arrowdown"  || key === "s") keys.down  = false;

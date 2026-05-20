@@ -11,12 +11,13 @@ export class CollectionManager {
         this.inventory = new Map();           // prizeId → quantidade obtida
         this.originalMaterials = new Map();   // Materiais originais de cada modelo
         this.mixers = new Map();              // Animadores de cada modelo
-        this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        this._clickableModels = [];           // Cache dos modelos da coleção (evita traverse por clique)
+        this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Material preto
+        this._clickableModels = [];           // Cache dos modelos da coleção
     }
 
-    // Regista um modelo na coleção; aplica silhueta se ainda não desbloqueado
+    // Regista um modelo na coleção
     registerPrize(prizeId, model, animations = [], idleAnimName = null) {
+        // Criar entrada no inventário se não existir
         if (!this.inventory.has(prizeId)) this.inventory.set(prizeId, 0);
 
         model.name = `collection_${prizeId}`;
@@ -28,6 +29,7 @@ export class CollectionManager {
         this._clickableModels.push(model);
 
         const materialsCache = new Map();
+        // Se n for desbloqueado n dá pa clicar
         const isLocked = this.inventory.get(prizeId) === 0;
 
         model.traverse(child => {
@@ -43,7 +45,7 @@ export class CollectionManager {
             const clip = this._findClip(animations, idleAnimName);
             const action = mixer.clipAction(clip);
             action.play();
-            if (isLocked) action.paused = true;
+            if (isLocked) action.paused = true; // Se estiver bloqueado, não há animação
             this.mixers.set(prizeId, mixer);
         }
     }
@@ -74,7 +76,7 @@ export class CollectionManager {
         this.inventory.set(prizeId, count + 1);
     }
 
-    // Desperta/Desbloqueia todos os prémios (para debug/UI)
+    // Desperta/Desbloqueia todos os prémios
     unlockAll() {
         this.inventory.forEach((count, prizeId) => {
             if (count === 0) {
@@ -105,10 +107,6 @@ export class CollectionManager {
     update(deltaTime) {
         this.mixers.forEach(mixer => mixer.update(deltaTime));
     }
-
-    getPrizeCount(prizeId) { return this.inventory.get(prizeId) || 0; }
-
-    getInventoryState() { return Object.fromEntries(this.inventory); }
 
     // Cria as prateleiras na sala e popula-as com os modelos de cada categoria
     setupRoom(arcadeBuilding) {
@@ -161,12 +159,12 @@ export class CollectionManager {
         });
     }
 
-    // Devolve todos os objetos da coleção clicáveis (cache local, sem traverse)
+    // Devolve todos os objetos da coleção clicáveis
     getClickableModels() {
         return this._clickableModels;
     }
 
-    // Procura uma animação pelo nome (exato ou aproximado), com fallback para 'idle'
+    // Procura uma animação pelo nome
     _findClip(clips, name) {
         if (name) {
             const exact = clips.find(c => c.name === name);

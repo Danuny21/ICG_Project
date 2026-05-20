@@ -1,7 +1,7 @@
 // Lista de todos os prémios disponíveis na máquina de garras.
 // Cada entrada define o nome, ficheiro 3D, peso de probabilidade,
 // escala inicial (dentro da cápsula), escala final (na inspeção),
-// deslocamento vertical e nome da animação em repouso.
+// deslocamento vertical e nome da animaçãa.
 export const PRIZE_LIST = [
     // ANIMAIS
     { name: "Alpaca",       file: "animals/Alpaca.glb",       weight: 10, scale: 0.25, targetScale: 0.75, offsetY: -0.5, idle: "Idle_2" },
@@ -16,17 +16,17 @@ export const PRIZE_LIST = [
     { name: "Lobo",         file: "animals/Wolf.glb",         weight: 10, scale: 0.45, targetScale: 1.5,  offsetY: -0.5, idle: "Attack" },
 
     // DINOSSAUROS
-    { name: "Apatossauro",     file: "dinossaurs/Apatosaurus.glb",     weight: 10, scale: 0.05, targetScale: 0.35, offsetY: 0,    idle: "Armature|Apatosaurus_Run" },
-    { name: "Parassaurolofo",  file: "dinossaurs/Parasaurolophus.glb", weight: 10, scale: 0.2,  targetScale: 0.75, offsetY: -0.5, idle: "Armature|Parasaurolophus_Run" },
-    { name: "Estegossauro",    file: "dinossaurs/Stegosaurus.glb",     weight: 10, scale: 0.08, targetScale: 0.35, offsetY: -0.2, idle: "Armature|Stegosaurus_Attack" },
-    { name: "T-Rex",           file: "dinossaurs/T-Rex.glb",           weight: 10, scale: 0.08, targetScale: 0.35, offsetY: -0.5, idle: "Armature|TRex_Attack" },
-    { name: "Triceratops",     file: "dinossaurs/Triceratops.glb",     weight: 10, scale: 0.08, targetScale: 0.35, offsetY: -0.2, idle: "Armature|Triceratops_Walk" },
-    { name: "Velociraptor",    file: "dinossaurs/Velociraptor.glb",    weight: 10, scale: 0.18, targetScale: 0.75, offsetY: -0.3, idle: "Armature|Velociraptor_Run" },
+    { name: "Apatossauro",     file: "dinossaurs/Apatosaurus.glb",     weight: 5, scale: 0.05, targetScale: 0.35, offsetY: 0,    idle: "Armature|Apatosaurus_Run" },
+    { name: "Parassaurolofo",  file: "dinossaurs/Parasaurolophus.glb", weight: 5, scale: 0.2,  targetScale: 0.75, offsetY: -0.5, idle: "Armature|Parasaurolophus_Run" },
+    { name: "Estegossauro",    file: "dinossaurs/Stegosaurus.glb",     weight: 5, scale: 0.08, targetScale: 0.35, offsetY: -0.2, idle: "Armature|Stegosaurus_Attack" },
+    { name: "T-Rex",           file: "dinossaurs/T-Rex.glb",           weight: 5, scale: 0.08, targetScale: 0.35, offsetY: -0.5, idle: "Armature|TRex_Attack" },
+    { name: "Triceratops",     file: "dinossaurs/Triceratops.glb",     weight: 5, scale: 0.08, targetScale: 0.35, offsetY: -0.2, idle: "Armature|Triceratops_Walk" },
+    { name: "Velociraptor",    file: "dinossaurs/Velociraptor.glb",    weight: 5, scale: 0.18, targetScale: 0.75, offsetY: -0.3, idle: "Armature|Velociraptor_Run" },
 
     // MONSTROS
-    { name: "Dragão",    file: "monsters/Dragon.glb",   weight: 10, scale: 0.3,  targetScale: 1.5, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
-    { name: "Esqueleto", file: "monsters/Skeleton.glb", weight: 10, scale: 0.25, targetScale: 1.1, offsetY: -0.3, idle: "SkeletonArmature|Skeleton_Running" },
-    { name: "Slime",     file: "monsters/Slime.glb",    weight: 10, scale: 0.5,  targetScale: 1.5, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk" },
+    { name: "Dragão",    file: "monsters/Dragon.glb",   weight: 1, scale: 0.3,  targetScale: 1.5, offsetY: -0.5, idle: "DragonArmature|Dragon_Flying" },
+    { name: "Esqueleto", file: "monsters/Skeleton.glb", weight: 1, scale: 0.25, targetScale: 1.1, offsetY: -0.3, idle: "SkeletonArmature|Skeleton_Running" },
+    { name: "Slime",     file: "monsters/Slime.glb",    weight: 1, scale: 0.5,  targetScale: 1.5, offsetY: -0.3, idle: "SlimeArmature|Slime_Walk" },
 ];
 
 // Sorteia um prémio da lista com base no peso de cada entrada.
@@ -38,6 +38,6 @@ export function drawPrize() {
         if (roll < prize.weight) return prize;
         roll -= prize.weight;
     }
-    // Fallback: devolve o primeiro prémio caso haja algum erro de arredondamento
+    // Fallback caso haja erro de arredonadar o valor
     return PRIZE_LIST[0];
 }

@@ -1,8 +1,6 @@
-/**
- * Visual themes for the Claw Machine
- */
+// Configurações de temas e paletas de cores para os materiais da cena.
 export const THEMES = {
-    classic: {
+    classic: {                  // Equivalente ao tema claro
         name: "Clássico",
         STRUCTURE: 0xcc0000,
         ARCADE_COLORS: [0xff3333, 0x33ff33, 0x3333ff, 0xffff33],
@@ -33,7 +31,7 @@ export const THEMES = {
     dark: {
         name: "Escuro",
         STRUCTURE: 0x11052C,
-        ARCADE_COLORS: [0x050A1F, 0x3B0059, 0x001B3D, 0x2B2B36], // Pretos, Roxos escuros, Azuis escuros, Cinzentos
+        ARCADE_COLORS: [0x050A1F, 0x3B0059, 0x001B3D, 0x2B2B36],
         FLOOR: 0x050A1F,
         FRAME: 0x00E5FF,
         GLASS: 0x00A2E8,

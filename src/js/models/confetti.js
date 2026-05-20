@@ -23,8 +23,8 @@ export function createConfetti(scene) {
         });
     }
 
-    // Funções para controlar os confetis
     return {
+        // Lançar confetis
         fire: function (position = new THREE.Vector3(0, 0, 0)) {
             confettiList.forEach(c => {
                 c.mesh.position.copy(position);
@@ -36,13 +36,17 @@ export function createConfetti(scene) {
                 );
             });
         },
-        hide: function () {
-            confettiList.forEach(c => { c.mesh.visible = false; });
+        // Apagar confetis
+        hide: function () { 
+            confettiList.forEach(c => { 
+                c.mesh.visible = false;
+            });
         },
+        // Fisica simples de gravidade e rotação
         update: function () {
             confettiList.forEach(c => {
                 if (c.mesh.visible) {
-                    c.velocity.y -= 0.005; // Gravity
+                    c.velocity.y -= 0.005
                     c.mesh.position.add(c.velocity);
 
                     c.mesh.rotation.x += c.rotationSpeed.x * 0.1;

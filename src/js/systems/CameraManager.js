@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 // Gere os diferentes pontos de vista da câmara: MÁQUINA, COLEÇÃO e MESA.
-// As transições entre vistas são suavizadas com interpolação linear (lerp).
 export class CameraManager {
     constructor(camera, controls, capsuleOpener) {
         this.camera = camera;
@@ -42,11 +41,13 @@ export class CameraManager {
             table: document.getElementById('btn-view-table')
         };
 
+        // Configura a vista inicial pá maáquina
         this.controls.maxDistance = 250;
         this.camera.position.copy(this.views.machine.pos);
         this.controls.target.copy(this.views.machine.target);
         this.controls.update();
 
+        // Eventos pa mudar de visão
         this._setupEvents();
     }
 
@@ -63,7 +64,6 @@ export class CameraManager {
         document.getElementById('ui-table')?.classList.toggle('hidden', state !== 'table');
         
         // Controlos Mobile: Joystick apenas na máquina, IR na máquina e coleção.
-        // As vistas de câmara (dentro de #mobile-controls) devem estar sempre visíveis.
         const mobileControls = document.getElementById('mobile-controls');
         if (mobileControls) {
             mobileControls.classList.remove('hidden'); // Sempre visível para mostrar os botões de câmara
@@ -81,7 +81,7 @@ export class CameraManager {
                 
                 const targetView = this.views[state];
 
-                // Se o inspetor de cápsula estiver ativo, sincroniza o fecho com o destino da câmara
+
                 if (this.capsuleOpener?.state === "FREE_VIEW") {
                     this.capsuleOpener.state = "CLOSING";
                     this.capsuleOpener._closingTime = 0;
@@ -106,7 +106,7 @@ export class CameraManager {
         });
     }
 
-    // Atualiza a câmara a cada frame: suaviza a transição e aplica os limites da vista ativa
+    // Atualiza a câmara a cada frame
     update() {
         if (this.capsuleOpener?.state === "CLOSING") {
             this.isTransitioning = false;
@@ -124,7 +124,7 @@ export class CameraManager {
                 this.camera.position.copy(target.pos);
                 this.controls.target.copy(target.target);
                 
-                // Garantir que os controlos estão habilitados/desabilitados corretamente após a transição
+                // Garantir que os controlos estão ativos/desativos corretamente após a transição
                 this.controls.enabled = (this.viewState === "machine");
             }
             this.controls.update();
@@ -144,9 +144,8 @@ export class CameraManager {
             this.controls.minDistance = 20;
             this.controls.maxDistance = 250;
         } else if (this.viewState === "table") {
-            // Vista da mesa: Câmara fixa no desktop, mas permite rodar um pouco no mobile
             const isMobile = window.matchMedia('(pointer: coarse)').matches;
-            if (isMobile) {
+            if (isMobile) { // Se for mobile deixa mexer um pouco pa ver a cena
                 this.controls.enabled = true;
                 this.controls.enablePan = false;
                 this.controls.enableZoom = false;
@@ -168,11 +167,11 @@ export class CameraManager {
                 // Fixar o ângulo polar para a câmara não subir nem descer
                 this.controls.minPolarAngle = basePolar;
                 this.controls.maxPolarAngle = basePolar;
-            } else {
+            } else { // Se n for mobile n mexe
                 this.controls.enabled = false;
             }
         }
- else if (this.viewState === "collection") {
+        else if (this.viewState === "collection") {
             // Vista da coleção: câmara fixa, sem controlos do utilizador
             this.controls.enabled = false;
         }

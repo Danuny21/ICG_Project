@@ -4,7 +4,7 @@ export function createFloatingShelf(width = 30) {
     const shelfGroup = new THREE.Group();
     shelfGroup.name = "FloatingShelf";
 
-    // Material da estante (tipo madeira escura)
+    // Material da estante
     const woodMaterial = new THREE.MeshStandardMaterial({
         color: 0x5c4033,
         roughness: 0.8,
@@ -27,7 +27,7 @@ export function createFloatingShelf(width = 30) {
     board.position.set(0, thickness / 2, 0);
     shelfGroup.add(board);
 
-    // Suportes metálicos robustos e inclinados
+    // Suportes metálicos inclinados
     const supportGeom = new THREE.BoxGeometry(0.8, 2.5, 0.8);
 
     // Distribuir suportes dependendo da largura
@@ -37,18 +37,12 @@ export function createFloatingShelf(width = 30) {
     for (let i = 0; i < numSupports; i++) {
         const support = new THREE.Mesh(supportGeom, metalMaterial);
         const posX = -width / 2 + 1 + i * spacing;
-
-        // Inclinação estilo braço de suporte (diagonal para a parede)
-        support.rotation.x = Math.PI / 8; // 45 graus
-
-        // Posicionar para ligar a prateleira à parede
-        // Como o pivot da estante está em 0, e a parede está atrás (Z negativo no grupo local)
+        support.rotation.x = Math.PI / 8;
         support.position.set(posX, -1, 0);
 
         shelfGroup.add(support);
     }
 
-    // Centrar o pivot na base da tábua
     shelfGroup.position.set(0, 0, 0);
 
     return shelfGroup;

@@ -48,12 +48,12 @@ export class CapsuleOpener {
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onSceneTouch = this._onSceneTouch.bind(this);
 
-        // Referências opcionais para limpeza completa da cápsula
+        // Referências para limpeza completa da cápsula
         this._physicsWorld = null;
         this._capsulesArray = null;
     }
 
-    // Define as referências necessárias para a limpeza completa (corpo Rapier + array)
+    // Define as referências necessárias para a limpeza completa
     setCleanupRefs(physicsWorld, capsulesArray) {
         this._physicsWorld = physicsWorld;
         this._capsulesArray = capsulesArray;
@@ -240,20 +240,20 @@ export class CapsuleOpener {
     _finalizeClose() {
         this._hidePrizeName();
 
-        // --- Limpeza completa da cápsula aberta ---
+        // Limpeza completa da cápsula aberta
         if (this.capsulePhysics) {
-            // 1. Remove o corpo Rapier (motor de física)
+            // Remove o corpo Rapier
             if (this._physicsWorld) {
                 this._physicsWorld.removeCapsuleBody(this.capsulePhysics);
             }
 
-            // 2. Remove do array global de cápsulas
+            // Remove do array global de cápsulas
             if (this._capsulesArray) {
                 const idx = this._capsulesArray.indexOf(this.capsulePhysics);
                 if (idx !== -1) this._capsulesArray.splice(idx, 1);
             }
 
-            // 3. Faz dispose da geometria e materiais do mesh da cápsula
+            // Faz dispose da geometria e materiais do mesh da cápsula
             const mesh = this.capsulePhysics.mesh;
             if (mesh) {
                 // Garante que está fora da cena (pode já ter sido removido no DISSOLVE)
@@ -271,7 +271,7 @@ export class CapsuleOpener {
             }
         }
 
-        // --- Limpeza do modelo do prémio ---
+        // Limpeza do modelo do prémio
         if (this.model) {
             this.scene.remove(this.model);
             this.model = null;

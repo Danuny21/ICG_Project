@@ -79,7 +79,7 @@ export class InteractionSystem {
             capsule.modeloInterno = model;
 
             this.capsuleOpener.openCapsule(
-                { group: capsule.mesh, hinge: capsule.dobradica }, // Usando nomes em inglês (group, hinge)
+                { group: capsule.mesh, hinge: capsule.dobradica },
                 capsule,
                 model,
                 prize.targetScale,
@@ -88,7 +88,7 @@ export class InteractionSystem {
                 prize.name
             );
 
-            // Desbloqueia o prémio na coleção
+            // Desloqueia o prémio
             this.collectionManager?.unlockPrize(prize.name);
         });
     }

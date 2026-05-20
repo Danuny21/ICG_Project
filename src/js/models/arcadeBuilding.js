@@ -15,7 +15,7 @@ import { createLamp } from './lamp.js';
 import { createCeilingFan } from './ceilingFan.js';
 import { createTokens } from './tokens.js';
 
-// Cria a estrutura do edifício do arcade, incluindo paredes, chão, mobiliário e iluminação.
+// Cria a estrutura do edifício do arcade, incluindo paredes, chão, mobíla e iluminação.
 export function createArcadeBuilding(scene) {
     const buildingGroup = new THREE.Group();
     scene.add(buildingGroup);
@@ -26,7 +26,7 @@ export function createArcadeBuilding(scene) {
     const THICKNESS = 2;
     const SCALE_FACTOR = 3;
 
-    // --- Materiais ---
+    // Materiais
     let wallMat = new THREE.MeshPhongMaterial({ color: 0x1a1a3e, shininess: 30 });
     const blueNeonMat = new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2 });
     const glassMat = new THREE.MeshPhongMaterial({ color: 0x88ddff, transparent: true, opacity: 0.15, shininess: 100, side: THREE.DoubleSide });
@@ -34,7 +34,7 @@ export function createArcadeBuilding(scene) {
     const metalMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
     const blindMat = new THREE.MeshPhongMaterial({ color: 0x33333d, shininess: 80, side: THREE.DoubleSide });
 
-    // --- Texturas ---
+    // Texturas
     const floorTex = loadTextureSet(
         "./src/js/textures/floor/Tiles074_1K-JPG",
         ["Color", "NormalGL", "Roughness", "Displacement"],
@@ -65,54 +65,53 @@ export function createArcadeBuilding(scene) {
         loader.load("./src/js/textures/posters/streetFighter.jpg")
     ];
 
-    // --- Piso ---
+    // Chão
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(WIDTH, DEPTH), floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     buildingGroup.add(floor);
 
-    // --- Parede Traseira com janela ---
+    // Parede com a janela
     const backWallZ = -(DEPTH / 2) - THICKNESS / 2;
     const windowWidth = 30;
     const windowHeight = 18;
     const windowSill = 12;
     const wingWidth = (WIDTH - windowWidth) / 2;
 
-    [
-        [wingWidth, HEIGHT, -(WIDTH / 2) + wingWidth / 2, HEIGHT / 2],
-        [wingWidth, HEIGHT, WIDTH / 2 - wingWidth / 2, HEIGHT / 2],
+    // Criar 2 paredes laterais à janela
+    [[wingWidth, HEIGHT, -(WIDTH / 2) + wingWidth / 2, HEIGHT / 2], 
+     [wingWidth, HEIGHT, WIDTH / 2 - wingWidth / 2, HEIGHT / 2],
     ].forEach(([w, h, x, y]) => {
         const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, THICKNESS), wallMat);
         m.position.set(x, y, backWallZ);
         buildingGroup.add(m);
     });
 
+    // Criar a parte superior da parede com a janela
     const backBottom = new THREE.Mesh(new THREE.BoxGeometry(windowWidth, windowSill, THICKNESS), wallMat);
     backBottom.position.set(0, windowSill / 2, backWallZ);
     buildingGroup.add(backBottom);
-
+    // Parte superior da parede acima da janela
     const backTopHeight = HEIGHT - windowSill - windowHeight;
     const backTop = new THREE.Mesh(new THREE.BoxGeometry(windowWidth, backTopHeight, THICKNESS), wallMat);
     backTop.position.set(0, HEIGHT - backTopHeight / 2, backWallZ);
     buildingGroup.add(backTop);
 
+    // Janela
     const backGlass = new THREE.Mesh(new THREE.BoxGeometry(windowWidth - 0.1, windowHeight - 0.1, THICKNESS * 0.1), glassMat);
     backGlass.position.set(0, windowSill + windowHeight / 2, backWallZ + THICKNESS * 0.3);
     buildingGroup.add(backGlass);
 
-    // --- Exterior (rua fora da janela) ---
+    // Exterior aka um plano com cor
     const exteriorMat = new THREE.MeshBasicMaterial({ color: 0x000088, side: THREE.DoubleSide });
-    const exterior = new THREE.Mesh(
-        new THREE.PlaneGeometry(windowWidth * 3, windowHeight * 3),
-        exteriorMat
-    );
+    const exterior = new THREE.Mesh(new THREE.PlaneGeometry(windowWidth * 3, windowHeight * 3), exteriorMat);
     exterior.position.set(0, 25, backWallZ - 20);
     buildingGroup.add(exterior);
 
+    // Luzes exteriores para simular a iluminação da rua a entrar pela janela
     const windowLight = new THREE.PointLight(0x4444ff, 15, 100);
     windowLight.position.set(0, 21, backWallZ - 5);
     buildingGroup.add(windowLight);
-
     const windowSpot = new THREE.SpotLight(0x4444ff, 20, 150, Math.PI / 3, 0.5);
     windowSpot.position.set(0, 21, backWallZ - 2);
     windowSpot.target.position.set(0, 10, 0);
@@ -124,39 +123,40 @@ export function createArcadeBuilding(scene) {
     scene.userData.windowLight = windowLight;
     scene.userData.windowSpot = windowSpot;
 
-    // --- Parede Esquerda ---
+    // Parede lateral esquerda
     const sideLength = DEPTH + THICKNESS * 2;
     const leftWall = new THREE.Mesh(new THREE.BoxGeometry(THICKNESS, HEIGHT, sideLength), wallMat);
     leftWall.position.set(-(WIDTH / 2) - THICKNESS / 2, HEIGHT / 2, 0);
     buildingGroup.add(leftWall);
 
-    // --- Parede Frontal com porta ---
+    // Parede com a porta
     const doorWidth = 14;
     const doorHeight = 22;
     const frontWallZ = DEPTH / 2 + THICKNESS / 2;
     const pillarWidth = (WIDTH - doorWidth) / 2;
-
-    [
-        [-(WIDTH / 2) + pillarWidth / 2, HEIGHT / 2],
-        [WIDTH / 2 - pillarWidth / 2, HEIGHT / 2],
+    // Paredes laterais à porta
+    [[-(WIDTH / 2) + pillarWidth / 2, HEIGHT / 2],
+      [WIDTH / 2 - pillarWidth / 2, HEIGHT / 2],
     ].forEach(([x, y]) => {
         const p = new THREE.Mesh(new THREE.BoxGeometry(pillarWidth, HEIGHT, THICKNESS), wallMat);
         p.position.set(x, y, frontWallZ);
         buildingGroup.add(p);
     });
 
+    // Viga superior da porta
     const beamHeight = HEIGHT - doorHeight;
     const frontBeam = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, beamHeight, THICKNESS), wallMat);
     frontBeam.position.set(0, HEIGHT - beamHeight / 2, frontWallZ);
     buildingGroup.add(frontBeam);
 
-    // --- Porta ---
+    // Porta
     const doorGroup = new THREE.Group();
     doorGroup.position.set(doorWidth / 2, doorHeight / 2, frontWallZ - 1);
     const doorThickness = THICKNESS * 0.4;
     const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, doorHeight, doorThickness), doorMat);
     doorMesh.position.set(-doorWidth / 2, 0, 0);
     doorGroup.add(doorMesh);
+    // Maçaneta exterior e interior
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), metalMat);
     knob.position.set(-doorWidth + 2, 0, doorThickness / 2 + 0.4);
     doorGroup.add(knob);
@@ -165,34 +165,36 @@ export function createArcadeBuilding(scene) {
     doorGroup.add(knobInt);
     buildingGroup.add(doorGroup);
 
-    // --- Parede Direita ---
+    // Parede lateral direita
     const rightWall = new THREE.Mesh(new THREE.BoxGeometry(THICKNESS, HEIGHT, sideLength), wallMat);
     rightWall.position.set(WIDTH / 2 + THICKNESS / 2, HEIGHT / 2, 0);
     buildingGroup.add(rightWall);
 
-    // --- Perciana ---
+    // Perciana
     const blindGroup = new THREE.Group();
     blindGroup.position.set(0, windowSill + windowHeight, backWallZ + THICKNESS * 0.3);
     const numSlats = 22;
     const slatHeight = 0.6;
     const slatSpacing = 0.1;
+    // Várias barras horizontais
     for (let i = 0; i < Math.round(numSlats * 0.7); i++) {
         const slat = new THREE.Mesh(new THREE.BoxGeometry(windowWidth - 0.1, slatHeight, THICKNESS * 0.2), blindMat);
         slat.rotation.x = -Math.PI / 8;
         slat.position.y = -(i * (slatHeight + slatSpacing)) - slatHeight / 2;
         blindGroup.add(slat);
     }
+    // Parapeito
     const bottomBar = new THREE.Mesh(new THREE.BoxGeometry(windowWidth - 0.1, 1.2, THICKNESS * 0.4), metalMat);
     bottomBar.position.y = -(Math.round(numSlats * 0.7) * (slatHeight + slatSpacing)) - 0.6;
     blindGroup.add(bottomBar);
     buildingGroup.add(blindGroup);
 
-    // --- Balcão ---
+    // Balcão + objetos em cima do balcão
     const counterObj = createCounter();
     counterObj.group.position.set(-(WIDTH / 2) + 15, 0, DEPTH / 2 - 28);
     counterObj.group.scale.setScalar(0.8);
     
-    // Ativa sombras no balcão e nos seus adereços todos
+    // Ativa sombras no grupo do balcão
     counterObj.group.traverse(child => {
         if (child.isMesh) {
             child.castShadow = true;
@@ -202,12 +204,12 @@ export function createArcadeBuilding(scene) {
     
     buildingGroup.add(counterObj.group);
 
-    // --- Teto ---
+    // Teto
     const roof = new THREE.Mesh(new THREE.BoxGeometry(WIDTH + THICKNESS * 2, THICKNESS, DEPTH + THICKNESS * 2), wallMat);
     roof.position.y = HEIGHT + THICKNESS / 2;
     buildingGroup.add(roof);
 
-    // --- Neons de rodapé ---
+    // Neon 
     const addNeon = (w, h, d, x, y, z) => {
         const n = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), blueNeonMat);
         n.position.set(x, y, z);
@@ -217,9 +219,9 @@ export function createArcadeBuilding(scene) {
     addNeon(0.5, 0.5, DEPTH, -(WIDTH / 2), 0.25, 0);
     addNeon(0.5, 0.5, DEPTH, WIDTH / 2, 0.25, 0);
 
-    // --- Máquinas de Arcade ---
+    // Máquinas de arcade
     const arcadeMachines = [];
-    scene.userData.arcadeEmissives = [];
+    scene.userData.arcadeEmissives = []; // Guardar para por cor neon
     [0xff3333, 0x33ff33, 0x3333ff, 0xffff33].forEach((color, i) => {
         const m = createArcadeMachine(color, i);
         m.group.scale.setScalar(SCALE_FACTOR);
@@ -234,14 +236,14 @@ export function createArcadeBuilding(scene) {
         });
     });
 
-    // --- Mesa de Bilhar ---
+    // Mesa de bilhar
     const poolTable = createBilliardTable();
-    const poolScale = SCALE_FACTOR * 1.0; // Diminuído de 1.2 (1.5*0.8) para 1.0
+    const poolScale = SCALE_FACTOR * 1.0;
     poolTable.scale.setScalar(poolScale);
     poolTable.position.set(0, 0, -45);
     poolTable.rotation.y = 0;
     
-    // Ativa sombras em toda a meza de bilhar (pano, bordos, tacos, bolas)
+    // Ativa sombras em toda a meza de bilhar + acessórios
     poolTable.traverse(child => {
         if (child.isMesh) {
             child.castShadow = true;
@@ -250,7 +252,7 @@ export function createArcadeBuilding(scene) {
     });
     buildingGroup.add(poolTable);
 
-    // --- Mesas Redondas com cadeiras ---
+    // Mesas com as cadeiras + coisas em cima
     const tableScale = SCALE_FACTOR * 0.90;
     const roundTables = [];
     const chairs = [];
@@ -294,6 +296,7 @@ export function createArcadeBuilding(scene) {
         });
         buildingGroup.add(table);
 
+        // 4 cadeiras em volta da mesa
         const chairOffset = 9;
         [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((rot, i) => {
             const chairObj = createChair();
@@ -323,7 +326,7 @@ export function createArcadeBuilding(scene) {
         scene.userData.tableLamps.push(tableLamp);
     });
 
-    // --- Plantas de chão ---
+    // Planta de chão
     [{ x: 45, z: -65 }, { x: -45, z: -65 }].forEach(pos => {
         const p = createFloorPlant();
         p.scale.setScalar(SCALE_FACTOR);
@@ -331,7 +334,7 @@ export function createArcadeBuilding(scene) {
         buildingGroup.add(p);
     });
 
-    // --- Balões ---
+    // Balões 
     [{ x: 48, z: 0 }, { x: 48, z: 30 }, { x: 48, z: 60 }].forEach(pos => {
         const b = createBalloons();
         b.scale.setScalar(SCALE_FACTOR);
@@ -339,14 +342,14 @@ export function createArcadeBuilding(scene) {
         buildingGroup.add(b);
     });
 
-    // --- Quadros (Posters) ---
+    // Posters
     const addFrame = (x, y, z, rotY, texIndex, w = 6, h = 8) => {
         const q = createFrame(w, h, posters[texIndex % posters.length]);
         q.position.set(x, y, z);
         q.rotation.y = rotY;
         buildingGroup.add(q);
     };
-    // Agora usando todos os 6 posters disponíveis e ajustando o offset para garantir visibilidade fora da parede
+
     addFrame(-42, 28, backWallZ + 1.1, 0, 0); // Donkey Kong
     addFrame(-35, 22, backWallZ + 1.1, 0, 1); // Pacman
     addFrame(30, 28, backWallZ + 1.1, 0, 2);  // Space Invaders
@@ -354,36 +357,33 @@ export function createArcadeBuilding(scene) {
     addFrame(27, 20, backWallZ + 1.1, 0, 4, 4, 5); // Pinball
     addFrame(-(WIDTH / 2) + 1.1, 25, 0, Math.PI / 2, 5, 8, 10); // Street Fighter
 
-    // --- Novos Elementos Decorativos ---
-
-    // 1. Candeeiro de Bilhar (com lâmpada)
+    // Candeeiro de Bilhar
     const poolLamp = createLamp(true, 150);
-    poolLamp.position.set(0, 35, -45); // Exatamente por cima da mesa de bilhar
-    poolLamp.scale.setScalar(SCALE_FACTOR * 1.0); // Ajustado para condizer com a mesa mais pequena
-    buildingGroup.add(poolLamp);
+    poolLamp.position.set(0, 35, -45);
+    poolLamp.scale.setScalar(SCALE_FACTOR * 1.0); 
     scene.userData.poolLamp = poolLamp;
 
-    // 1.1 Candeeiro de Balcão
+    // Candeeiro de Balcão
     const counterLamp = createLamp(true, 120);
     counterLamp.position.set(-(WIDTH / 2) + 15, 45, DEPTH / 2 - 28); // Por cima do balcão (-35, 35, 42)
     counterLamp.scale.setScalar(SCALE_FACTOR * 0.8);
     buildingGroup.add(counterLamp);
     scene.userData.counterLamp = counterLamp;
 
-    // 4. Ventoinha de Teto
+    // Ventoinha de Teto
     const fanObj = createCeilingFan();
-    fanObj.group.position.set(0, HEIGHT - 13.5, 0); // Rebaixado para ser visível na câmara
+    fanObj.group.position.set(0, HEIGHT - 13.5, 0);
     fanObj.group.scale.setScalar(SCALE_FACTOR * 1.5);
     buildingGroup.add(fanObj.group);
 
 
     return {
         group: buildingGroup,
-        door: doorGroup,
-        counter: counterObj.group,
-        blinds: blindGroup,
-        fan: fanObj.blades, // Exportamos as pás para animar no main.js
-        updateTheme: (theme) => {
+        door: doorGroup,            // Porta + maçanetas
+        counter: counterObj.group,  // Balcão + coisas em cima
+        blinds: blindGroup,         // Perciana
+        fan: fanObj.blades,         // Necessário para animar a ventoinha
+        updateTheme: (theme) => {   // Função para atualizar o tema em tudo de uma vez
             roundTables.forEach(t => t.updateTheme(theme));
             arcadeMachines.forEach(m => m.updateTheme(theme));
             counterObj.updateTheme(theme);
@@ -394,13 +394,13 @@ export function createArcadeBuilding(scene) {
         // Função para alternar entre dia e noite
         setExteriorTheme: (theme) => {
             if (theme === 'dia') {
-                exterior.material.color.setHex(0x87ceeb); // Light blue for day
+                exterior.material.color.setHex(0x87ceeb);
                 windowLight.color.set(0xffffff);
                 windowLight.intensity = 2;
                 windowSpot.color.set(0xffcc88);
                 windowSpot.intensity = 10;
             } else {
-                exterior.material.color.setHex(0x000088); // Dark blue for night
+                exterior.material.color.setHex(0x000088);
                 windowLight.color.set(0x4444ff);
                 windowLight.intensity = 15;
                 windowSpot.color.set(0x4444ff);

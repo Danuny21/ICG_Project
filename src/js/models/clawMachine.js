@@ -32,41 +32,41 @@ export function createClawMachine(scene) {
 
     const { structure: structureMat, glass: glassMat, floor: floorMat, metal: metalMat, mechanism: mechanismMat, finger: fingerMat, frame: frameMat } = materials;
 
-    // ── Base Oca ─────────────────────────────────────────────────────────────────
+    // Base Oca
     const thickness = 1;
 
-    // Door floor
+    // Porta inferior
     const baseBottom = new THREE.Mesh(new THREE.BoxGeometry(10, 0.95, 10), structureMat);
     baseBottom.position.set(-6.5, 0.5, 9.8);
     group.add(baseBottom);
 
-    // Base back wall
+    // Base de trás
     const baseBack = new THREE.Mesh(new THREE.BoxGeometry(24, 14, thickness), structureMat);
     baseBack.position.set(0, 7, -11.5);
     group.add(baseBack);
 
-    // Base right wall
+    // Base da direita
     const baseRight = new THREE.Mesh(new THREE.BoxGeometry(thickness, 14, 24), structureMat);
     baseRight.position.set(11.5, 7, 0);
     group.add(baseRight);
 
-    // Base left wall
+    // Base da esquerda
     const baseLeft = new THREE.Mesh(new THREE.BoxGeometry(thickness, 14, 24), structureMat);
     baseLeft.position.set(-11.5, 7, 0);
     group.add(baseLeft);
 
-    // Base front-right wall
+    // Base da frente
     const baseFrontRight = new THREE.Mesh(new THREE.BoxGeometry(15.9, 14, thickness), structureMat);
     baseFrontRight.position.set(3.55, 7, 11.5);
     group.add(baseFrontRight);
 
-    // Roof
+    // Teto
     const roof = new THREE.Mesh(new THREE.BoxGeometry(24, 2.4, 24), structureMat);
     roof.position.y = 42.2;
     roof.castShadow = true;
     group.add(roof);
 
-    // Columns/Posts
+    // Colunas
     const postGeo = new THREE.BoxGeometry(1, 27, 1);
     [[11.5, 11.5], [-11.5, 11.5], [11.5, -11.5], [-11.5, -11.5]].forEach(([px, pz]) => {
         const post = new THREE.Mesh(postGeo, structureMat);
@@ -75,7 +75,7 @@ export function createClawMachine(scene) {
         group.add(post);
     });
 
-    // Glass Panes
+    // Vidros
     const sideGlassGeo = new THREE.BoxGeometry(0.1, 27, 22);
     const frontGlassGeo = new THREE.BoxGeometry(22, 27, 0.1);
     const gl = new THREE.Mesh(sideGlassGeo, glassMat); gl.position.set(-11.45, 27.5, 0); group.add(gl);
@@ -83,18 +83,20 @@ export function createClawMachine(scene) {
     const gb = new THREE.Mesh(frontGlassGeo, glassMat); gb.position.set(0, 27.5, -11.45); group.add(gb);
     const gf = new THREE.Mesh(frontGlassGeo, glassMat); gf.position.set(0, 27.5, 11.45); group.add(gf);
 
-    // Interior floor with hole
+    // Chão dividido ao meio pa deixar um biraco
+    // Chºao da esquerda
     const floorRight = new THREE.Mesh(new THREE.BoxGeometry(15.7, 0.1, 22.8), floorMat);
     floorRight.position.set(3.55, 14.06, 0);
     floorRight.receiveShadow = true;
     group.add(floorRight);
 
+    // Chão da direita
     const floorLeft = new THREE.Mesh(new THREE.BoxGeometry(7.1, 0.1, 15.7), floorMat);
     floorLeft.position.set(-7.85, 14.06, -3.55);
     floorLeft.receiveShadow = true;
     group.add(floorLeft);
 
-    // Hole Frame
+    // Moldura à volta do buraco no chão
     const frameGroup = new THREE.Group();
     frameGroup.position.set(-7.8, 14.08, 7.8);
     const sizeExt = 7;
@@ -113,7 +115,7 @@ export function createClawMachine(scene) {
     frameGroup.add(borderFront, borderBack, borderLeft, borderRight);
     group.add(frameGroup);
 
-    // Glass dividers near the hole
+    // Vidro que divide o buraco das cáspulas
     const divRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 10, 7.2), glassMat);
     divRight.position.set(-4.3, 19.1, 7.85);
     group.add(divRight);
@@ -121,20 +123,23 @@ export function createClawMachine(scene) {
     divBack.position.set(-7.85, 19.1, 4.3);
     group.add(divBack);
 
-    // Control Panel Support
+    // Painel
+    // Parte da direita
     const supRight = new THREE.Mesh(new THREE.BoxGeometry(15.9, 13, 4), structureMat);
     supRight.position.set(3.55, 6.5, 12.8);
     group.add(supRight);
 
+    // Parte da esquerda
     const supLeft = new THREE.Mesh(new THREE.BoxGeometry(0.5, 13, 4), structureMat);
     supLeft.position.set(-11.5, 6.5, 12.8);
     group.add(supLeft);
 
+    // Parte de cima
     const supTop = new THREE.Mesh(new THREE.BoxGeometry(7.5, 5.2, 4), structureMat);
     supTop.position.set(-7.5, 10.4, 12.8);
     group.add(supTop);
 
-    // Hollow Chute/Tunnel
+    // Túnel para as cápsulas caírem
     const chuteLeft = new THREE.Mesh(new THREE.BoxGeometry(0.4, 10.0, 11.0), structureMat);
     chuteLeft.position.set(-11.1, 8.5, 9);
     group.add(chuteLeft);
@@ -160,6 +165,7 @@ export function createClawMachine(scene) {
     const joyGroup = new THREE.Group();
     joyGroup.position.set(-5, 1.5, 0);
     panelGroup.add(joyGroup);
+    // Base
     const joystickBase = new THREE.Mesh(
         new THREE.CylinderGeometry(1.5, 1.5, 0.4, 16),
         materials.joyBase
@@ -171,14 +177,16 @@ export function createClawMachine(scene) {
     joyShaftGroup.position.set(0, 0.4, 0);
     joyGroup.add(joyShaftGroup);
 
+    // Haste
     const joyShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.8, 8), metalMat);
     joyShaft.position.set(0, 1.4, 0);
     joyShaftGroup.add(joyShaft);
+    // Bola
     const joyBall = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 16), materials.joyBall);
     joyBall.position.set(0, 3.2, 0);
     joyShaftGroup.add(joyBall);
 
-    // Button
+    // Butão
     const btnGroup = new THREE.Group();
     btnGroup.position.set(5, 1.5, 0);
     panelGroup.add(btnGroup);
@@ -202,17 +210,18 @@ export function createClawMachine(scene) {
     interiorLight.position.set(0, 38, 0);
     group.add(interiorLight);
     
-    // Luz interna mais perto do chão para evidenciar as cápsulas
-    const interiorBottomLight = new THREE.PointLight(0xffeedd, 0, 20);
-    interiorBottomLight.position.set(0, 5, 0); // Perto das cápsulas
-    group.add(interiorBottomLight);
+    // Luz interna do chão
+    // const interiorBottomLight = new THREE.PointLight(0xffeedd, 0, 20);
+    // interiorBottomLight.position.set(0, 5, 0);
+    // group.add(interiorBottomLight);
     
-    if (scene) {
+    // Guardar info da luz pa depois mudar a itensidade
+    if (scene) { 
         scene.userData.clawInteriorLight = interiorLight;
         scene.userData.clawInteriorBottomLight = interiorBottomLight;
     }
 
-    // Claw Mechanism
+    // Estrutura da garra (teto + cabo + cabeça)
     const clawRoofGroup = new THREE.Group();
     clawRoofGroup.position.set(0, 42.2, 0);
     group.add(clawRoofGroup);
@@ -232,7 +241,7 @@ export function createClawMachine(scene) {
     cable.castShadow = true;
     clawCableGroup.add(cable);
 
-    // Central Head
+    // Cabeça da garra
     const clawHeadGroup = new THREE.Group();
     clawCableGroup.add(clawHeadGroup);
 
@@ -240,7 +249,7 @@ export function createClawMachine(scene) {
     head.castShadow = true;
     clawHeadGroup.add(head);
 
-    // 3 Claw fingers
+    // 3 dedos da garra
     const F_WIDTH = 0.55;
     const F_THICK = 0.45;
     const L1 = 3.2;
@@ -249,7 +258,7 @@ export function createClawMachine(scene) {
     const Z_OFF = 0.95;
 
     const fingers = [];
-    const fingerPivots = [];
+    const fingerPivots = []; // Pa ter a animação
 
     for (let i = 0; i < 3; i++) {
         const pivot = new THREE.Group();
@@ -283,13 +292,13 @@ export function createClawMachine(scene) {
         seg2.add(seg3);
     }
 
-    // Slide Ramp
+    // Rampa para as cápsulas
     const ramp = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.5, 14), structureMat);
     ramp.position.set(-7.8, 6, 8);
     ramp.rotation.x = 1;
     group.add(ramp);
 
-    // Acrylic Chute Door (Pivot and Rotation)
+    // Porta do túnel
     const doorPivot = new THREE.Group();
     doorPivot.position.set(-7.8, 7.8, 14.82);
     group.add(doorPivot);
@@ -313,7 +322,7 @@ export function createClawMachine(scene) {
             button: buttonMesh
         },
         interiorLight,
-        updateTheme: (theme) => {
+        updateTheme: (theme) => { // Muda o tema à máquina toda
             materials.structure.color.set(theme.STRUCTURE);
             materials.glass.color.set(theme.GLASS);
             materials.floor.color.set(theme.FLOOR);

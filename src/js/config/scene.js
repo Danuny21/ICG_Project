@@ -18,6 +18,7 @@ export function setupScene() {
     renderer.shadowMap.type = THREE.PCFShadowMap;
     document.body.appendChild(renderer.domElement);
 
+    // Atualiza a câmara e renderer ao redimensionar a janela
     window.addEventListener("resize", () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();

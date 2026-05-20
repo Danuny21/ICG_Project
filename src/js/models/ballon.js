@@ -20,7 +20,7 @@ export function createBalloons() {
     configs.forEach((cfg, index) => {
         const balizaMat = new THREE.MeshStandardMaterial({
             color: cores[index],
-            roughness: 0.2, // Balões são um pouco brilhantes
+            roughness: 0.2,
             metalness: 0.1
         });
 
@@ -31,18 +31,18 @@ export function createBalloons() {
         balao.scale.y = 1.3; // Esticar para ficar com forma oval
         subGrupo.add(balao);
 
-        // O "nó" na base do balão
+        // Nó do balão
         const noBalao = new THREE.Mesh(geoNo, balizaMat);
         noBalao.position.y = -0.55;
         subGrupo.add(noBalao);
 
-        // Posicionar este balão inteiro (apenas a parte do balão e nó)
+        // Posicionar este balão inteiro
         subGrupo.position.set(cfg.x, cfg.y, cfg.z);
         subGrupo.rotation.z = cfg.rotZ;
 
         baloesGroup.add(subGrupo);
 
-        // --- Fio Dinâmico ---
+        // Fio Dinâmico
         // Calcular onde o nó está exatamente no espaço do grupo dos balões
         const knotX = cfg.x + 0.55 * Math.sin(cfg.rotZ);
         const knotY = cfg.y - 0.55 * Math.cos(cfg.rotZ);
@@ -63,10 +63,10 @@ export function createBalloons() {
         baloesGroup.add(fio);
     });
 
-    // Base que prende os fios (cilindro espalmado)
+    // Base que prende os fios
     const matBase = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
     const baseCilindro = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16), matBase);
-    baseCilindro.position.y = 0.05; // Assenta no chão
+    baseCilindro.position.y = 0.05;
     baloesGroup.add(baseCilindro);
 
     return baloesGroup;

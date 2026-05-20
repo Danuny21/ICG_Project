@@ -13,7 +13,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     });
 
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    // Ecrã emissivo — brilha à noite com a cor da máquina
+    // Ecrã que brilha à noite com a cor da máquina
     const screenMat = new THREE.MeshStandardMaterial({
         color: 0x111111,
         emissive: mainColor,
@@ -26,15 +26,15 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     const height = 6.0;
     const depth = 2.5;
 
-    // --- Corpo Principal (Estrutura lateral) ---
+    // Corpo Principal
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
     shape.lineTo(depth, 0);
-    shape.lineTo(depth, height * 0.6); // Fim da frente vertical
-    shape.lineTo(depth * 0.7, height * 0.7); // Inclinação do painel
-    shape.lineTo(depth * 0.7, height * 0.9); // Recuo do ecrã
-    shape.lineTo(depth, height * 0.9); // Base do paralelepípedo (avanço para a frente)
-    shape.lineTo(depth, height); // Topo do letreiro (face vertical)
+    shape.lineTo(depth, height * 0.6);           // Fim da frente vertical
+    shape.lineTo(depth * 0.7, height * 0.7);     // Inclinação do painel
+    shape.lineTo(depth * 0.7, height * 0.9);     // Recuo do ecrã
+    shape.lineTo(depth, height * 0.9);           // Base do paralelepípedo
+    shape.lineTo(depth, height);                 // Topo do letreiro
     shape.lineTo(0, height);
     shape.lineTo(0, 0);
 
@@ -47,7 +47,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     body.rotation.y = -Math.PI / 2;
     arcadeGroup.add(body);
 
-    // --- Painel de Controlo ---
+    // Painel de Controlo
     const controlPanel = new THREE.Group();
 
     const cpBase = new THREE.Mesh(
@@ -56,7 +56,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     );
     controlPanel.add(cpBase);
 
-    // Joystick 
+    // Haste do joystick
     const stick = new THREE.Mesh(
         new THREE.CylinderGeometry(0.02, 0.02, 0.3),
         blackMat
@@ -64,6 +64,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     stick.position.set(-0.6, 0.2, 0);
     controlPanel.add(stick);
 
+    // Bola do joystick
     const ball = new THREE.Mesh(
         new THREE.SphereGeometry(0.08),
         new THREE.MeshStandardMaterial({ color: 0xff0000 })
@@ -88,11 +89,12 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     btn3.position.set(0.35, 0.1, 0.1);
     controlPanel.add(btn3);
 
+    // Base dos botões
     controlPanel.position.set(0, 3.86, 2.09);
     controlPanel.rotation.x = 0.674;
     arcadeGroup.add(controlPanel);
 
-    // --- Ecrã ---
+    // Ecrã
     const screen = new THREE.Mesh(
         new THREE.BoxGeometry(width - 0.3, 1.2, 0.1),
         screenMat
@@ -101,7 +103,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     screen.rotation.x = 0;
     arcadeGroup.add(screen);
 
-    // --- Letreiro (Marquee) no Topo ---
+    // Letreiro
     const marqueeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         emissive: 0xffffcc,
@@ -115,7 +117,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     marquee.rotation.x = 0;
     arcadeGroup.add(marquee);
 
-    // --- PointLight do Ecrã (simula a luz do monitor projetada no chão) ---
+    // PointLight do Ecrã 
     const screenLight = new THREE.PointLight(mainColor, 0, 15);
     screenLight.position.set(0, 4.8, 2.5);
     arcadeGroup.add(screenLight);
@@ -125,7 +127,7 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
         screenMat,
         marqueeMat,
         screenLight,
-        updateTheme: (theme) => {
+        updateTheme: (theme) => { // Atualiza as cores do ecrã e letreiro para brilhar com a cor da máquina
             if (theme.ARCADE_COLORS && theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length] !== undefined) {
                 bodyMat.color.setHex(theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length]);
             } else {

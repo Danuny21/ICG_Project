@@ -20,13 +20,13 @@ export function createChair() {
 
     const seatHeight = 1.5;
 
-    // Assento (Plástico)
+    // Assento
     const seatGeom = new THREE.BoxGeometry(1.5, 0.15, 1.5);
     const seat = new THREE.Mesh(seatGeom, plasticMaterial);
     seat.position.y = seatHeight;
     chairGroup.add(seat);
 
-    // Pernas (Metal)
+    // Pernas
     const legGeom = new THREE.CylinderGeometry(0.1, 0.1, seatHeight, 8);
     const offset = 0.6;
     const legPositions = [
@@ -40,13 +40,13 @@ export function createChair() {
         chairGroup.add(leg);
     });
 
-    // Encosto (Plástico) - Largura aumentada em 0.2
+    // Encosto
     const backGeom = new THREE.BoxGeometry(1.7, 0.6, 0.17);
     const backrest = new THREE.Mesh(backGeom, plasticMaterial);
     backrest.position.set(0, seatHeight + 0.8, -offset);
     chairGroup.add(backrest);
 
-    // Suportes do encosto (Metal)
+    // Suportes do encosto
     const supGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
     const sup1 = new THREE.Mesh(supGeom, metalMaterial);
     sup1.position.set(-offset, seatHeight + 0.3, -offset);

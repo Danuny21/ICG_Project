@@ -28,6 +28,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     document.body.appendChild(stats.domElement);
     stats.domElement.style.display = config.showStats ? 'block' : 'none';
 
+    // Mudar a escala do GUI e Stats para melhor se adaptar a mobile
     const updateUIScale = () => {
         const w = window.innerWidth;
         const scale = w < 400 ? 0.7 : w < 600 ? 0.8 : 1;
@@ -41,12 +42,14 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
     window.addEventListener('resize', updateUIScale);
     setTimeout(updateUIScale, 100);
 
+    // Configurações de dificuldade
     gui.add(config, 'difficulty', ['fácil', 'normal', 'difícil']).name("Dificuldade").onChange(val => {
         if (val === 'normal') window.CONFIG_JOGO = NORMAL_MODE;
         else if (val === 'difícil') window.CONFIG_JOGO = HARD_MODE;
         else window.CONFIG_JOGO = EASY_MODE;
     });
 
+    // Configurações de tema
     gui.add(config, 'theme', { 'clássico': 'classic', 'escuro': 'dark' }).name("Tema").onChange(val => {
         const theme = THEMES[val];
         if (clawMachine) clawMachine.updateTheme(theme);
@@ -71,13 +74,14 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
             });
         }
 
-        const shadow = val === 'dark' ? '#ff00ff' : '#cc0000';
-
+        // Mudar a cor das divs do UI
+        const shadow = val === 'dark' ? '#0c0a5e' : '#cc0000';
         const uiElements = document.querySelectorAll('.game-ui, .game-ui-hint');
         uiElements.forEach(el => {
             el.style.boxShadow = `4px 4px 0px ${shadow}`;
         });
 
+        // Mudar a cor dos títulos das dicas de ajuda
         const helpItems = document.querySelectorAll('.help-item');
         if (helpItems) {
             const color = val === 'dark' ? '#00E5FF' : '#ffcc00';
@@ -91,19 +95,22 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         }
     });
 
+    // Configurações de tempo do dia
     gui.add(config, 'timeOfDay', ['dia', 'noite']).name("Tempo").onChange(val => {
         updateLightsForTimeOfDay(scene, val === 'noite');
     });
 
+    // Mostrar ou esconder o painel de estatísticas (FPS)
     gui.add(config, 'showStats').name("Mostrar FPS").onChange(val => {
         stats.domElement.style.display = val ? 'block' : 'none';
     });
 
+    // Ativar ou desativar sombras para os candeeiros de teto
     gui.add(config, 'allShadows').name("Sombras").onChange(val => {
         if (scene) {
-            // Devido ao limite de hardware MAX_TEXTURE_IMAGE_UNITS(16) do WebGL, 
-            // não podemos ter dezenas de sombras simultâneas.
-            // Vamos ligar sombras extra APENAS nos candeeiros de teto principais para evitar o crash.
+            // Devido ao limite de hardware MAX_TEXTURE_IMAGE_UNITS(16) do WebGL, ligar apenas as sombras dos candeiros
+            // Kinda pesado
+
             const extraLightsGrp = [
                 scene.userData.clawLamp,
                 scene.userData.poolLamp,
@@ -120,7 +127,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
                 });
             });
 
-            // Necessário forçar atualização dos materiais para re-compilar os shaders com mapas de sombras novos
+            // Forçar atualização dos materiais para re-compilar os shaders com mapas de sombras novos
             scene.traverse(child => {
                 if (child.isMesh && child.material) {
                     if (Array.isArray(child.material)) {
@@ -133,22 +140,25 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         }
     });
 
+    // Configurações de volume da música
     const audioFolder = gui.addFolder("Áudio");
     audioFolder.add(config, 'musicVolume', 0, 1).name("Música").onChange(val => {
         if (sounds?.bgMusic) sounds.bgMusic.setVolume(val);
     });
+    // Configurações de volume dos sons de ganhar um prémio
     audioFolder.add(config, 'prizeVolume', 0, 1).name("Som de Prémio").onChange(val => {
         if (sounds?.capsuleSound) sounds.capsuleSound.setVolume(val);
     });
 
     const actionsFolder = gui.addFolder("Ações");
     
-    // Objeto temporário para guardar as funções a serem mapeadas no GUI
+    // Guardar as funções a serem mapeadas no GUI
     const actionsParams = {
+        // Remove as cápsulas atuais e cria novas (igual ao spawn inicial)
         resetCapsules: () => {
             if (!scene || !capsules) return;
 
-            // 1. Remove todas as cápsulas actuais da cena, da física e liberta memória
+            // Remove todas as cápsulas actuais da cena
             while (capsules.length > 0) {
                 const c = capsules.pop();
                 // Remove da cena Three.js
@@ -165,28 +175,23 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
                 if (typeof physicsWorld !== "undefined" && physicsWorld) physicsWorld.removeCapsuleBody(c);
             }
 
-            // 2. Gera novas cápsulas com os mesmos parâmetros originais
+            // Gera novas cápsulas com os mesmos parâmetros originais
             if (typeof machinePos !== "undefined" && machinePos) {
-                // ...existing code...
                 const novasCapsulas = CapsuleSpawner.spawnCapsules(scene, 200, machinePos, typeof machineRotY !== "undefined" ? machineRotY : 0);
                 novasCapsulas.forEach(c => capsules.push(c));
 
-                // 3. Regista os novos corpos Rapier no mundo físico existente
                 if (typeof physicsWorld !== "undefined" && physicsWorld && physicsWorld.world) {
                     physicsWorld._createCapsuleBodies(capsules);
                 }
 
-                // 4. Actualiza as referências de limpeza do CapsuleOpener
                 if (capsuleOpener && typeof capsuleOpener.setCleanupRefs === "function") {
                     capsuleOpener.setCleanupRefs(physicsWorld, capsules);
                 }
-
-                console.log(`[Repor Cápsulas] ${capsules.length} novas cápsulas geradas.`);
             }
         },
+
+        // Desbloquear todos os p´remios da coleçaõ
         completeCollection: () => {
-            // collectionManager não é passado pelo widget setup.
-            // Contudo podemos usar objectos globais se expostos, caso contrário tentamos chegar a ele.
             if (window.collectionManager) {
                 window.collectionManager.unlockAll();
             }

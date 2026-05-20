@@ -7,7 +7,7 @@ export class MobileControls {
         this.stick = document.getElementById('joystick-stick');
         this.actionButton = document.getElementById('action-button');
 
-        this.maxDistance = 50; // Max move distance for the stick
+        this.maxDistance = 50;
         this.active = false;
         this.startX = 0;
         this.startY = 0;
@@ -16,12 +16,12 @@ export class MobileControls {
     }
 
     init() {
-        // Joystick Events
+        // Joystick eventos
         this.joystick.addEventListener('touchstart', (e) => this.onStart(e), { passive: false });
         window.addEventListener('touchmove', (e) => this.onMove(e), { passive: false });
         window.addEventListener('touchend', () => this.onEnd(), { passive: false });
 
-        // Action Button
+        // Butão de ir eventos
         this.actionButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.keys.action = true;
