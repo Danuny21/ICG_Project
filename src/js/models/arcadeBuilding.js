@@ -210,6 +210,7 @@ export function createArcadeBuilding(scene) {
 
     // --- Máquinas de Arcade ---
     const arcadeMachines = [];
+    scene.userData.arcadeEmissives = [];
     [0xff3333, 0x33ff33, 0x3333ff, 0xffff33].forEach((color, i) => {
         const m = createArcadeMachine(color, i);
         m.group.scale.setScalar(SCALE_FACTOR);
@@ -217,6 +218,11 @@ export function createArcadeBuilding(scene) {
         m.group.rotation.y = -Math.PI / 2;
         buildingGroup.add(m.group);
         arcadeMachines.push(m);
+        scene.userData.arcadeEmissives.push({
+            screenMat: m.screenMat,
+            marqueeMat: m.marqueeMat,
+            screenLight: m.screenLight
+        });
     });
 
     // --- Mesa de Bilhar ---
@@ -231,6 +237,7 @@ export function createArcadeBuilding(scene) {
     const tableScale = SCALE_FACTOR * 0.90;
     const roundTables = [];
     const chairs = [];
+    scene.userData.tableLamps = [];
     [{ x: 32, z: 15 }, { x: 32, z: 45 }].forEach((pos, index) => {
         const tableObj = createRoundTable();
         const table = tableObj.group;
@@ -274,6 +281,13 @@ export function createArcadeBuilding(scene) {
             chair.rotation.y = rot;
             buildingGroup.add(chair);
         });
+
+        // Candeeiro pendente da mesa
+        const tableLamp = createLamp(true, 120);
+        tableLamp.position.set(pos.x, 35, pos.z);
+        tableLamp.scale.setScalar(SCALE_FACTOR * 0.8);
+        buildingGroup.add(tableLamp);
+        scene.userData.tableLamps.push(tableLamp);
     });
 
     // --- Plantas de chão ---
@@ -316,91 +330,12 @@ export function createArcadeBuilding(scene) {
     buildingGroup.add(poolLamp);
     scene.userData.poolLamp = poolLamp;
 
-    // 1.2. Luzes focadas nas Coleções
-    scene.userData.shelfSpots = [];
-    [{x: -20, y: 35, z: 25}, {x: -20, y: 35, z: 60}].forEach(pos => {
-        const spot = new THREE.SpotLight(0xffffff, 150);
-        spot.position.set(pos.x, pos.y, pos.z);
-        spot.angle = Math.PI / 4;
-        spot.penumbra = 0.5;
-        spot.decay = 1.5;
-        spot.distance = 70;
-        spot.castShadow = true;
-        const target = new THREE.Object3D();
-        target.position.set(-48.5, 20, 43); // Aponta para o meio das estantes
-        buildingGroup.add(target);
-        spot.target = target;
-        buildingGroup.add(spot);
-        scene.userData.shelfSpots.push(spot);
-    });
-
-    // 1.3. Luzes focadas nas Mesas Redondas (apenas a luz, sem o modelo)
-    scene.userData.tableSpots = [];
-    const tablePositions = [{ x: 32, z: 15 }, { x: 32, z: 45 }];
-    tablePositions.forEach((pos) => {
-        // Spot 1 (esquerda/frente)
-        const spot1 = new THREE.SpotLight(0xffffff, 100);
-        spot1.position.set(pos.x - 15, 35, pos.z - 15);
-        spot1.angle = Math.PI / 4;
-        spot1.penumbra = 0.5;
-        spot1.decay = 1.5;
-        spot1.distance = 60;
-        spot1.castShadow = true;
-        const target1 = new THREE.Object3D();
-        target1.position.set(pos.x, 5, pos.z);
-        buildingGroup.add(target1);
-        spot1.target = target1;
-        buildingGroup.add(spot1);
-        scene.userData.tableSpots.push(spot1);
-
-        // Spot 2 (direita/trás)
-        const spot2 = new THREE.SpotLight(0xffffff, 100);
-        spot2.position.set(pos.x + 15, 35, pos.z + 15);
-        spot2.angle = Math.PI / 4;
-        spot2.penumbra = 0.5;
-        spot2.decay = 1.5;
-        spot2.distance = 60;
-        spot2.castShadow = true;
-        const target2 = new THREE.Object3D();
-        target2.position.set(pos.x, 5, pos.z);
-        buildingGroup.add(target2);
-        spot2.target = target2;
-        buildingGroup.add(spot2);
-        scene.userData.tableSpots.push(spot2);
-    });
-
-    // 1.4 Luzes direcionais para as Máquinas de Arcade
-    scene.userData.arcadeSpots = [];
-    [{x: 15, y: 35, z: -40, tx: 50, tz: -49}, {x: 15, y: 35, z: -15, tx: 50, tz: -25}].forEach(spec => {
-        const spot = new THREE.SpotLight(0xffffff, 150);
-        spot.position.set(spec.x, spec.y, spec.z);
-        spot.angle = Math.PI / 3;
-        spot.penumbra = 0.5;
-        spot.decay = 1.5;
-        spot.distance = 70;
-        spot.castShadow = true;
-        const target = new THREE.Object3D();
-        target.position.set(spec.tx, 10, spec.tz);
-        buildingGroup.add(target);
-        spot.target = target;
-        buildingGroup.add(spot);
-        scene.userData.arcadeSpots.push(spot);
-    });
-
-    // 1.5 Luz para o balcão
-    const counterSpot = new THREE.SpotLight(0xffffff, 150);
-    counterSpot.position.set(-10, 35, -5); // Em ângulo
-    counterSpot.angle = Math.PI / 3;
-    counterSpot.penumbra = 0.5;
-    counterSpot.decay = 1.5;
-    counterSpot.distance = 60;
-    counterSpot.castShadow = true;
-    const counterTarget = new THREE.Object3D();
-    counterTarget.position.set(-35, 10, 22);
-    buildingGroup.add(counterTarget);
-    counterSpot.target = counterTarget;
-    buildingGroup.add(counterSpot);
-    scene.userData.counterSpot = counterSpot;
+    // 1.1 Candeeiro de Balcão
+    const counterLamp = createLamp(true, 120);
+    counterLamp.position.set(-(WIDTH / 2) + 15, 35, DEPTH / 2 - 28); // Por cima do balcão (-35, 35, 42)
+    counterLamp.scale.setScalar(SCALE_FACTOR * 0.8);
+    buildingGroup.add(counterLamp);
+    scene.userData.counterLamp = counterLamp;
 
     // 4. Ventoinha de Teto
     const fanObj = createCeilingFan();

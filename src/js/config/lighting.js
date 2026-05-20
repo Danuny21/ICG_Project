@@ -1,10 +1,14 @@
 import * as THREE from "three";
 
 export function setupLighting(scene) {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // Luz ambiente bem baixa
-    scene.add(ambientLight);
+    // ── Luz de Preenchimento ──────────────────────────────────────────────────
+    // HemisphereLight simula luz que "vaza" da rua e reflete nas paredes.
+    // Céu: azul-escuro/roxo noturno | Chão: cinza escuro
+    const hemiLight = new THREE.HemisphereLight(0x0a0a2e, 0x222222, 0.15);
+    scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.1); // Luz direcional muito fraca
+    // ── Luz Direcional (Sol de dia / Lua de noite) ───────────────────────────
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.1);
     dirLight.position.set(36, 72, 24);
     dirLight.castShadow = true;
     dirLight.shadow.bias = -0.001;
@@ -16,93 +20,92 @@ export function setupLighting(scene) {
     dirLight.shadow.camera.bottom = -20;
     scene.add(dirLight);
 
-    // Luz no teto da máquina para iluminar as cápsulas (diminuída para escurecer o arcade)
-    const ceilingLight = new THREE.PointLight(0xffffff, 0.15, 50);
-    ceilingLight.position.set(0, 40, 0);
-    scene.add(ceilingLight);
-
-    // Luz do lado esquerdo (diminuída para escurecer o arcade)
-    const leftLight = new THREE.PointLight(0xffffff, 0.1, 60);
-    leftLight.position.set(-30, 30, 20);
-    scene.add(leftLight);
-
-    // Luz focada Máquina de Garra (apenas luz, direcionada em ângulo)
-    const clawSpot = new THREE.SpotLight(0xffffff, 200); // Forte
-    clawSpot.position.set(-50, 35, 25); // Movido para o lado e para baixo
-    clawSpot.angle = Math.PI / 4;
-    clawSpot.penumbra = 0.5;
-    clawSpot.decay = 1.5;
-    clawSpot.distance = 80;
-    clawSpot.castShadow = true;
-    const clawTarget = new THREE.Object3D();
-    clawTarget.position.set(-86, 12, 1); // Direcionado para a frente da máquina de garras
-    scene.add(clawTarget);
-    clawSpot.target = clawTarget;
-    scene.add(clawSpot);
-
     // Guardar referências na scene para controlo de dia/noite
-    scene.userData.ambientLight = ambientLight;
+    scene.userData.hemiLight = hemiLight;
     scene.userData.dirLight = dirLight;
-    scene.userData.ceilingLight = ceilingLight;
-    scene.userData.leftLight = leftLight;
-    scene.userData.clawSpot = clawSpot;
 }
 
 export function updateLightsForTimeOfDay(scene, isNight) {
-    // 1. Luz Ambiente
-    if (scene.userData.ambientLight) {
-        scene.userData.ambientLight.intensity = isNight ? 0.05 : 0.7;
+    // 1. HemisphereLight — preenchimento ambiente
+    if (scene.userData.hemiLight) {
+        if (isNight) {
+            scene.userData.hemiLight.color.set(0x1a1a3e);      // Céu noturno ligeiramente mais claro
+            scene.userData.hemiLight.groundColor.set(0x333333); // Chão cinza claro
+            scene.userData.hemiLight.intensity = 0.35;         // Aumentado de 0.15
+        } else {
+            scene.userData.hemiLight.color.set(0x87ceeb);       // Céu azul claro
+            scene.userData.hemiLight.groundColor.set(0x886644); // Chão castanho quente
+            scene.userData.hemiLight.intensity = 0.6;
+        }
     }
+
     // 2. Luz Direcional (Sol/Lua)
     if (scene.userData.dirLight) {
-        scene.userData.dirLight.intensity = isNight ? 0.1 : 1.0;
+        scene.userData.dirLight.intensity = isNight ? 0.05 : 1.0;
+        scene.userData.dirLight.color.set(isNight ? 0x8888cc : 0xffffff);
     }
-    // 3. Luz no teto do arcade
-    if (scene.userData.ceilingLight) {
-        scene.userData.ceilingLight.intensity = isNight ? 0.15 : 0.8;
+
+    // 4. Luz interior da Máquina de Garras (ilumina cápsulas)
+    if (scene.userData.clawInteriorLight) {
+        scene.userData.clawInteriorLight.intensity = isNight ? 0.6 : 0; // A luz dentro da máquina é mantida
     }
-    // 4. Luz lateral esquerda
-    if (scene.userData.leftLight) {
-        scene.userData.leftLight.intensity = isNight ? 0.1 : 0.6;
-    }
-    // 5. Spotlight da Máquina de Garras
-    if (scene.userData.clawSpot) {
-        scene.userData.clawSpot.intensity = isNight ? 150 : 0;
-    }
-    // 6. Spotlight da Mesa de Bilhar (e lâmpada física emissiva)
-    if (scene.userData.poolLamp) {
-        scene.userData.poolLamp.traverse(child => {
-            if (child.isSpotLight) {
-                child.intensity = isNight ? 150 : 0;
-            }
+
+    // 4.1. Candeeiro Físico em cima da Máquina de Garras
+    if (scene.userData.clawLamp) {
+        scene.userData.clawLamp.traverse(child => {
+            if (child.isSpotLight) child.intensity = isNight ? 500 : 0; // Mais forte porque está alto
+            if (child.isPointLight) child.intensity = isNight ? 150 : 0; // Ilumina a interior do abajur
             if (child.isMesh && child.material && child.material.emissive) {
                 child.material.emissiveIntensity = isNight ? 2.0 : 0.0;
             }
         });
     }
-    // 7. Spotlight das Coleções
-    if (scene.userData.shelfSpots) {
-        scene.userData.shelfSpots.forEach(spot => {
-            spot.intensity = isNight ? 150 : 0;
+
+    // 5. Spotlight da Mesa de Bilhar (e lâmpada física emissiva)
+    if (scene.userData.poolLamp) {
+        scene.userData.poolLamp.traverse(child => {
+            if (child.isSpotLight) child.intensity = isNight ? 600 : 0;
+            if (child.isPointLight) child.intensity = isNight ? 150 : 0;
+            if (child.isMesh && child.material && child.material.emissive) {
+                child.material.emissiveIntensity = isNight ? 2.0 : 0.0;
+            }
         });
     }
-    // 8. Spotlights das Mesas Redondas
-    if (scene.userData.tableSpots) {
-        scene.userData.tableSpots.forEach(spot => {
-            spot.intensity = isNight ? 150 : 0;
+
+    // 8. Candeeiros pendentes das Mesas Redondas
+    if (scene.userData.tableLamps) {
+        scene.userData.tableLamps.forEach(lamp => {
+            lamp.traverse(child => {
+                if (child.isSpotLight) child.intensity = isNight ? 500 : 0;
+                if (child.isPointLight) child.intensity = isNight ? 150 : 0;
+                if (child.isMesh && child.material && child.material.emissive) {
+                    child.material.emissiveIntensity = isNight ? 2.0 : 0.0;
+                }
+            });
         });
     }
-    // 8.1 Spotlights das Máquinas de Arcada
-    if (scene.userData.arcadeSpots) {
-        scene.userData.arcadeSpots.forEach(spot => {
-            spot.intensity = isNight ? 150 : 0;
+
+    // 9. Candeeiro pendente do Balcão
+    if (scene.userData.counterLamp) {
+        scene.userData.counterLamp.traverse(child => {
+            if (child.isSpotLight) child.intensity = isNight ? 500 : 0;
+            if (child.isPointLight) child.intensity = isNight ? 150 : 0;
+            if (child.isMesh && child.material && child.material.emissive) {
+                child.material.emissiveIntensity = isNight ? 2.0 : 0.0;
+            }
         });
     }
-    // 8.2 Spotlight do Balcão
-    if (scene.userData.counterSpot) {
-        scene.userData.counterSpot.intensity = isNight ? 150 : 0;
+
+    // 11. Ecrãs e letreiros emissivos das Máquinas de Arcada
+    if (scene.userData.arcadeEmissives) {
+        scene.userData.arcadeEmissives.forEach(({ screenMat, marqueeMat, screenLight }) => {
+            screenMat.emissiveIntensity = isNight ? 2.0 : 0;
+            marqueeMat.emissiveIntensity = isNight ? 3.0 : 0.5;
+            screenLight.intensity = isNight ? 2 : 0;
+        });
     }
-    // 9. Luz exterior e cor do céu na janela
+
+    // 13. Luz exterior e cor do céu na janela
     if (scene.userData.windowLight) {
         scene.userData.windowLight.color.set(isNight ? 0x4444ff : 0xffffee);
         scene.userData.windowLight.intensity = isNight ? 15 : 20;
@@ -112,6 +115,6 @@ export function updateLightsForTimeOfDay(scene, isNight) {
         scene.userData.windowSpot.intensity = isNight ? 20 : 30;
     }
     if (scene.userData.exteriorMat) {
-        scene.userData.exteriorMat.color.set(isNight ? 0x00081e : 0x87ceeb); // Céu escuro ou azul celeste
+        scene.userData.exteriorMat.color.set(isNight ? 0x00081e : 0x87ceeb);
     }
 }

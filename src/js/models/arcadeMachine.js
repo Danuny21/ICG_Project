@@ -13,7 +13,12 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     });
 
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    const screenMat = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Ecrã desligado
+    // Ecrã emissivo — brilha à noite com a cor da máquina
+    const screenMat = new THREE.MeshStandardMaterial({
+        color: 0x111111,
+        emissive: mainColor,
+        emissiveIntensity: 0
+    });
     const controlPanelMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.4 });
 
     // Dimensões base
@@ -110,8 +115,16 @@ export function createArcadeMachine(mainColor = 0x3366ff, machineIndex = 0) {
     marquee.rotation.x = 0;
     arcadeGroup.add(marquee);
 
+    // --- PointLight do Ecrã (simula a luz do monitor projetada no chão) ---
+    const screenLight = new THREE.PointLight(mainColor, 0, 15);
+    screenLight.position.set(0, 4.8, 2.5);
+    arcadeGroup.add(screenLight);
+
     return {
         group: arcadeGroup,
+        screenMat,
+        marqueeMat,
+        screenLight,
         updateTheme: (theme) => {
             if (theme.ARCADE_COLORS && theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length] !== undefined) {
                 bodyMat.color.setHex(theme.ARCADE_COLORS[machineIndex % theme.ARCADE_COLORS.length]);

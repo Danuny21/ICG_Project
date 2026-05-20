@@ -197,6 +197,14 @@ export function createClawMachine(scene) {
     btnLight.position.set(5, 4, 0);
     panelGroup.add(btnLight);
 
+    // Luz interna no teto
+    const interiorLight = new THREE.PointLight(0xffeedd, 0, 30);
+    interiorLight.position.set(0, 38, 0);
+    group.add(interiorLight);
+    if (scene) {
+        scene.userData.clawInteriorLight = interiorLight;
+    }
+
     // Claw Mechanism
     const clawRoofGroup = new THREE.Group();
     clawRoofGroup.position.set(0, 42.2, 0);
@@ -297,6 +305,7 @@ export function createClawMachine(scene) {
             joystick: joyShaftGroup,
             button: buttonMesh
         },
+        interiorLight,
         updateTheme: (theme) => {
             materials.structure.color.set(theme.STRUCTURE);
             materials.glass.color.set(theme.GLASS);

@@ -36,14 +36,21 @@ export function createLamp(showBulb = true, intensity = 100) {
         lampGroup.add(bulb);
     }
 
+    // Luz esférica suave para iluminar o próprio candeeiro por dentro (abajur)
+    const glowLight = new THREE.PointLight(0xffffee, intensity);
+    glowLight.position.set(0, 0, 0); // No centro do abajur
+    glowLight.distance = 25; // Preenchimento curto
+    glowLight.decay = 1.0;
+    lampGroup.add(glowLight);
+
     // Foco de Luz apontado para baixo
-    const spotLight = new THREE.SpotLight(0xffffee, intensity);
-    spotLight.position.set(0, -0.2, 0);
-    spotLight.angle = Math.PI / 4;
-    spotLight.penumbra = 0.6;
-    spotLight.decay = 1.5;
-    spotLight.distance = 40;
-    spotLight.castShadow = true;
+    const spotLight = new THREE.SpotLight(0xffffee, intensity * 5); // Multiplicado para iluminar forte (estava fraco)
+    spotLight.position.set(0, 0.5, 0); // Puxado ligeiramente para cima no eixo central para não parecer "cortado"
+    spotLight.angle = Math.PI / 3; // Ligeiramente mais aberto
+    spotLight.penumbra = 0.5;
+    spotLight.decay = 1.2; // Decay menor para a luz cair melhor no chão
+    spotLight.distance = 120; // Maior distância
+    spotLight.castShadow = false; // Desligado para poupar limite de sombras MAX_TEXTURE_IMAGE_UNITS
     
     // Alvo da luz
     const target = new THREE.Object3D();

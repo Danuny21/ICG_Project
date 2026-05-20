@@ -4,6 +4,7 @@ import { setupLighting, updateLightsForTimeOfDay } from "./config/lighting.js";
 import { setupOrbitControls, setupKeyboard } from "./config/controls.js";
 import { createArcadeBuilding } from "./models/arcadeBuilding.js";
 import { createClawMachine } from "./models/clawMachine.js";
+import { createLamp } from "./models/lamp.js";
 import { PhysicsWorld } from "./systems/PhysicsSystem.js";
 import { CapsuleSpawner } from "./systems/CapsuleSpawner.js";
 import { CapsuleOpener } from "./systems/CapsuleOpener.js";
@@ -35,6 +36,13 @@ setupLighting(scene);
 const arcadeBuilding = createArcadeBuilding(scene);
 arcadeBuilding.group.position.set(0, 0, 55);
 arcadeBuilding.group.scale.set(2, 2, 2);
+
+// Add a hanging lamp directly above the claw machine
+const clawLamp = createLamp(true, 500);
+clawLamp.position.set(MACHINE_POS.x, 70, MACHINE_POS.z); // Altura mundial do teto = 70 (35 * 2)
+clawLamp.scale.setScalar(6.0); // Escala para igualar a da mesa de bilhar (SCALE_FACTOR(3) * 2.0 = 6.0)
+scene.add(clawLamp);
+scene.userData.clawLamp = clawLamp;
 
 // --- Inicialização e Controlo do Ciclo Dia/Noite ---
 const isNightInit = false; // Começa sempre de dia por predefinição
