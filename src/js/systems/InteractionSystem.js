@@ -61,8 +61,15 @@ export class InteractionSystem {
                 if (root.name.startsWith('collection_')) {
                     const prizeId = root.userData.prizeId;
                     // Só permite inspecionar se o prémio já foi desbloqueado
-                    if (this.collectionManager.getPrizeCount(prizeId) > 0)
-                        this.prizeInspector.inspect(root, prizeId);
+                    if (this.collectionManager.getPrizeCount(prizeId) > 0) {
+                        const mixer = this.collectionManager.mixers.get(prizeId) ?? null;
+                        // Cede o mixer ao inspector; CollectionManager deixa de o atualizar
+                        this.collectionManager.setInspectedMixer(mixer);
+                        this.prizeInspector.inspect(root, prizeId, mixer, () => {
+                            // Callback ao fechar: devolve o controlo do mixer ao CollectionManager
+                            this.collectionManager.setInspectedMixer(null);
+                        });
+                    }
                 }
             }
         }

@@ -13,6 +13,7 @@ export class CollectionManager {
         this.mixers = new Map();              // Animadores de cada modelo
         this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Material preto
         this._clickableModels = [];           // Cache dos modelos da coleção
+        this._inspectedMixer = null;          // Mixer cedido ao PrizeInspector — não atualizar em duplicado
     }
 
     // Regista um modelo na coleção
@@ -105,8 +106,15 @@ export class CollectionManager {
 
     // Atualiza todos os animadores a cada frame
     update(deltaTime) {
-        this.mixers.forEach(mixer => mixer.update(deltaTime));
+        this.mixers.forEach(mixer => {
+            // Salta o mixer que está a ser gerido pelo PrizeInspector neste momento
+            if (mixer === this._inspectedMixer) return;
+            mixer.update(deltaTime);
+        });
     }
+
+    // Chamado pelo PrizeInspector para ceder/devolver o controlo do mixer
+    setInspectedMixer(mixer) { this._inspectedMixer = mixer; }
 
     // Cria as prateleiras na sala e popula-as com os modelos de cada categoria
     setupRoom(arcadeBuilding) {

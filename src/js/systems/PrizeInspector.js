@@ -57,11 +57,13 @@ export class PrizeInspector {
     }
 
     // Inicia a inspeção de um modelo da coleção.
-    inspect(originalModel, name) {
+    inspect(originalModel, name, existingMixer = null, onClose = null) {
         if (this.state !== "IDLE") return;
 
         this.originalModel = originalModel;
         this.displayName = name;
+        this._existingMixer = existingMixer;
+        this._onClose = onClose; // Mixer do CollectionManager — pausar durante inspeção
 
         this._originalParent = originalModel.parent;
         this._originalLocalPos = originalModel.position.clone();
@@ -75,11 +77,17 @@ export class PrizeInspector {
 
         this._createPedestal();
 
-        const { animations, idleAnimName } = originalModel.userData;
-        if (animations?.length > 0) {
-            this.mixer = new THREE.AnimationMixer(originalModel);
-            const clip = this._findClip(animations, idleAnimName);
-            this.mixer.clipAction(clip).play();
+        // Reutiliza o mixer existente em vez de criar um novo (evita conflito de poses no esqueleto)
+        if (existingMixer) {
+            existingMixer._actions.forEach(a => a.paused = false);
+            this.mixer = existingMixer;
+        } else {
+            const { animations, idleAnimName } = originalModel.userData;
+            if (animations?.length > 0) {
+                this.mixer = new THREE.AnimationMixer(originalModel);
+                const clip = this._findClip(animations, idleAnimName);
+                this.mixer.clipAction(clip).play();
+            }
         }
 
         this.controls.update();
@@ -254,6 +262,8 @@ export class PrizeInspector {
 
         this.originalModel = null;
         this.mixer = null;
+        this._existingMixer = null;
+        if (this._onClose) { this._onClose(); this._onClose = null; }
     }
 
     _findClip(clips, name) {
