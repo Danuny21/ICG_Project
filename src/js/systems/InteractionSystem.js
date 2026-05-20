@@ -15,16 +15,36 @@ export class InteractionSystem {
         this.raycaster = new THREE.Raycaster();
         this.clickPoint = new THREE.Vector2();
 
-        this._onMouseClick = this._onMouseClick.bind(this);
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+
+        this._onPointerDown = this._onPointerDown.bind(this);
+        this._onPointerUp = this._onPointerUp.bind(this);
     }
 
-    // Liga o listener de clique ao window
-    init() { window.addEventListener("click", this._onMouseClick); }
+    // Liga os listeners ao window
+    init() { 
+        window.addEventListener("pointerdown", this._onPointerDown);
+        window.addEventListener("pointerup", this._onPointerUp);
+    }
 
-    // Remove o listener (limpeza)
-    dispose() { window.removeEventListener("click", this._onMouseClick); }
+    // Remove os listeners (limpeza)
+    dispose() { 
+        window.removeEventListener("pointerdown", this._onPointerDown);
+        window.removeEventListener("pointerup", this._onPointerUp);
+    }
 
-    _onMouseClick(e) {
+    _onPointerDown(e) {
+        this.touchStartX = e.clientX;
+        this.touchStartY = e.clientY;
+    }
+
+    _onPointerUp(e) {
+        // Se a distância for > 15px, foi um drag (rodar a câmara) e não um clique/touch
+        const dx = Math.abs(e.clientX - this.touchStartX);
+        const dy = Math.abs(e.clientY - this.touchStartY);
+        if (dx > 15 || dy > 15) return;
+
         // Ignora cliques se algum sistema de inspeção estiver ativo
         if (this.capsuleOpener.state !== "IDLE") return;
         if (this.prizeInspector?.state !== "IDLE") return;
