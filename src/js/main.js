@@ -133,7 +133,7 @@ interactionSystem.init();
 
 let lastFrameTime = performance.now();
 
-// ─── LOOP DE RENDERIZAÇÃO ────────────────────────────────────────────────────
+// LOOP DE RENDERIZAÇÃO
 function animate(time) {
     if (stats) stats.update();
     requestAnimationFrame(animate);

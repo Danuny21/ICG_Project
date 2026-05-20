@@ -6,7 +6,7 @@ export function setupLighting(scene) {
     const hemiLight = new THREE.HemisphereLight(0x0a0a2e, 0x222222, 0.15);
     scene.add(hemiLight);
 
-    // ── Luz Direcional (Sol de dia / Lua de noite) ───────────────────────────
+    //Luz Direcional (Sol de dia / Lua de noite)
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.1);
     dirLight.position.set(36, 72, 24);
     dirLight.castShadow = true;
