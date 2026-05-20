@@ -180,7 +180,7 @@ export function createArcadeBuilding(scene) {
     // Ativa sombras no grupo do balcão
     counterObj.group.traverse(child => {
         if (child.isMesh) {
-            child.castShadow = true;
+            child.castShadow = false; // Controlado pelo toggle de sombras no GUI
             child.receiveShadow = true;
         }
     });
@@ -229,7 +229,7 @@ export function createArcadeBuilding(scene) {
     // Ativa sombras em toda a meza de bilhar + acessórios
     poolTable.traverse(child => {
         if (child.isMesh) {
-            child.castShadow = true;
+            child.castShadow = false; // Controlado pelo toggle de sombras no GUI
             child.receiveShadow = true;
         }
     });
@@ -269,7 +269,7 @@ export function createArcadeBuilding(scene) {
         // Aplica sombras na mesa e em todos os adereços em cima dela
         table.traverse(child => {
             if (child.isMesh) {
-                child.castShadow = true;
+                child.castShadow = false; // Controlado pelo toggle de sombras no GUI
                 child.receiveShadow = true;
             }
         });
@@ -290,7 +290,7 @@ export function createArcadeBuilding(scene) {
             // Ativa sombras nas cadeiras
             chair.traverse(child => {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false; // Controlado pelo toggle de sombras no GUI
                     child.receiveShadow = true;
                 }
             });
@@ -363,6 +363,8 @@ export function createArcadeBuilding(scene) {
         counter: counterObj.group,  // Balcão + coisas em cima
         blinds: blindGroup,         // Perciana
         fan: fanObj.blades,         // Necessário para animar a ventoinha
+        // Grupos cujas sombras são controladas pelo toggle do GUI
+        shadowGroups: [counterObj.group, poolTable, ...roundTables.map(t => t.group)],
         updateTheme: (theme) => {   // Função para atualizar o tema em tudo de uma vez
             roundTables.forEach(t => t.updateTheme(theme));
             arcadeMachines.forEach(m => m.updateTheme(theme));
@@ -370,6 +372,12 @@ export function createArcadeBuilding(scene) {
             chairs.forEach(c => c.updateTheme(theme));
             blueNeonMat.color.setHex(theme.NEON || theme.FRAME);
             blueNeonMat.emissive.setHex(theme.NEON || theme.FRAME);
+        },
+        setShadows: (val) => {
+            // Controla castShadow nos grupos do interior: balcão, bilhar e mesas (+ adereços)
+            [counterObj.group, poolTable, ...roundTables.map(t => t.group), ...chairs.map(c => c.group)].forEach(g => {
+                g.traverse(child => { if (child.isMesh) child.castShadow = val; });
+            });
         },
     };
 }

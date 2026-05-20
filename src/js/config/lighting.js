@@ -41,7 +41,7 @@ export function updateLightsForTimeOfDay(scene, isNight) {
 
     // Luz Direcional (Sol/Lua)
     if (scene.userData.dirLight) {
-        scene.userData.dirLight.intensity = isNight ? 0.05 : 1.0;
+        scene.userData.dirLight.intensity = isNight ? 0.5 : 3;
         scene.userData.dirLight.color.set(isNight ? 0x8888cc : 0xffffff);
     }
 

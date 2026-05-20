@@ -158,7 +158,7 @@ export function createClawMachine(scene) {
     group.add(panelGroup);
 
     const panelMesh = new THREE.Mesh(new THREE.BoxGeometry(24, 3, 5.2), structureMat);
-    panelMesh.castShadow = true;
+    panelMesh.castShadow = false; // Controlado pelo toggle de sombras no GUI
     panelGroup.add(panelMesh);
 
     // Joystick
@@ -198,12 +198,8 @@ export function createClawMachine(scene) {
     btnGroup.add(buttonBase);
     const buttonMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.0, 16), materials.btn);
     buttonMesh.position.set(0, 0.65, 0);
-    buttonMesh.castShadow = true;
+    buttonMesh.castShadow = false; // Controlado pelo toggle de sombras no GUI
     btnGroup.add(buttonMesh);
-    const btnLight = new THREE.PointLight(THEME.BTN_MAIN, 0.5, 8);
-    btnLight.userData.isThemeLight = true;
-    btnLight.position.set(5, 4, 0);
-    panelGroup.add(btnLight);
 
     // Luz interior
     const interiorLight = new THREE.PointLight(0xffeedd, 0, 60);
@@ -222,7 +218,7 @@ export function createClawMachine(scene) {
     group.add(clawRoofGroup);
 
     const carriage = new THREE.Mesh(new THREE.BoxGeometry(5.28, 1.2, 5.28), mechanismMat);
-    carriage.castShadow = true;
+    carriage.castShadow = false; // Controlado pelo toggle de sombras no GUI
     clawRoofGroup.add(carriage);
 
     const clawCableGroup = new THREE.Group();
@@ -233,7 +229,7 @@ export function createClawMachine(scene) {
     cableGeo.translate(0, 0.5, 0);
     const cable = new THREE.Mesh(cableGeo, metalMat);
     cable.scale.y = 4;
-    cable.castShadow = true;
+    cable.castShadow = false; // Controlado pelo toggle de sombras no GUI
     clawCableGroup.add(cable);
 
     // Cabeça da garra
@@ -241,7 +237,7 @@ export function createClawMachine(scene) {
     clawCableGroup.add(clawHeadGroup);
 
     const head = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 1.8, 8), mechanismMat);
-    head.castShadow = true;
+    head.castShadow = false; // Controlado pelo toggle de sombras no GUI
     clawHeadGroup.add(head);
 
     // 3 dedos da garra
@@ -266,7 +262,7 @@ export function createClawMachine(scene) {
         geo1.translate(0, -L1 / 2, Z_OFF);
         const seg1 = new THREE.Mesh(geo1, fingerMat);
         seg1.rotation.x = -Math.PI / 10;
-        seg1.castShadow = true;
+        seg1.castShadow = false; // Controlado pelo toggle de sombras no GUI
         pivot.add(seg1);
         fingers.push(seg1);
 
@@ -275,7 +271,7 @@ export function createClawMachine(scene) {
         const seg2 = new THREE.Mesh(geo2, fingerMat);
         seg2.position.set(0, -L1, Z_OFF);
         seg2.rotation.x = Math.PI / 4;
-        seg2.castShadow = true;
+        seg2.castShadow = false; // Controlado pelo toggle de sombras no GUI
         seg1.add(seg2);
 
         const geo3 = new THREE.BoxGeometry(F_WIDTH, L3, F_THICK);
@@ -283,7 +279,7 @@ export function createClawMachine(scene) {
         const seg3 = new THREE.Mesh(geo3, fingerMat);
         seg3.position.set(0, -L2, 0);
         seg3.rotation.x = Math.PI / 3;
-        seg3.castShadow = true;
+        seg3.castShadow = false; // Controlado pelo toggle de sombras no GUI
         seg2.add(seg3);
     }
 
@@ -330,7 +326,6 @@ export function createClawMachine(scene) {
             materials.btnBase.color.set(theme.BTN_BASE);
             materials.btn.color.set(theme.BTN_MAIN);
             materials.door.color.set(theme.DOOR);
-            btnLight.color.set(theme.BTN_MAIN);
         }
     };
 }

@@ -42,7 +42,7 @@ export function createCapsule() {
 
     // Parte inferior da cápsula
     const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-    baseMesh.castShadow = true;
+    baseMesh.castShadow = false; // Controlado pelo toggle de sombras no GUI
     baseMesh.receiveShadow = true;
     group.add(baseMesh);
 
@@ -54,7 +54,7 @@ export function createCapsule() {
     // Parte superior da cápsula
     const topMesh = new THREE.Mesh(topGeo, topMat);
     topMesh.position.set(0, 0, 1.5);
-    topMesh.castShadow = true;
+    topMesh.castShadow = false; // Controlado pelo toggle de sombras no GUI
     topMesh.receiveShadow = true;
     hinge.add(topMesh);
 

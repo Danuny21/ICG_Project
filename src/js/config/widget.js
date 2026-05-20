@@ -106,39 +106,39 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         stats.domElement.style.display = val ? 'block' : 'none';
     });
 
-    // Ativar ou desativar sombras para os candeeiros de teto
+    // Ativar ou desativar sombras dos objetos e candeeiros de teto
     gui.add(config, 'allShadows').name("Sombras").onChange(val => {
-        if (scene) {
-            // Devido ao limite de hardware MAX_TEXTURE_IMAGE_UNITS(16) do WebGL, ligar apenas as sombras dos candeiros
-            // Kinda pesado
-
-            const extraLightsGrp = [
-                scene.userData.clawLamp,
-                scene.userData.poolLamp,
-                scene.userData.counterLamp,
-                ...(scene.userData.tableLamps || [])
-            ];
-
-            extraLightsGrp.forEach(lamp => {
-                if (lamp) lamp.traverse(child => {
-                    // Apenas SpotLights maiores. PointLights e Spots secundários ficam de fora.
-                    if (child.isSpotLight) {
-                        child.castShadow = val;
-                    }
-                });
-            });
-
-            // Forçar atualização dos materiais para re-compilar os shaders com mapas de sombras novos
-            scene.traverse(child => {
-                if (child.isMesh && child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(m => m.needsUpdate = true);
-                    } else {
-                        child.material.needsUpdate = true;
-                    }
-                }
-            });
+        // Máquina de garras
+        if (clawMachine) {
+            clawMachine.box.traverse(child => { if (child.isMesh) child.castShadow = val; });
         }
+
+        // Cápsulas
+        if (capsules) {
+            capsules.forEach(c => c.mesh.traverse(child => { if (child.isMesh) child.castShadow = val; }));
+        }
+
+        // Balcão, mesas, cadeiras e mesa de bilhar
+        if (arcadeBuilding?.setShadows) arcadeBuilding.setShadows(val);
+
+        // SpotLights dos candeeiros (limitado por MAX_TEXTURE_IMAGE_UNITS=16 do WebGL)
+        const lamps = [
+            scene.userData.clawLamp,
+            scene.userData.poolLamp,
+            scene.userData.counterLamp,
+            ...(scene.userData.tableLamps || [])
+        ];
+        lamps.forEach(lamp => {
+            if (lamp) lamp.traverse(child => { if (child.isSpotLight) child.castShadow = val; });
+        });
+
+        // Forçar recompilação dos shaders com/sem shadow maps
+        scene.traverse(child => {
+            if (child.isMesh && child.material) {
+                const mats = Array.isArray(child.material) ? child.material : [child.material];
+                mats.forEach(m => m.needsUpdate = true);
+            }
+        });
     });
 
     // Configurações de volume da música
