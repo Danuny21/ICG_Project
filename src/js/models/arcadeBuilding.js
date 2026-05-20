@@ -191,6 +191,15 @@ export function createArcadeBuilding(scene) {
     const counterObj = createCounter();
     counterObj.group.position.set(-(WIDTH / 2) + 15, 0, DEPTH / 2 - 28);
     counterObj.group.scale.setScalar(0.8);
+    
+    // Ativa sombras no balcão e nos seus adereços todos
+    counterObj.group.traverse(child => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+    
     buildingGroup.add(counterObj.group);
 
     // --- Teto ---
@@ -231,6 +240,14 @@ export function createArcadeBuilding(scene) {
     poolTable.scale.setScalar(poolScale);
     poolTable.position.set(0, 0, -45);
     poolTable.rotation.y = 0;
+    
+    // Ativa sombras em toda a meza de bilhar (pano, bordos, tacos, bolas)
+    poolTable.traverse(child => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
     buildingGroup.add(poolTable);
 
     // --- Mesas Redondas com cadeiras ---
@@ -267,6 +284,14 @@ export function createArcadeBuilding(scene) {
             tableTokens.scale.setScalar(0.4);
             table.add(tableTokens);
         }
+        
+        // Aplica sombras na mesa e em todos os adereços em cima dela
+        table.traverse(child => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
         buildingGroup.add(table);
 
         const chairOffset = 9;
@@ -279,6 +304,14 @@ export function createArcadeBuilding(scene) {
             const pz = i < 2 ? (i === 0 ? pos.z - chairOffset : pos.z + chairOffset) : pos.z;
             chair.position.set(px, 0, pz);
             chair.rotation.y = rot;
+            
+            // Ativa sombras nas cadeiras
+            chair.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
             buildingGroup.add(chair);
         });
 
@@ -332,7 +365,7 @@ export function createArcadeBuilding(scene) {
 
     // 1.1 Candeeiro de Balcão
     const counterLamp = createLamp(true, 120);
-    counterLamp.position.set(-(WIDTH / 2) + 15, 35, DEPTH / 2 - 28); // Por cima do balcão (-35, 35, 42)
+    counterLamp.position.set(-(WIDTH / 2) + 15, 45, DEPTH / 2 - 28); // Por cima do balcão (-35, 35, 42)
     counterLamp.scale.setScalar(SCALE_FACTOR * 0.8);
     buildingGroup.add(counterLamp);
     scene.userData.counterLamp = counterLamp;

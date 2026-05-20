@@ -201,8 +201,15 @@ export function createClawMachine(scene) {
     const interiorLight = new THREE.PointLight(0xffeedd, 0, 30);
     interiorLight.position.set(0, 38, 0);
     group.add(interiorLight);
+    
+    // Luz interna mais perto do chão para evidenciar as cápsulas
+    const interiorBottomLight = new THREE.PointLight(0xffeedd, 0, 20);
+    interiorBottomLight.position.set(0, 5, 0); // Perto das cápsulas
+    group.add(interiorBottomLight);
+    
     if (scene) {
         scene.userData.clawInteriorLight = interiorLight;
+        scene.userData.clawInteriorBottomLight = interiorBottomLight;
     }
 
     // Claw Mechanism

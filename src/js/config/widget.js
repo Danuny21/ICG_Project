@@ -12,6 +12,7 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
         theme: "clássico",
         timeOfDay: isNightInit ? "noite" : "dia",
         showStats: false,
+        allShadows: false,
         musicVolume: 0.08,
         prizeVolume: 0.2
     };
@@ -96,6 +97,40 @@ export function setupWidget(scene, clawMachine, confetti, capsules, capsuleOpene
 
     gui.add(config, 'showStats').name("Mostrar FPS").onChange(val => {
         stats.domElement.style.display = val ? 'block' : 'none';
+    });
+
+    gui.add(config, 'allShadows').name("Sombras").onChange(val => {
+        if (scene) {
+            // Devido ao limite de hardware MAX_TEXTURE_IMAGE_UNITS(16) do WebGL, 
+            // não podemos ter dezenas de sombras simultâneas.
+            // Vamos ligar sombras extra APENAS nos candeeiros de teto principais para evitar o crash.
+            const extraLightsGrp = [
+                scene.userData.clawLamp,
+                scene.userData.poolLamp,
+                scene.userData.counterLamp,
+                ...(scene.userData.tableLamps || [])
+            ];
+
+            extraLightsGrp.forEach(lamp => {
+                if (lamp) lamp.traverse(child => {
+                    // Apenas SpotLights maiores. PointLights e Spots secundários ficam de fora.
+                    if (child.isSpotLight) {
+                        child.castShadow = val;
+                    }
+                });
+            });
+
+            // Necessário forçar atualização dos materiais para re-compilar os shaders com mapas de sombras novos
+            scene.traverse(child => {
+                if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(m => m.needsUpdate = true);
+                    } else {
+                        child.material.needsUpdate = true;
+                    }
+                }
+            });
+        }
     });
 
     const audioFolder = gui.addFolder("Áudio");

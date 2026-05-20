@@ -125,6 +125,13 @@ export class CollectionManager {
             shelf.position.set(-48.5, yBase + index * ySpacing, zBase);
 
             if (arcadeBuilding && arcadeBuilding.group) {
+                // Ativa sombras ativas para a estante
+                shelf.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
                 arcadeBuilding.group.add(shelf);
             }
 
@@ -138,6 +145,15 @@ export class CollectionManager {
                     model.scale.setScalar(s);
                     model.position.set(startX + i * spacing, 0.5 - cfg.offsetY * s, 0);
                     model.rotation.y = Math.PI / 2;
+                    
+                    // Sombras ativas para cada brinquedo individual da coleção
+                    model.traverse(child => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+
                     shelf.add(model);
                     this.registerPrize(cfg.name, model, animations, cfg.idle);
                 });

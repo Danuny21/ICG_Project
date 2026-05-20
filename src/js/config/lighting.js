@@ -47,7 +47,10 @@ export function updateLightsForTimeOfDay(scene, isNight) {
 
     // 4. Luz interior da Máquina de Garras (ilumina cápsulas)
     if (scene.userData.clawInteriorLight) {
-        scene.userData.clawInteriorLight.intensity = isNight ? 0.6 : 0; // A luz dentro da máquina é mantida
+        scene.userData.clawInteriorLight.intensity = isNight ? 50 : 0; // A luz dentro da máquina é mantida
+    }
+    if (scene.userData.clawInteriorBottomLight) {
+        scene.userData.clawInteriorBottomLight.intensity = isNight ? 50 : 0; // Ilumina cápsulas de perto
     }
 
     // 4.1. Candeeiro Físico em cima da Máquina de Garras
@@ -103,18 +106,5 @@ export function updateLightsForTimeOfDay(scene, isNight) {
             marqueeMat.emissiveIntensity = isNight ? 3.0 : 0.5;
             screenLight.intensity = isNight ? 2 : 0;
         });
-    }
-
-    // 13. Luz exterior e cor do céu na janela
-    if (scene.userData.windowLight) {
-        scene.userData.windowLight.color.set(isNight ? 0x4444ff : 0xffffee);
-        scene.userData.windowLight.intensity = isNight ? 15 : 20;
-    }
-    if (scene.userData.windowSpot) {
-        scene.userData.windowSpot.color.set(isNight ? 0x4444ff : 0xffeedd);
-        scene.userData.windowSpot.intensity = isNight ? 20 : 30;
-    }
-    if (scene.userData.exteriorMat) {
-        scene.userData.exteriorMat.color.set(isNight ? 0x00081e : 0x87ceeb);
     }
 }

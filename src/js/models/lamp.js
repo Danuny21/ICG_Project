@@ -39,9 +39,9 @@ export function createLamp(showBulb = true, intensity = 100) {
     // Luz esférica suave para iluminar o próprio candeeiro por dentro (abajur)
     const glowLight = new THREE.PointLight(0xffffee, intensity);
     glowLight.position.set(0, 0, 0); // No centro do abajur
-    glowLight.distance = 25; // Preenchimento curto
+    glowLight.distance = 5; // Preenchimento curto
     glowLight.decay = 1.0;
-    lampGroup.add(glowLight);
+    //lampGroup.add(glowLight);
 
     // Foco de Luz apontado para baixo
     const spotLight = new THREE.SpotLight(0xffffee, intensity * 5); // Multiplicado para iluminar forte (estava fraco)
