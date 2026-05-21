@@ -173,7 +173,6 @@ export class PhysicsWorld {
 
     // Cria o corpo cinemático da porta de saída
     _createDoorBody(clawMachine) {
-        // CORREÇÃO: Usar 'door' em vez de 'porta'
         if (!clawMachine.door) return;
         const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.baseRotY);
         const relPos = new THREE.Vector3(-7.8, 7.8, 14.82).applyQuaternion(quat);
