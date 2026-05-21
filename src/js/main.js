@@ -21,7 +21,7 @@ import { preloadAllPrizes } from "./systems/PrizeLoader.js";
 import { PRIZE_LIST } from "./config/prizes.js";
 
 window.CONFIG_JOGO = NORMAL_MODE;
-const NUM_CAPSULES = 200;
+const NUM_CAPSULES = 100;
 
 const MACHINE_POS = new THREE.Vector3(-86, 0, 1);
 const MACHINE_ROT = Math.PI / 2;

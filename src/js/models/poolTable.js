@@ -107,7 +107,7 @@ export function createBilliardTable() {
 
     // Buracos
     const pocketRadius = 0.2; // Maior que o raio da bola (0.08)
-    const pocketGeom = new THREE.CircleGeometry(pocketRadius, 32); 
+    const pocketGeom = new THREE.CircleGeometry(pocketRadius, 32);
     pocketGeom.rotateX(-Math.PI / 2);
 
     const pocketY = height - 0.19; // Um pouco mais acima do feltro
