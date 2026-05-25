@@ -1,5 +1,0 @@
-Título do Projeto: Claw Machine 3D - Projeto ICG
-Nome do Autor: Daniel Nunes
-URL do repositório no GitHub: https://github.com/Danuny21/ICG_Project
-URL para executar o projeto: [INSERIR URL DE EXECUÇÃO AQUI (ex: GitHub Pages ou Vercel, ou instruções locais)]
-URL do vídeo: [INSERIR URL DO VÍDEO AQUI (ex: YouTube, Google Drive)]
