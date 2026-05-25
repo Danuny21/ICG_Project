@@ -54,7 +54,7 @@ clawMachine.box.rotation.y = MACHINE_ROT;
 
 const capsules = CapsuleSpawner.spawnCapsules(scene, NUM_CAPSULES, MACHINE_POS, MACHINE_ROT);
 
-// ─── ÁUDIO ───────────────────────────────────────────────────────────────────
+// ÁUDIO
 const listener = new THREE.AudioListener();
 camera.add(listener);
 const audioLoader = new THREE.AudioLoader();
